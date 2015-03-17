@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<component name="fr.toutatice.ecm.elasticsearch.codecs.contrib" version="1.0">
+
+	<require>org.nuxeo.ecm.automation.server.AutomationServer</require>
+
+	<extension target="org.nuxeo.ecm.automation.server.AutomationServer"
+		point="codecs">
+		
+		<codec class="fr.toutatice.ecm.elasticsearch.codec.TTCEsCodec" />
+		
+	</extension>
+
+
+</component>
