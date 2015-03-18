@@ -72,11 +72,6 @@ public class TTCEsCodec extends ObjectCodec<SearchResponse> {
 		String execTime = String.format("%d s %d ms", (((stopTime - startTime) / 1000) % 60), ((stopTime - startTime) % 1000));
 		log.info("> TTCEsCodec::write(): " + execTime);
 
-//    	JSONObject json = new JSONObject();
-//        json.putAll(entityMap);
-//        String jsonStrg = json.toString();
-//        log.info(jsonStrg);
-    	
         jg.writeObject(entityMap);
     }
 
