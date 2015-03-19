@@ -1,8 +1,8 @@
 <!-- See documentation at http://doc.nuxeo.com/x/HgIz -->
-<package type="addon" name="open-toutatice-addons-collab-tools" version="@VERSION@">
+<package type="addon" name="open-toutatice-addons-elasticsearch" version="@VERSION@">
 	<title>Addon to leverage the ElasticSearch tool</title>
 	<description>
-		<p>Interface the ElasticSearch tool with HTTP Rest accesses </p>
+		<p>Interface the ElasticSearch tool with shortened Json accesses </p>
 	</description>
 	<home-page>http://www.toutatice.fr</home-page>
 	<vendor>Academie de Rennes</vendor>
