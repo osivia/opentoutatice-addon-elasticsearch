@@ -1,7 +1,5 @@
 package fr.toutatice.ecm.elasticsearch.automation;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchResponse;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
@@ -15,28 +13,23 @@ import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
 import fr.toutatice.ecm.elasticsearch.query.TTCNxQueryBuilder;
+import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
 @Operation(id = QueryES.ID, category = Constants.CAT_FETCH, label = "Query  via ElasticSerach", description = "Perform a query on ElasticSerach instead of Repository")
 public class QueryES {
 
-	private static final Log log = LogFactory.getLog(QueryES.class);
-
+//	private static final Log log = LogFactory.getLog(QueryES.class);
     public static final String ID = "Document.QueryES";
-
-//    @HeaderParam(value = "X-NXDocumentProperties")
-//    String schemas;
+    private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
     
     @Context
     CoreSession session;
-
+    
     @Context
     ElasticSearchService elasticSearchService;
     
     @Param(name = "query", required = false)
     protected String query;
-
-    @Param(name = "page", required = false)
-    protected Integer page;
 
     @Param(name = "currentPageIndex", required = false)
     protected Integer currentPageIndex;
@@ -47,17 +40,17 @@ public class QueryES {
     @OperationMethod
     public DefaultJsonAdapter run() throws OperationException {
     	
-		long startTime = System.currentTimeMillis();
-
-    	NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query).limit(-1);
+    	NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
+    	if (null != currentPageIndex && null != pageSize) {
+    		builder.offset(((0 < currentPageIndex ? currentPageIndex : 1) - 1) * pageSize);
+    		builder.limit(pageSize);
+    	} else {
+    		builder.limit(DEFAULT_MAX_RESULT_SIZE);
+    	}
+    	
     	elasticSearchService.query(builder);
     	SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
-    	
-    	long stopTime = System.currentTimeMillis();
-    	String execTime = String.format("%d s %d ms", (((stopTime - startTime) / 1000) % 60), ((stopTime - startTime) % 1000));
-    	log.info("> QueryES::run(): " + execTime);
-
-    	return new DefaultJsonAdapter(esResponse);
+    	return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex));
     }
     
 }
