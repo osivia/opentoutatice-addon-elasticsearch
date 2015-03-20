@@ -58,13 +58,26 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 		SearchHit[] searchhits = upperhits.getHits();
     	Map<String, Object> entityMap = new TreeMap<String, Object>(new keyComparator());
 		entityMap.put("entity-type", "documents");
-		entityMap.put("isPaginable", value.isPaginable());
+		/**
+		 * Due to bug about client unmarshalling, it is not possible to return a result of type "Documents"
+		 * but only "PaginableDocuments". 
+		 * 
+		 * (Nuxeo reference: SUPNXP-12954)
+		 */
+		// entityMap.put("isPaginable", value.isPaginable());
+		entityMap.put("isPaginable", true);
 		if (value.isPaginable()) {
 			entityMap.put("resultsCount", searchhits.length);
 			entityMap.put("totalSize", upperhits.getTotalHits());
 			entityMap.put("pageSize", value.getPageSize());
 			entityMap.put("pageCount", upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0));
 			entityMap.put("currentPageIndex", value.getCurrentPageIndex());
+		} else {
+			entityMap.put("resultsCount", searchhits.length);
+			entityMap.put("totalSize", upperhits.getTotalHits());
+			entityMap.put("pageSize", upperhits.getTotalHits());
+			entityMap.put("pageCount", 1);
+			entityMap.put("currentPageIndex", 1);			
 		}
 		
 		List<Map<String, Object>> entries = new ArrayList<Map<String, Object>>();
@@ -72,7 +85,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
     	for (SearchHit hit : searchhits) {
     		Map<String, Object> source = hit.getSource();
     		Map<String, Object> entryMap = new HashMap<String, Object>();
-    		    		
+    		
     		// convert ES JSON mapping into Nuxeo automation mapping
     		entryMap.put("entity-type", "document");
     		entryMap.put("repository", source.get("ecm:repository"));
