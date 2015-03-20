@@ -18,6 +18,12 @@
  */
 package fr.toutatice.ecm.elasticsearch.automation;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchResponse;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
@@ -27,6 +33,8 @@ import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.jaxrs.DefaultJsonAdapter;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.schema.SchemaManager;
+import org.nuxeo.ecm.core.schema.types.Schema;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
@@ -36,42 +44,63 @@ import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 @Operation(id = QueryES.ID, category = Constants.CAT_FETCH, label = "Query  via ElasticSerach", description = "Perform a query on ElasticSerach instead of Repository")
 public class QueryES {
 
-//	private static final Log log = LogFactory.getLog(QueryES.class);
-    public static final String ID = "Document.QueryES";
-    private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+	private static final Log log = LogFactory.getLog(QueryES.class);
+	private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+	public static final String ID = "Document.QueryES";
 
-//    @HeaderParam(value = "X-NXDocumentProperties")
-//    String documentProperties;
-    
-    @Context
-    CoreSession session;
-    
-    @Context
-    ElasticSearchService elasticSearchService;
-    
-    @Param(name = "query", required = true)
-    protected String query;
+	@Context
+	CoreSession session;
 
-    @Param(name = "pageSize", required = false)
-    protected Integer pageSize;
+	@Context
+	ElasticSearchService elasticSearchService;
 
-    @Param(name = "currentPageIndex", required = false)
-    protected Integer currentPageIndex;
+	@Context
+	SchemaManager schemaManager;
 
-    @OperationMethod
-    public DefaultJsonAdapter run() throws OperationException {
-    	
-    	NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
-    	if (null != currentPageIndex && null != pageSize) {
-    		builder.offset(((0 < currentPageIndex ? currentPageIndex : 1) - 1) * pageSize);
-    		builder.limit(pageSize);
-    	} else {
-    		builder.limit(DEFAULT_MAX_RESULT_SIZE);
-    	}
-    	
-    	elasticSearchService.query(builder);
-    	SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
-    	return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex, null));
-    }
-    
+	@Param(name = "query", required = true)
+	protected String query;
+
+	@Param(name = "pageSize", required = false)
+	protected Integer pageSize;
+
+	@Param(name = "currentPageIndex", required = false)
+	protected Integer currentPageIndex;
+
+	@Param(name = "X-NXDocumentProperties", required = false)
+	protected String nxProperties;
+
+	@OperationMethod
+	public DefaultJsonAdapter run() throws OperationException {
+
+		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
+		if (null != currentPageIndex && null != pageSize) {
+			builder.offset(((0 < currentPageIndex ? currentPageIndex : 1) - 1) * pageSize);
+			builder.limit(pageSize);
+		} else {
+			builder.limit(DEFAULT_MAX_RESULT_SIZE);
+		}
+
+		elasticSearchService.query(builder);
+		SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
+		return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex, getSchemas(nxProperties)));
+	}
+
+	private List<String> getSchemas(String nxProperties) {
+		List<String> schemas = new ArrayList<String>();
+
+		if (StringUtils.isNotBlank(nxProperties)) {
+			String[] schemasList = nxProperties.split(",");
+			for (String schema : schemasList) {
+				Schema sch = schemaManager.getSchema(schema);
+				if (null != sch) {
+					schemas.add(sch.getNamespace().prefix);
+				} else {
+					log.warn("Unknown schema '" + schema + "'");
+				}
+			}
+		}
+		
+		return schemas;
+	}
+	
 }

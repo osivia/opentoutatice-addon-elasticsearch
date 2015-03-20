@@ -35,28 +35,30 @@ import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
 public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
-//	private static final Log log = LogFactory.getLog(TTCEsCodec.class);
-	
+	//	private static final Log log = LogFactory.getLog(TTCEsCodec.class);
+
 	@SuppressWarnings("serial")
 	private static final List<String> keys = new ArrayList<String>() {{
-	    add("entity-type");
-	    add("isPaginable");
+		add("entity-type");
+		add("isPaginable");
 	}};
-	
-    public TTCEsCodec() {
-        super(TTCSearchResponse.class);
-    }
-    
-    @Override
-    public String getType() {
-        return "esresponse";
-    }
-    
-    public void write(JsonGenerator jg, TTCSearchResponse value) throws IOException {
+
+	public TTCEsCodec() {
+		super(TTCSearchResponse.class);
+	}
+
+	@Override
+	public String getType() {
+		return "esresponse";
+	}
+
+	public void write(JsonGenerator jg, TTCSearchResponse value) throws IOException {
 
 		SearchHits upperhits = value.getSearchResponse().getHits();
+		String schemasRegex = value.getSchemasRegex();
+
 		SearchHit[] searchhits = upperhits.getHits();
-    	Map<String, Object> entityMap = new TreeMap<String, Object>(new keyComparator());
+		Map<String, Object> entityMap = new TreeMap<String, Object>(new keyComparator());
 		entityMap.put("entity-type", "documents");
 		/**
 		 * Due to bug about client unmarshalling, it is not possible to return a result of type "Documents"
@@ -79,42 +81,42 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 			entityMap.put("pageCount", 1);
 			entityMap.put("currentPageIndex", 1);			
 		}
-		
+
 		List<Map<String, Object>> entries = new ArrayList<Map<String, Object>>();
-    	entityMap.put("entries", entries);
-    	for (SearchHit hit : searchhits) {
-    		Map<String, Object> source = hit.getSource();
-    		Map<String, Object> entryMap = new HashMap<String, Object>();
-    		
-    		// convert ES JSON mapping into Nuxeo automation mapping
-    		entryMap.put("entity-type", "document");
-    		entryMap.put("repository", source.get("ecm:repository"));
-    		entryMap.put("uid", source.get("ecm:uuid"));
-    		entryMap.put("path", source.get("ecm:path"));
-    		entryMap.put("type", source.get("ecm:primaryType"));
-    		entryMap.put("state", source.get("ecm:currentLifeCycleState"));
-    		entryMap.put("parentRef", source.get("ecm:parentId"));
-    		entryMap.put("versionLabel", source.get("ecm:versionLabel"));
-    		entryMap.put("isCheckedOut", "");
-    		entryMap.put("title", source.get("dc:title"));
-    		entryMap.put("lastModified", source.get("dc:modified"));
-    		entryMap.put("facets", source.get("ecm:mixinType"));
-    		entryMap.put("changeToken", source.get("ecm:changeToken"));
-    		
-    		Map<String, Object> propertiesMap = new HashMap<String, Object>();
-    		for (String key : source.keySet()) {
-    			if (!key.matches("ecm:.*")) {
-    				propertiesMap.put(key, source.get(key));
-    			}
-    		}
-    		entryMap.put("properties", propertiesMap);
-    		entries.add(entryMap);
-    	}
-    	
-        jg.writeObject(entityMap);
-    }
-    
-    private class keyComparator implements Comparator<String> {
+		entityMap.put("entries", entries);
+		for (SearchHit hit : searchhits) {
+			Map<String, Object> source = hit.getSource();
+			Map<String, Object> entryMap = new HashMap<String, Object>();
+
+			// convert ES JSON mapping into Nuxeo automation mapping
+			entryMap.put("entity-type", "document");
+			entryMap.put("repository", source.get("ecm:repository"));
+			entryMap.put("uid", source.get("ecm:uuid"));
+			entryMap.put("path", source.get("ecm:path"));
+			entryMap.put("type", source.get("ecm:primaryType"));
+			entryMap.put("state", source.get("ecm:currentLifeCycleState"));
+			entryMap.put("parentRef", source.get("ecm:parentId"));
+			entryMap.put("versionLabel", source.get("ecm:versionLabel"));
+			entryMap.put("isCheckedOut", "");
+			entryMap.put("title", source.get("dc:title"));
+			entryMap.put("lastModified", source.get("dc:modified"));
+			entryMap.put("facets", source.get("ecm:mixinType"));
+			entryMap.put("changeToken", source.get("ecm:changeToken"));
+
+			Map<String, Object> propertiesMap = new HashMap<String, Object>();
+			for (String key : source.keySet()) {
+				if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
+					propertiesMap.put(key, source.get(key));
+				}
+			}
+			entryMap.put("properties", propertiesMap);
+			entries.add(entryMap);
+		}
+
+		jg.writeObject(entityMap);
+	}
+
+	private class keyComparator implements Comparator<String> {
 
 		@Override
 		public int compare(String key1, String key2) {
@@ -125,7 +127,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 			i2 = (0 > i2) ? keys.size() : i2;
 			return (i1 != i2) ? i1 - i2 : 1;
 		}
-    	
-    }
+
+	}
 
 }

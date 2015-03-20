@@ -18,6 +18,9 @@
  */
 package fr.toutatice.ecm.elasticsearch.search;
 
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.search.SearchResponse;
 
 public class TTCSearchResponse {
@@ -25,13 +28,13 @@ public class TTCSearchResponse {
 	private Integer pageSize;
 	private Integer currentPageIndex;
 	private SearchResponse searchResponse;
-	private String documentProperties;
+	private List<String> schemas;
 
-	public TTCSearchResponse(SearchResponse searchResponse, Integer pageSize, Integer currentPageIndex, String documentProperties) {
+	public TTCSearchResponse(SearchResponse searchResponse, Integer pageSize, Integer currentPageIndex, List<String> schemas) {
 		this.pageSize = pageSize;
 		this.searchResponse = searchResponse;
 		this.currentPageIndex = currentPageIndex;
-		this.documentProperties = documentProperties;
+		this.schemas = schemas;
 	}
 	
 	public int getPageSize() {
@@ -58,16 +61,20 @@ public class TTCSearchResponse {
 		this.searchResponse = searchResponse;
 	}
 
-	public String getDocumentProperties() {
-		return documentProperties;
+	public List<String> getSchemas() {
+		return schemas;
 	}
 
-	public void setDocumentProperties(String documentProperties) {
-		this.documentProperties = documentProperties;
+	public void setSchemas(List<String> schemas) {
+		this.schemas = schemas;
 	}
 
 	public boolean isPaginable() {
 		return ((null != pageSize) && (null != currentPageIndex));
 	}
-	
+
+	public String getSchemasRegex() {
+		return (null != schemas && 0 < schemas.size()) ? "^(" + StringUtils.join(schemas, "|") + "):.+$" : ".*";
+	}
+
 }
