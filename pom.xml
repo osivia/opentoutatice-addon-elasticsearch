@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>1.0-RC02</version>
+	<version>1.0-SNAPSHOT</version>
 
 	<properties>
 		<nuxeo.version>6.0</nuxeo.version>
@@ -57,7 +57,7 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/tags/1.0-RC02</developerConnection>
+		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/trunk</developerConnection>
 	</scm>
 
 	<distributionManagement>
