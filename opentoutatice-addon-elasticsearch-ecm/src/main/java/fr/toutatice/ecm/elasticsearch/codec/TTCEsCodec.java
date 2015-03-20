@@ -58,12 +58,14 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 		SearchHit[] searchhits = upperhits.getHits();
     	Map<String, Object> entityMap = new TreeMap<String, Object>(new keyComparator());
 		entityMap.put("entity-type", "documents");
-		entityMap.put("isPaginable", Boolean.TRUE);
-		entityMap.put("resultsCount", searchhits.length);
-		entityMap.put("totalSize", upperhits.getTotalHits());
-		entityMap.put("pageSize", value.getPageSize());
-		entityMap.put("pageCount", upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0));
-		entityMap.put("currentPageIndex", value.getCurrentPageIndex());
+		entityMap.put("isPaginable", value.isPaginable());
+		if (value.isPaginable()) {
+			entityMap.put("resultsCount", searchhits.length);
+			entityMap.put("totalSize", upperhits.getTotalHits());
+			entityMap.put("pageSize", value.getPageSize());
+			entityMap.put("pageCount", upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0));
+			entityMap.put("currentPageIndex", value.getCurrentPageIndex());
+		}
 		
 		List<Map<String, Object>> entries = new ArrayList<Map<String, Object>>();
     	entityMap.put("entries", entries);

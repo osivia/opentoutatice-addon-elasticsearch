@@ -39,6 +39,9 @@ public class QueryES {
 //	private static final Log log = LogFactory.getLog(QueryES.class);
     public static final String ID = "Document.QueryES";
     private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+
+//    @HeaderParam(value = "X-NXDocumentProperties")
+//    String documentProperties;
     
     @Context
     CoreSession session;
@@ -46,14 +49,14 @@ public class QueryES {
     @Context
     ElasticSearchService elasticSearchService;
     
-    @Param(name = "query", required = false)
+    @Param(name = "query", required = true)
     protected String query;
-
-    @Param(name = "currentPageIndex", required = false)
-    protected Integer currentPageIndex;
 
     @Param(name = "pageSize", required = false)
     protected Integer pageSize;
+
+    @Param(name = "currentPageIndex", required = false)
+    protected Integer currentPageIndex;
 
     @OperationMethod
     public DefaultJsonAdapter run() throws OperationException {
@@ -68,7 +71,7 @@ public class QueryES {
     	
     	elasticSearchService.query(builder);
     	SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
-    	return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex));
+    	return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex, null));
     }
     
 }

@@ -22,18 +22,20 @@ import org.elasticsearch.action.search.SearchResponse;
 
 public class TTCSearchResponse {
 
-	private int pageSize;
-	private int currentPageIndex;
+	private Integer pageSize;
+	private Integer currentPageIndex;
 	private SearchResponse searchResponse;
+	private String documentProperties;
 
-	public TTCSearchResponse(SearchResponse searchResponse, int pageSize, int currentPageIndex) {
+	public TTCSearchResponse(SearchResponse searchResponse, Integer pageSize, Integer currentPageIndex, String documentProperties) {
 		this.pageSize = pageSize;
 		this.searchResponse = searchResponse;
 		this.currentPageIndex = currentPageIndex;
+		this.documentProperties = documentProperties;
 	}
 	
 	public int getPageSize() {
-		return pageSize;
+		return pageSize.intValue();
 	}
 	
 	public void setPageSize(int pageSize) {
@@ -41,7 +43,7 @@ public class TTCSearchResponse {
 	}
 
 	public int getCurrentPageIndex() {
-		return currentPageIndex;
+		return currentPageIndex.intValue();
 	}
 
 	public void setCurrentPageIndex(int currentPageIndex) {
@@ -56,4 +58,16 @@ public class TTCSearchResponse {
 		this.searchResponse = searchResponse;
 	}
 
+	public String getDocumentProperties() {
+		return documentProperties;
+	}
+
+	public void setDocumentProperties(String documentProperties) {
+		this.documentProperties = documentProperties;
+	}
+
+	public boolean isPaginable() {
+		return ((null != pageSize) && (null != currentPageIndex));
+	}
+	
 }
