@@ -61,10 +61,10 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 		Map<String, Object> entityMap = new TreeMap<String, Object>(new keyComparator());
 		entityMap.put("entity-type", "documents");
 		/**
-		 * Due to bug about client unmarshalling, it is not possible to return a result of type "Documents"
+		 * Due to issue about client marshalling, it is not possible to return a result of type "Documents"
 		 * but only "PaginableDocuments". 
 		 * 
-		 * (Nuxeo reference: SUPNXP-12954)
+		 * (Nuxeo Jira reference: SUPNXP-12954)
 		 */
 		// entityMap.put("isPaginable", value.isPaginable());
 		entityMap.put("isPaginable", true);
