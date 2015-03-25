@@ -19,7 +19,6 @@
 package fr.toutatice.ecm.elasticsearch.codec;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +43,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 		return "esresponse";
 	}
 
+	@SuppressWarnings("unchecked")
 	public void write(JsonGenerator jg, TTCSearchResponse value) throws IOException {
 
 		SearchHits upperhits = value.getSearchResponse().getHits();
