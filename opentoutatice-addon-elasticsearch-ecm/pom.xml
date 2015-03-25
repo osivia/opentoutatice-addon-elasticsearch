@@ -25,7 +25,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.nuxeo.elasticsearch</groupId>
-			<artifactId>nuxeo-elasticsearch-core</artifactId>
+			<artifactId>nuxeo-elasticsearch-web</artifactId>
 			<version>${nuxeo.version}</version>
 		</dependency>
 		<dependency>
@@ -53,5 +53,5 @@
 				</plugin>
 			</plugins>
 	</build>
-
+	
 </project>

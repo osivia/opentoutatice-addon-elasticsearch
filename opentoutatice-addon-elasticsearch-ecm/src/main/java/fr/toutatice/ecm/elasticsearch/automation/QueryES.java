@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchResponse;
+import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
@@ -32,6 +33,7 @@ import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.jaxrs.DefaultJsonAdapter;
+import org.nuxeo.ecm.automation.jaxrs.JsonAdapter;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.schema.SchemaManager;
 import org.nuxeo.ecm.core.schema.types.Schema;
@@ -41,7 +43,7 @@ import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 import fr.toutatice.ecm.elasticsearch.query.TTCNxQueryBuilder;
 import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
-@Operation(id = QueryES.ID, category = Constants.CAT_FETCH, label = "Query  via ElasticSerach", description = "Perform a query on ElasticSerach instead of Repository")
+@Operation(id = QueryES.ID, category = Constants.CAT_FETCH, label = "Query via ElasticSerach", description = "Perform a query on ElasticSerach instead of Repository")
 public class QueryES {
 
 	private static final Log log = LogFactory.getLog(QueryES.class);
@@ -50,6 +52,9 @@ public class QueryES {
 
 	@Context
 	CoreSession session;
+	
+	@Context
+	OperationContext opContext;
 
 	@Context
 	ElasticSearchService elasticSearchService;
@@ -70,7 +75,7 @@ public class QueryES {
 	protected String nxProperties;
 
 	@OperationMethod
-	public DefaultJsonAdapter run() throws OperationException {
+	public JsonAdapter run() throws OperationException {
 
 		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
 		if (null != currentPageIndex && null != pageSize) {
@@ -82,6 +87,7 @@ public class QueryES {
 
 		elasticSearchService.query(builder);
 		SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
+		
 		return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex, getSchemas(nxProperties)));
 	}
 
@@ -91,7 +97,7 @@ public class QueryES {
 		if (StringUtils.isNotBlank(nxProperties)) {
 			String[] schemasList = nxProperties.split(",");
 			for (String schema : schemasList) {
-				Schema sch = schemaManager.getSchema(schema);
+				Schema sch = schemaManager.getSchema(StringUtils.trim(schema));
 				if (null != sch) {
 					schemas.add(sch.getNamespace().prefix);
 				} else {

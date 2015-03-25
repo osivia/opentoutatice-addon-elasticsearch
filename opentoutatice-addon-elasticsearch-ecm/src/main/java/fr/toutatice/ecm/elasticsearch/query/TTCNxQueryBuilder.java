@@ -20,7 +20,9 @@ package fr.toutatice.ecm.elasticsearch.query;
 
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
@@ -33,7 +35,6 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 	
 	public TTCNxQueryBuilder(CoreSession coreSession) {
 		super(coreSession);
-		
 	}
 	
 	@Override
@@ -43,7 +44,15 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     }
 
 	public SearchResponse getSearchResponse() {
-		return ((TTCEsFetcher) this.fetcher).getResponse();
+	    if(this.fetcher != null){
+	        return ((TTCEsFetcher) this.fetcher).getResponse();
+	    }
+	    return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
 	}
+	
+    @Override
+    public boolean isFetchFromElasticsearch() {
+        return true;
+    }
 	
 }
