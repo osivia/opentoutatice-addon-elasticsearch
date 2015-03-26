@@ -13,7 +13,9 @@
 	<packaging>zip</packaging>
 	<name>elasticsearch plugin - marketplace</name>
 
-	<properties />
+	<properties>
+		<nuxeo.cap.distribution.version>6.0</nuxeo.cap.distribution.version>
+	</properties>
 
 	<dependencyManagement>
 		<dependencies>
