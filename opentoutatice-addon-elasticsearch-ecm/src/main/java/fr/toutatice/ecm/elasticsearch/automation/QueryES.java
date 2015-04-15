@@ -95,7 +95,8 @@ public class QueryES {
 			for (String schema : schemasList) {
 				Schema sch = schemaManager.getSchema(StringUtils.trim(schema));
 				if (null != sch) {
-					schemas.add(sch.getNamespace().prefix);
+					String prefix = sch.getNamespace().prefix;
+					schemas.add(StringUtils.isNotBlank(prefix) ? prefix : sch.getName());
 				} else {
 					log.warn("Unknown schema '" + schema + "'");
 				}
