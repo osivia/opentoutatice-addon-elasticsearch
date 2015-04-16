@@ -53,31 +53,16 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 		
 		jg.writeStartObject();
         jg.writeStringField("entity-type", "documents");
-		
-		/**
-		 * Due to bug about client unmarshalling, it is not possible to return a result of type "Documents"
-		 * but only "PaginableDocuments". 
-		 * 
-		 * (Nuxeo reference: SUPNXP-12954)
-		 */
-		// entityMap.put("isPaginable", value.isPaginable());
-        jg.writeBooleanField("isPaginable", true);
 		if (value.isPaginable()) {
+			jg.writeBooleanField("isPaginable", value.isPaginable());
 			jg.writeNumberField("resultsCount", searchhits.length);
 			jg.writeNumberField("totalSize", upperhits.getTotalHits());
 			jg.writeNumberField("pageSize", value.getPageSize());
 			jg.writeNumberField("pageCount", upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0));
 			jg.writeNumberField("currentPageIndex", value.getCurrentPageIndex());
-		} else {
-		    jg.writeNumberField("resultsCount", searchhits.length);
-		    jg.writeNumberField("totalSize", upperhits.getTotalHits());
-		    jg.writeNumberField("pageSize", upperhits.getTotalHits());
-		    jg.writeNumberField("pageCount", 1);
-		    jg.writeNumberField("currentPageIndex", 1);			
 		}
 
-		jg.writeArrayFieldStart("entries");
-		
+		jg.writeArrayFieldStart("entries");		
 		for (SearchHit hit : searchhits) {
 			Map<String, Object> source = hit.getSource();
 		    jg.writeStartObject();
