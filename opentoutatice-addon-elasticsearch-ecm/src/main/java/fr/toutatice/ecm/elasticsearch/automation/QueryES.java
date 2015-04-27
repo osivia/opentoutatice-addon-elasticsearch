@@ -75,7 +75,7 @@ public class QueryES {
 
 		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
 		if (null != currentPageIndex && null != pageSize) {
-			builder.offset(((0 < currentPageIndex ? currentPageIndex : 1) - 1) * pageSize);
+			builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * pageSize);
 			builder.limit(pageSize);
 		} else {
 			builder.limit(DEFAULT_MAX_RESULT_SIZE);
