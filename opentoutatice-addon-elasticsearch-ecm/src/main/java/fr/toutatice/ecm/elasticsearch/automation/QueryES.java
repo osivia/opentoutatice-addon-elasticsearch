@@ -98,7 +98,7 @@ public class QueryES {
 					String prefix = sch.getNamespace().prefix;
 					schemas.add(StringUtils.isNotBlank(prefix) ? prefix : sch.getName());
 				} else {
-					log.warn("Unknown schema '" + schema + "'");
+					log.warn("Unknown schema '" + schema + "' (query='" + query + "')");
 				}
 			}
 		}
