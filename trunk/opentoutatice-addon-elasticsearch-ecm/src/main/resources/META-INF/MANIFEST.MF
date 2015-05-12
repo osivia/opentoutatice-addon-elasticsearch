@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 1
+Bundle-Name: OpenToutatice ElasticeSearch Service 
+Bundle-SymbolicName: fr.toutatice.ecm.platform.elasticsearch;singleton:=true
+Bundle-Localization: plugin
+Bundle-Category: stateful
+Nuxeo-Component: OSGI-INF/extensions/toutatice-elasticsearch-operations-contrib.xml,
+ OSGI-INF/extensions/toutatice-elasticsearch-codecs-contrib.xml
+ 

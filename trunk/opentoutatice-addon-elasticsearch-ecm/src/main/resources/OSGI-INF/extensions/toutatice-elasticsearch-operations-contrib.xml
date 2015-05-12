@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<component name="fr.toutatice.ecm.elasticsearch.automation.contrib" version="1.0">
+
+	<require>org.nuxeo.ecm.core.operation.OperationServiceComponent</require>
+
+	<extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
+		point="operations">
+		
+		<operation class="fr.toutatice.ecm.elasticsearch.automation.QueryES" />
+		
+	</extension>
+
+</component>
