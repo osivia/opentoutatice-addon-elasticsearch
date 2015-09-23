@@ -3,6 +3,10 @@
 	<title>Addon to leverage the ElasticSearch tool</title>
 	<description>
 		<p>Interface the ElasticSearch tool with shortened Json accesses </p>
+		<p>
+		Bug fixes:
+		* #345 - LOG - Simple quote non correctement parsées sur requêtes SQL
+		</p>
 	</description>
 	<home-page>http://www.toutatice.fr</home-page>
 	<vendor>Academie de Rennes</vendor>
