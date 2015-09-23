@@ -39,6 +39,7 @@ import org.nuxeo.ecm.core.schema.types.Schema;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
+import fr.toutatice.ecm.elasticsearch.helper.SQLHelper;
 import fr.toutatice.ecm.elasticsearch.query.TTCNxQueryBuilder;
 import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
@@ -73,7 +74,7 @@ public class QueryES {
 	@OperationMethod
 	public JsonAdapter run() throws OperationException {
 
-		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(query);
+		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(SQLHelper.getInstance().escape(query));
 		if (null != currentPageIndex && null != pageSize) {
 			builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * pageSize);
 			builder.limit(pageSize);

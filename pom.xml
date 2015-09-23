@@ -11,7 +11,7 @@
 	<version>1.1-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF10</nuxeo.version>
+		<nuxeo.version>6.0-HF19</nuxeo.version>
 		<nuxeo.opentoutatice.version>3.0.0</nuxeo.opentoutatice.version>
 	</properties>
 
