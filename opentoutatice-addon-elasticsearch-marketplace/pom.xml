@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>1.1-RC01</version>
+		<version>1.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>opentoutatice-addon-elasticsearch-marketplace</artifactId>
@@ -44,7 +44,7 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/tags/1.1-RC01/trunk</developerConnection>
+		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/trunk</developerConnection>
 	</scm>
 
 	<distributionManagement>
