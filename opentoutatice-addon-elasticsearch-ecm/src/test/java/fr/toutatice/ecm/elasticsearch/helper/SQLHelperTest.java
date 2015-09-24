@@ -106,4 +106,10 @@ public class SQLHelperTest extends TestCase {
 				SQLHelper.getInstance().escape("SELECT * FROM Document WHERE dc:title in ('l \\' arche','le cerisier', 'l'abricotier')"));
 	}
 
+	// stupid monkey test
+	public void testEscape15() {
+		assertEquals("SELECT * FROM Document WHERE dc:title LIKE 'dc:title = 'l\\'arche''", 
+				SQLHelper.getInstance().escape("SELECT * FROM Document WHERE dc:title LIKE 'dc:title = 'l'arche''"));
+	}
+
 }
