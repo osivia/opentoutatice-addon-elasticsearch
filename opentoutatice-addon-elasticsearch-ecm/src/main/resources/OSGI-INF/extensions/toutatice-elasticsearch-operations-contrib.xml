@@ -2,12 +2,24 @@
 <component name="fr.toutatice.ecm.elasticsearch.automation.contrib" version="1.0">
 
 	<require>org.nuxeo.ecm.core.operation.OperationServiceComponent</require>
+	<require>org.nuxeo.ecm.automation.server.AutomationServer</require>
 
 	<extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
 		point="operations">
 		
 		<operation class="fr.toutatice.ecm.elasticsearch.automation.QueryES" />
+		<operation class="fr.toutatice.ecm.elasticsearch.automation.ReIndexES" />
 		
 	</extension>
 
+	<extension target="org.nuxeo.ecm.automation.server.AutomationServer"
+		point="bindings">
+	
+		<!-- don't allow ReIndexES of arbitrary URLs on the server -->
+		<binding name="Document.ReIndexES">
+			<administrator>true</administrator>
+		</binding>
+		
+	</extension>
+  
 </component>

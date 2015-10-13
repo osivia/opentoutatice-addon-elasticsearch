@@ -7,6 +7,10 @@
 		Bug fixes:
 		* #345 - LOG - Simple quote non correctement parsées sur requêtes SQL
 		</p>
+		<p>
+		Evolution:
+		* REST API to access the indexation commands from administration.
+		</p>
 	</description>
 	<home-page>http://www.toutatice.fr</home-page>
 	<vendor>Academie de Rennes</vendor>
@@ -22,7 +26,7 @@
 	</platforms>
 	<dependencies>
 		<!-- Dependance sur la plate-forme opentoutatice -->
-		<package>open-toutatice:3.0.0</package>
+		<package>open-toutatice:3.0.5</package>
 	</dependencies>
 	<license>LGPL 2.1</license>
 	<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>

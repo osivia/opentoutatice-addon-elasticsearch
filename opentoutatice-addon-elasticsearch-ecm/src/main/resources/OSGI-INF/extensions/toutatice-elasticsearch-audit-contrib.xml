@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<component name="fr.toutatice.ecm.elasticsearch.audit.contrib" version="1.0">
+
+	<require>org.nuxeo.ecm.platform.audit.service.NXAuditEventsService</require>
+	
+	<extension target="org.nuxeo.ecm.platform.audit.service.NXAuditEventsService" point="event">
+	
+		<event name="opentoutatice.addon.elasticsearch.audit.event"/>
+		
+	</extension>
+	
+</component>

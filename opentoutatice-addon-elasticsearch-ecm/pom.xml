@@ -10,6 +10,7 @@
 	</parent>
 
 	<properties>
+		<opentoutatice.version>3.0.5-SNAPSHOT</opentoutatice.version>
 		<elasticsearch.version>1.1.2</elasticsearch.version>
 	</properties>
 	
@@ -29,11 +30,21 @@
 			<version>${nuxeo.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.nuxeo.elasticsearch</groupId>
+			<artifactId>nuxeo-elasticsearch-web</artifactId>
+			<version>${nuxeo.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
 			<version>${elasticsearch.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>opentoutatice-ecm.platform</groupId>
+			<artifactId>opentoutatice-ecm-platform-core</artifactId>
+			<version>${opentoutatice.version}</version>
+		</dependency>
+		
 		<!-- For test purpose only -->
 		<dependency>
 			<groupId>org.nuxeo.ecm.automation</groupId>
