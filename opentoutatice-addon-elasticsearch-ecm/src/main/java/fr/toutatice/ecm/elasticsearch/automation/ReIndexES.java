@@ -34,14 +34,16 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentRef;
 import org.nuxeo.ecm.core.api.IdRef;
+import org.nuxeo.ecm.core.event.Event;
 import org.nuxeo.ecm.core.event.EventContext;
 import org.nuxeo.ecm.core.event.impl.EventContextImpl;
+import org.nuxeo.ecm.core.event.impl.EventImpl;
+import org.nuxeo.ecm.platform.audit.api.Logs;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.elasticsearch.commands.IndexingCommand;
 import org.nuxeo.elasticsearch.commands.IndexingCommand.Type;
-
-import fr.toutatice.ecm.platform.core.helper.ToutaticeNotifyEventHelper;
+import org.nuxeo.runtime.api.Framework;
 
 @Operation(id = ReIndexES.ID, category = Constants.CAT_DOCUMENT, label = "Re-index documents via ElasticSerach", description = "Re-build the ElasticSerach indice of either the whole repositry, a document (and its sub-hierarchy), documents selected based on a Nxql query")
 public class ReIndexES {
@@ -133,10 +135,11 @@ public class ReIndexES {
     
     private void logAudit(CoreSession session, String comment) {
     	EventContext ctx = new EventContextImpl(session, session.getPrincipal());
-    	ToutaticeNotifyEventHelper.notifyAuditEvent(ctx, 
-    			ELASTICSEARCH_AUDIT_EVENT_CATEGORY, 
-    			ELASTICSEARCH_AUDIT_EVENT_NAME, 
-    			comment);
+    	Logs auditProducer = Framework.getService(Logs.class);
+    	ctx.setProperty("category", ELASTICSEARCH_AUDIT_EVENT_CATEGORY);
+    	ctx.setProperty("comment", comment);
+    	Event entry = new EventImpl(ELASTICSEARCH_AUDIT_EVENT_NAME, ctx);
+    	auditProducer.logEvent(entry);
     }
 
 }
