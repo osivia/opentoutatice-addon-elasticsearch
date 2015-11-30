@@ -5,7 +5,7 @@
 		<p>Interface the ElasticSearch tool with shortened Json accesses </p>
 		<p>
 		Bug fixes:
-		* #345 - LOG - Simple quote non correctement parsées sur requêtes SQL
+		* #345 - LOG - Bad parsing of simple quote in SQL requests
 		</p>
 		<p>
 		Evolution:
