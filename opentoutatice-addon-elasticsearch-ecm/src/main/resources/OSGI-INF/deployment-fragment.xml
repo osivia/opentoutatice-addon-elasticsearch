@@ -4,6 +4,7 @@
  	
 	<require>org.nuxeo.ecm.automation.core</require>
 	<require>org.nuxeo.ecm.automation.io</require>
+	<require>org.nuxeo.ecm.platform.lang</require>
 	
 	<extension target="faces-config#NAVIGATION">
 	</extension>
@@ -24,10 +25,10 @@
 		<unzip from="${bundle.fileName}" to="${bundle.fileName}.tmp">
 			<include>OSGI-INF/l10n/**</include>
 		</unzip>
+		<append from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_fr.properties"
+            to="nuxeo.war/WEB-INF/classes/messages_fr.properties" addNewLine="true" />
 		<append from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_en.properties"
 			to="nuxeo.war/WEB-INF/classes/messages_en.properties" addNewLine="true" />
-		<append from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_fr.properties"
-			to="nuxeo.war/WEB-INF/classes/messages_fr.properties" addNewLine="true" />
 		<delete path="${bundle.fileName}.tmp" />
 	</install>
 
