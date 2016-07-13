@@ -26,7 +26,7 @@
 	</platforms>
 	<dependencies>
 		<!-- Dependance sur la plate-forme opentoutatice -->
-		<package>open-toutatice:3.2.1</package>
+		<package>open-toutatice:3.2.3</package>
 	</dependencies>
 	<license>LGPL 2.1</license>
 	<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>
