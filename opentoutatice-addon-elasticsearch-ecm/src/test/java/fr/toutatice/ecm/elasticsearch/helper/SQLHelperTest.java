@@ -111,5 +111,28 @@ public class SQLHelperTest extends TestCase {
 		assertEquals("SELECT * FROM Document WHERE dc:title LIKE 'dc:title = 'l\\'arche''", 
 				SQLHelper.getInstance().escape("SELECT * FROM Document WHERE dc:title LIKE 'dc:title = 'l'arche''"));
 	}
+	
+	// Test with BETWEEN operator (lower case)
+	public void testEscape16() {
+        assertEquals("SELECT * FROM Document WHERE (ecm:primaryType in ('Note','Article','File','Picture','Audio','Video')) AND ((dc:issued between DATE '2016-07-11' AND DATE '2016-07-12'))", 
+                    SQLHelper.getInstance().escape("SELECT * FROM Document WHERE (ecm:primaryType in ('Note','Article','File','Picture','Audio','Video')) AND ((dc:issued between DATE '2016-07-11' AND DATE '2016-07-12'))"));
+    }
+	
+	// Test with BETWEEN operator
+	public void testEscape17() {
+        assertEquals("SELECT * FROM Document WHERE dc:title LIKE 'l\\'arche%' and (ecm:primaryType in ('Note','Article','File','Picture','Audio','Video')) AND ecm:path STARTSWITH 'ah - la' AND ((dc:issued BETWEEN DATE \'2016-07-11\' AND DATE \'2016-07-12')) AND ((ecm:primaryType not in ('BulkDocumentRoot'))) "
+                + "AND (ecm:isProxy = 1 AND ecm:mixinType != 'HiddenInNavigation' AND ecm:currentLifeCycleState <> 'deleted' AND ecm:isCheckedInVersion = 0) ORDER BY dc:modified DESC", 
+                SQLHelper.getInstance().escape("SELECT * FROM Document WHERE dc:title LIKE 'l'arche%' and (ecm:primaryType in ('Note','Article','File','Picture','Audio','Video')) AND ecm:path STARTSWITH 'ah - la' AND ((dc:issued BETWEEN DATE \'2016-07-11\' AND DATE \'2016-07-12')) AND ((ecm:primaryType not in ('BulkDocumentRoot'))) "
+                        + "AND (ecm:isProxy = 1 AND ecm:mixinType != 'HiddenInNavigation' AND ecm:currentLifeCycleState <> 'deleted' AND ecm:isCheckedInVersion = 0) ORDER BY dc:modified DESC"));
+    }	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 }

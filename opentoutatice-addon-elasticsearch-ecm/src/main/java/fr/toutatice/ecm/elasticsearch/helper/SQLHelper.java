@@ -56,7 +56,9 @@ public class SQLHelper {
 		if (m.matches()) {
 			String[] predicates = m.group(1).split("\\S+:\\S+\\s+");
 			for (String predicate : predicates) {
-				if (StringUtils.isNotBlank(predicate)) {
+			    // Predicate <identifier> [NOT] BETWEEN <literal> AND <literal>
+			    // is the only one which must not be escaped
+				if (StringUtils.isNotBlank(predicate) && !StringUtils.containsIgnoreCase(predicate, "BETWEEN")) {
 					// extract the expression (being compared to the metadata) from each predicate
 					Matcher mexp = this.expressionPattern.matcher(predicate);			
 					if (mexp.matches()) {
