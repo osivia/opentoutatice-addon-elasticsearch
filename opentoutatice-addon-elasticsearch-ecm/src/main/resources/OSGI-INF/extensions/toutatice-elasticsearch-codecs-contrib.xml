@@ -5,9 +5,10 @@
 
 	<extension target="org.nuxeo.ecm.automation.io.services.IOComponent"
 		point="codecs">
-		
+
 		<codec class="fr.toutatice.ecm.elasticsearch.codec.TTCEsCodec" />
-		
+		<codec class="fr.toutatice.ecm.elasticsearch.codec.TTCRawEsCodec" />
+
 	</extension>
 
 </component>
