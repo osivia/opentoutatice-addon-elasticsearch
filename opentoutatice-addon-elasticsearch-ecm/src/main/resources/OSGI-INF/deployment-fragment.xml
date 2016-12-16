@@ -6,12 +6,6 @@
 	<require>org.nuxeo.ecm.automation.io</require>
 	<require>org.nuxeo.ecm.platform.lang</require>
 	
-	<extension target="faces-config#NAVIGATION">
-	</extension>
-
-	<extension target="pages#PAGES">
-	</extension>
-
 	<extension target="application#MODULE">
 		<module>
 			<java>${bundle.fileName}</java>

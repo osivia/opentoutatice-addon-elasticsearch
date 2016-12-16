@@ -29,7 +29,7 @@ import org.apache.commons.lang.StringUtils;
  *
  */
 public class SQLHelper {
-
+    
 	private Pattern predicatesPattern;
 	private Pattern expressionPattern;
 	private Pattern escapePattern;
@@ -54,7 +54,7 @@ public class SQLHelper {
 		// extract the predicates from the query
 		Matcher m = this.predicatesPattern.matcher(query);
 		if (m.matches()) {
-			String[] predicates = m.group(1).split("\\S+:\\S+\\s+");
+			String[] predicates = m.group(1).split("\\w+:\\w+");
 			for (String predicate : predicates) {
 			    // Predicate <identifier> [NOT] BETWEEN <literal> AND <literal>
 			    // is the only one which must not be escaped
@@ -73,7 +73,7 @@ public class SQLHelper {
 				}
 			}
 		}
-
+		
 		return escapedQuery;
 	}
 
