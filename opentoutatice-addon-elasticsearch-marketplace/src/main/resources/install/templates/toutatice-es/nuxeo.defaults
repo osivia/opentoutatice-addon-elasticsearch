@@ -1,5 +1,7 @@
 toutatice-es.target=.
 
+nuxeo.template.includes=toutatice-es
+
 ##==============================================
 # Elasticsearch mode
 ##==============================================
