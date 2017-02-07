@@ -8,11 +8,11 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>1.3.1-SNAPSHOT</version>
+	<version>1.4-SNAPSHOT</version>
 
 	<properties>
 		<nuxeo.version>6.0-HF21</nuxeo.version>
-		<nuxeo.opentoutatice.version>3.2.3</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>3.0.12</nuxeo.opentoutatice.version>
 	</properties>
 
 	<modules>
