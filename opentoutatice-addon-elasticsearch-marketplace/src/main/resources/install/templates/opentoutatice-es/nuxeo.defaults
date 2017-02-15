@@ -1,9 +1,9 @@
-toutatice-es.target=.
+opentoutatice-es.target=.
 
-nuxeo.template.includes=toutatice-es
+nuxeo.template.includes=opentoutatice-es
 
 ##==============================================
-# Elasticsearch mode
+# Full Elasticsearch Mode
 ##==============================================
 
 ottc.es.indexing.sync.force=true
@@ -12,4 +12,3 @@ ottc.querying.es.force=true
 # Disable ACLs optimization:
 nuxeo.vcs.optimizations.acl.enabled=false
 
-#nuxeo.vcs.noddl=true
