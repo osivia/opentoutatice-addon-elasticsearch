@@ -16,15 +16,15 @@
 	<extension target="web#SERVLET">
 
 		<filter>
-            <display-name>QueryModeFilter</display-name>
-            <filter-name>QueryModeFilter</filter-name>
+            <display-name>VcsToEsQueryFilter</display-name>
+            <filter-name>VcsToEsQueryFilter</filter-name>
             <filter-class>
-                fr.toutatice.ecm.elasticsearch.servlet.QueryModeFilter
+                fr.toutatice.ecm.elasticsearch.servlet.VcsToEsQueryFilter
             </filter-class>
         </filter>
 
         <filter-mapping>
-            <filter-name>QueryModeFilter</filter-name>
+            <filter-name>VcsToEsQueryFilter</filter-name>
             <url-pattern>/site/automation/*</url-pattern>
             <dispatcher>REQUEST</dispatcher>
             <dispatcher>FORWARD</dispatcher>
@@ -32,15 +32,15 @@
 
 
 		<filter>
-			<display-name>ElasticSearchModeFilter</display-name>
-			<filter-name>ElasticSearchModeFilter</filter-name>
+			<display-name>ToSyncEsIndexingFilter</display-name>
+			<filter-name>ToSyncEsIndexingFilter</filter-name>
 			<filter-class>
-				fr.toutatice.ecm.elasticsearch.servlet.ElasticSearchModeFilter
+				fr.toutatice.ecm.elasticsearch.servlet.ToSyncEsIndexingFilter
 			</filter-class>
 		</filter>
 
 		<filter-mapping>
-			<filter-name>ElasticSearchModeFilter</filter-name>
+			<filter-name>ToSyncEsIndexingFilter</filter-name>
 			<url-pattern>/restAPI/*</url-pattern>
 			<url-pattern>/site/automation/*</url-pattern>
 			<dispatcher>REQUEST</dispatcher>

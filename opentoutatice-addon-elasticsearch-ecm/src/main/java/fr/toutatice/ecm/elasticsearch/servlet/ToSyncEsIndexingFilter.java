@@ -39,7 +39,7 @@ import org.nuxeo.runtime.api.Framework;
  * <li>in a synchronous way or not</li>
  * </ul>
  */
-public class ElasticSearchModeFilter implements Filter {
+public class ToSyncEsIndexingFilter implements Filter {
 
     /** Mode of treatment of ES command: always synchronous or not. */
     public static final String ES_INDEXING_SYNC_FORCE = "ottc.es.indexing.sync.force";

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<component name="fr.toutatice.ecm.elasticsearch.automation.server.proxy">
+
+	<require>fr.toutatice.ecm.platform.core.services.proxyfactory</require>
+
+	<extension target="fr.toutatice.ecm.platform.core.services.proxyfactory"
+		point="handlers">
+
+		<handler enabled="true" serviceClass="org.nuxeo.ecm.automation.server.AutomationServer"
+			handlerClass="fr.toutatice.ecm.elasticsearch.compat.CompatAutomationServer" />
+
+	</extension>
+
+</component>

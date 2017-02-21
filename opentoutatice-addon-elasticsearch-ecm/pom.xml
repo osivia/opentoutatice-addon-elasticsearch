@@ -50,6 +50,12 @@
 			<artifactId>nuxeo-automation-client</artifactId>
 			<version>${nuxeo.version}</version>
 		</dependency>
+		
+		<dependency>
+            <groupId>opentoutatice-ecm.platform</groupId>
+            <artifactId>opentoutatice-ecm-platform-core</artifactId>
+            <version>${nuxeo.opentoutatice.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>

@@ -6,7 +6,7 @@
 		point="marshallers">
 
 		<marshaller>
-			<reader>fr.toutatice.ecm.elasticsearch.marshaller.JsonRequestCompatibilityReader
+			<reader>fr.toutatice.ecm.elasticsearch.compat.marshaller.JsonRequestCompatibilityReader
 			</reader>
 		</marshaller>
 
