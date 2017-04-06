@@ -16,6 +16,8 @@
 	<vendor>Academie de Rennes</vendor>
 	<installer restart="true" />
 	<uninstaller restart="true" />
+	<!-- <hotreload-support>false</hotreload-support> -->
+	<!-- <require-terms-and-conditions-acceptance>false</require-terms-and-conditions-acceptance> -->
 	<nuxeo-validation>none</nuxeo-validation>
 	<production-state>production_ready</production-state>
 	<supported>false</supported>
@@ -23,7 +25,8 @@
 		<platform>cap-@DISTRIB_VERSION@</platform>
 	</platforms>
 	<dependencies>
-		<package>open-toutatice:3.0.12</package>  
+		<!-- Dependance sur la plate-forme opentoutatice -->
+		<package>open-toutatice:3.2.3</package>
 	</dependencies>
 	<license>LGPL 2.1</license>
 	<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>
