@@ -39,13 +39,23 @@
 			<version>${elasticsearch.version}</version>
 		</dependency>
 		
-		<!-- For test purpose only -->
 		<dependency>
-			<groupId>org.nuxeo.ecm.automation</groupId>
-			<artifactId>nuxeo-automation-client</artifactId>
-			<version>${nuxeo.version}</version>
-			<scope>test</scope>
-		</dependency>
+            <groupId>org.nuxeo.ecm.automation</groupId>
+            <artifactId>nuxeo-automation-features</artifactId>
+            <version>${nuxeo.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.nuxeo.ecm.automation</groupId>
+            <artifactId>nuxeo-automation-client</artifactId>
+            <version>${nuxeo.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>opentoutatice-ecm.platform</groupId>
+            <artifactId>opentoutatice-ecm-platform-core</artifactId>
+            <version>${nuxeo.opentoutatice.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>
