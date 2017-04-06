@@ -32,8 +32,6 @@ import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
 public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
-	//	private static final Log log = LogFactory.getLog(TTCEsCodec.class);
-
 	public TTCEsCodec() {
 		super(TTCSearchResponse.class);
 	}
@@ -81,7 +79,6 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 			jg.writeStringField("lastModified", (String) source.get("dc:modified"));
 			jg.writeObjectField("facets", (List<String>) source.get("ecm:mixinType"));
 			jg.writeStringField("changeToken", (String) source.get("ecm:changeToken"));
-			//jg.writeStringField("ancestorId", (String) source.get("ecm:ancestorId"));
 			
 			jg.writeObjectFieldStart("properties");
 			for (String key : source.keySet()) {

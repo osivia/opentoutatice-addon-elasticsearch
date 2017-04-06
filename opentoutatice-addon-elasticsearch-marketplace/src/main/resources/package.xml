@@ -4,12 +4,9 @@
 	<description>
 		<p>Interface the ElasticSearch tool with shortened Json accesses </p>
 		<p>
-		Bug fixes:
-		* #345 - LOG - Bad parsing of simple quote in SQL requests
-		</p>
-		<p>
 		Evolution:
-		* REST API to access the indexation commands from administration.
+		* Use of Header flag to set synchronized ES indexing.
+		* Optimization of escaping query method.
 		</p>
 	</description>
 	<home-page>http://www.toutatice.fr</home-page>
@@ -26,7 +23,7 @@
 	</platforms>
 	<dependencies>
 		<!-- Dependance sur la plate-forme opentoutatice -->
-		<package>open-toutatice:3.2.3</package>
+		<package>open-toutatice:3.0.12</package>
 	</dependencies>
 	<license>LGPL 2.1</license>
 	<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>

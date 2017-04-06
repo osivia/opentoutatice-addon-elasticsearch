@@ -11,6 +11,27 @@
 			<java>${bundle.fileName}</java>
 		</module>
 	</extension>
+	
+	<!-- Backport of 8.3 to activate sync ES on given request-->
+    <extension target="web#SERVLET">
+
+        <filter>
+            <display-name>ElasticSearchFilter</display-name>
+            <filter-name>ElasticSearchFilter</filter-name>
+            <filter-class>
+                fr.toutatice.ecm.elasticsearch.filter.ElasticSearchFilter
+            </filter-class>
+        </filter>
+        
+        <filter-mapping>
+            <filter-name>ElasticSearchFilter</filter-name>
+            <url-pattern>/restAPI/*</url-pattern>
+            <url-pattern>/site/automation/*</url-pattern>
+            <dispatcher>REQUEST</dispatcher>
+            <dispatcher>FORWARD</dispatcher>
+        </filter-mapping>
+    
+    </extension>
 
 	<install>
 		<!-- append l10n files -->
