@@ -85,10 +85,15 @@ public class QueryES {
 
 	@OperationMethod
     public JsonAdapter run() throws OperationException {
+        // Compat mode
+        Integer currentPageIndex = this.currentPageIndex;
+        if (this.currentPageIndex == null) {
+            currentPageIndex = this.page;
+        }
 
         NxQueryBuilder builder = new TTCNxQueryBuilder(this.session).nxql(SQLHelper.getInstance().escape(this.query));
-        if (null != this.currentPageIndex && null != this.pageSize) {
-            builder.offset((0 <= this.currentPageIndex ? this.currentPageIndex : 0) * this.pageSize);
+        if (null != currentPageIndex && null != this.pageSize) {
+            builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
             builder.limit(this.pageSize);
 		} else {
 			builder.limit(DEFAULT_MAX_RESULT_SIZE);
@@ -102,10 +107,6 @@ public class QueryES {
 		if(this.nxProperties == null){
             schemas = getSchemasFromHeader(this.ctx);
 		}
-        Integer currentPageIndex = this.currentPageIndex;
-        if (this.currentPageIndex == null) {
-            currentPageIndex = this.page;
-        }
 
 
         return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
@@ -120,7 +121,8 @@ public class QueryES {
     // TODO: to remove when client ES query will send schema in header
     public String getSchemasFromHeader(OperationContext ctx) {
         HttpServletRequest httpRequest = (HttpServletRequest) ctx.get("request");
-        return httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+        String schemas = httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+        return !StringUtils.equals("*", schemas) ? schemas : null;
     }
 
     private List<String> formatSchemas(String nxProperties) {
