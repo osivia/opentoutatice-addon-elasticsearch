@@ -18,6 +18,7 @@
 			<filterset>
 				<filter token="VERSION" value="${maven.project.version}" />
 				<filter token="DISTRIB_VERSION" value="${nuxeo.cap.distribution.version}" />
+				<filter token="OTTC_VERSION" value="${nuxeo.opentoutatice.version}" />
 			</filterset>
 		</copy>
 		

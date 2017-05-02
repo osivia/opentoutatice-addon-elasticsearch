@@ -6,6 +6,8 @@
 	<require>org.nuxeo.ecm.automation.io</require>
 	<require>org.nuxeo.ecm.platform.lang</require>
 	
+	<require>org.nuxeo.ecm.core.storage.sql</require>
+	
 	<extension target="application#MODULE">
 		<module>
 			<java>${bundle.fileName}</java>

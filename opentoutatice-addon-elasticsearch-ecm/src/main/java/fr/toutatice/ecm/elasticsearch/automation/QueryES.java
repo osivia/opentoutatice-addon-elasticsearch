@@ -21,10 +21,13 @@ package fr.toutatice.ecm.elasticsearch.automation;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchResponse;
+import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
@@ -33,6 +36,7 @@ import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.jaxrs.DefaultJsonAdapter;
 import org.nuxeo.ecm.automation.jaxrs.JsonAdapter;
+import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonDocumentWriter;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.schema.SchemaManager;
 import org.nuxeo.ecm.core.schema.types.Schema;
@@ -54,6 +58,9 @@ public class QueryES {
 	CoreSession session;
 	
 	@Context
+    OperationContext ctx;
+
+    @Context
 	ElasticSearchService elasticSearchService;
 
 	@Context
@@ -66,29 +73,57 @@ public class QueryES {
 	protected Integer pageSize;
 
 	@Param(name = "currentPageIndex", required = false)
-	protected Integer currentPageIndex;
+    protected Integer currentPageIndex;
+
+    @Deprecated
+    @Param(name = "page", required = false)
+    // For Document.PageProvider only: to remove later
+    protected Integer page;
 
 	@Param(name = "X-NXDocumentProperties", required = false)
 	protected String nxProperties;
 
 	@OperationMethod
-	public JsonAdapter run() throws OperationException {
+    public JsonAdapter run() throws OperationException {
 
-		NxQueryBuilder builder = new TTCNxQueryBuilder(session).nxql(SQLHelper.getInstance().escape(query));
-		if (null != currentPageIndex && null != pageSize) {
-			builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * pageSize);
-			builder.limit(pageSize);
+        NxQueryBuilder builder = new TTCNxQueryBuilder(this.session).nxql(SQLHelper.getInstance().escape(this.query));
+        if (null != this.currentPageIndex && null != this.pageSize) {
+            builder.offset((0 <= this.currentPageIndex ? this.currentPageIndex : 0) * this.pageSize);
+            builder.limit(this.pageSize);
 		} else {
 			builder.limit(DEFAULT_MAX_RESULT_SIZE);
 		}
 
-		elasticSearchService.query(builder);
+        this.elasticSearchService.query(builder);
 		SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
 		
-		return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, pageSize, currentPageIndex, getSchemas(nxProperties)));
+		// Compat mode
+		String schemas = this.nxProperties;
+		if(this.nxProperties == null){
+            schemas = getSchemasFromHeader(this.ctx);
+		}
+        Integer currentPageIndex = this.currentPageIndex;
+        if (this.currentPageIndex == null) {
+            currentPageIndex = this.page;
+        }
+
+
+        return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
 	}
 
-	private List<String> getSchemas(String nxProperties) {
+    /**
+     * Gets schemas from Header.
+     * 
+     * @param ctx
+     * @return schemas
+     */
+    // TODO: to remove when client ES query will send schema in header
+    public String getSchemasFromHeader(OperationContext ctx) {
+        HttpServletRequest httpRequest = (HttpServletRequest) ctx.get("request");
+        return httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+    }
+
+    private List<String> formatSchemas(String nxProperties) {
 		List<String> schemas = new ArrayList<String>();
 
 		if (StringUtils.isNotBlank(nxProperties)) {

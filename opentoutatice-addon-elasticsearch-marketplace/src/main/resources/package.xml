@@ -23,8 +23,7 @@
 		<platform>cap-@DISTRIB_VERSION@</platform>
 	</platforms>
 	<dependencies>
-		<!-- Dependance sur la plate-forme opentoutatice -->
-		<package>open-toutatice:3.4.3-SNAPSHOT</package>
+		<package>open-toutatice:@OTTC_VERSION@</package>
 	</dependencies>
 	<license>LGPL 2.1</license>
 	<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>

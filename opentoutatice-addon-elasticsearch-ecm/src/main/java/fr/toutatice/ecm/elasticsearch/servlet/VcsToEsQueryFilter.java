@@ -61,15 +61,8 @@ public class VcsToEsQueryFilter implements Filter {
             String opId = StringUtils.substringAfterLast(httpReq.getPathInfo(), "/");
 
             if (DocumentPaginatedQuery.ID.equals(opId) || DocumentPageProviderOperation.ID.equals(opId)) {
-                // Set flag for compatibility mode (JsonRequestCompatibilityReader)
-                httpReq.setAttribute(QUERY_ES_COMPAT_MODE, opId);
-
-                try {
-                    // Redirect all Document.Query by Document.QueryES
-                    httpReq.getRequestDispatcher(QUERY_ES_OP_RESOURCE).forward(request, response);
-                } finally {
-                    httpReq.removeAttribute(QUERY_ES_COMPAT_MODE);
-                }
+                // Redirect all Document.Query by Document.QueryES
+                httpReq.getRequestDispatcher(QUERY_ES_OP_RESOURCE).forward(request, response);
             } else {
                 chain.doFilter(request, response);
             }

@@ -6,7 +6,5 @@ Bundle-Localization: plugin
 Bundle-Category: stateful
 Nuxeo-Component: OSGI-INF/extensions/toutatice-elasticsearch-operations-contrib.xml,
  OSGI-INF/extensions/toutatice-elasticsearch-codecs-contrib.xml,
- OSGI-INF/extensions/toutatice-elasticsearch-audit-contrib.xml,
- OSGI-INF/extensions/toutatice-elasticsearch-marshallers-contrib.xml,
- OSGI-INF/extensions/compat/toutatice-proxy-service-contrib.xml
+ OSGI-INF/extensions/toutatice-elasticsearch-audit-contrib.xml
  
