@@ -1,10 +1,12 @@
 opentoutatice-es.target=.
 
-nuxeo.template.includes=opentoutatice-es
+nuxeo.template.includes=opentoutatice
 
 ##==============================================
 ## Full Elasticsearch Mode
 ##==============================================
+
+elasticsearch.fetchDocFromEs=true
 
 #ottc.es.indexing.sync.force=true
 #ottc.querying.es.force=true

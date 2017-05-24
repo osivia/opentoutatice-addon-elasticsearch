@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -12,56 +13,64 @@
 
 	<properties>
 		<nuxeo.version>6.0-HF37</nuxeo.version>
+		<nuxeo.cap.distribution.version>6.0</nuxeo.cap.distribution.version>
 		<elasticsearch.version>1.1.2</elasticsearch.version>
 		<nuxeo.opentoutatice.version>4.6-SNAPSHOT</nuxeo.opentoutatice.version>
 	</properties>
 
 	<modules>
-	   <module>opentoutatice-addon-elasticsearch-ecm</module>
-	   <module>opentoutatice-addon-elasticsearch-marketplace</module> 
+		<module>opentoutatice-addon-elasticsearch-ecm</module>
+		<module>opentoutatice-addon-elasticsearch-marketplace</module>
 	</modules>
-	
+
 	<dependencyManagement>
 		<dependencies>
-		<dependency>
-			<groupId>org.nuxeo.ecm.automation</groupId>
-			<artifactId>nuxeo-automation-core</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.elasticsearch</groupId>
-			<artifactId>nuxeo-elasticsearch-core</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.elasticsearch</groupId>
-			<artifactId>nuxeo-elasticsearch-web</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch</artifactId>
-			<version>${elasticsearch.version}</version>
-		</dependency>
-		
-		<dependency>
-            <groupId>org.nuxeo.ecm.automation</groupId>
-            <artifactId>nuxeo-automation-features</artifactId>
-            <version>${nuxeo.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.nuxeo.ecm.automation</groupId>
-            <artifactId>nuxeo-automation-client</artifactId>
-            <version>${nuxeo.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>opentoutatice-ecm.platform</groupId>
-            <artifactId>opentoutatice-ecm-platform-core</artifactId>
-            <version>${nuxeo.opentoutatice.version}</version>
-        </dependency>
-	</dependencies>
+			<dependency>
+				<groupId>org.nuxeo.ecm.distribution</groupId>
+				<artifactId>nuxeo-distribution-cap</artifactId>
+				<version>${nuxeo.cap.distribution.version}</version>
+				<type>pom</type>
+			</dependency>
+
+			<dependency>
+				<groupId>org.nuxeo.ecm.automation</groupId>
+				<artifactId>nuxeo-automation-core</artifactId>
+				<version>${nuxeo.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.elasticsearch</groupId>
+				<artifactId>nuxeo-elasticsearch-core</artifactId>
+				<version>${nuxeo.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.elasticsearch</groupId>
+				<artifactId>nuxeo-elasticsearch-web</artifactId>
+				<version>${nuxeo.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.elasticsearch</groupId>
+				<artifactId>elasticsearch</artifactId>
+				<version>${elasticsearch.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.nuxeo.ecm.automation</groupId>
+				<artifactId>nuxeo-automation-features</artifactId>
+				<version>${nuxeo.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.nuxeo.ecm.automation</groupId>
+				<artifactId>nuxeo-automation-client</artifactId>
+				<version>${nuxeo.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>opentoutatice-ecm.platform</groupId>
+				<artifactId>opentoutatice-ecm-platform-core</artifactId>
+				<version>${nuxeo.opentoutatice.version}</version>
+			</dependency>
+		</dependencies>
 	</dependencyManagement>
 
 	<build>
@@ -70,12 +79,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
 				<version>2.2.1</version>
-			 	<configuration>
+				<configuration>
 					<tagBase>http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/tags</tagBase>
 					<releaseProfiles>unpack,pack</releaseProfiles>
 					<preparationGoals>clean install</preparationGoals>
 					<goals>deploy</goals>
-			      	</configuration>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -86,8 +95,8 @@
 					<source>1.7</source>
 					<target>1.7</target>
 				</configuration>
-			</plugin> 
-		</plugins>			
+			</plugin>
+		</plugins>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -114,6 +123,6 @@
 			<url>http://projet.toutatice.fr/nexus/content/repositories/toutatice-snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
-	
+
 </project>
 
