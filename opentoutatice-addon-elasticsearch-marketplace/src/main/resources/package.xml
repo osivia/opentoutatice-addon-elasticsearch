@@ -20,7 +20,8 @@
 	<production-state>production_ready</production-state>
 	<supported>false</supported>
 	<platforms>
-		<platform>cap-@DISTRIB_VERSION@</platform>
+		<platform>cap-@CAP_DISTRIB_VERSION@</platform>
+		<platform>cap-@CAP_DISTRIB_VERSION@*</platform>
 	</platforms>
 	<dependencies>
 		<package>open-toutatice:@OTTC_VERSION@</package>
