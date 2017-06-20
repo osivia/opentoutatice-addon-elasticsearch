@@ -18,12 +18,15 @@
  */
 package fr.toutatice.ecm.elasticsearch.query;
 
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
@@ -33,13 +36,28 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 
 	private Fetcher fetcher;
 	
+    /** Indicates if this builder is used from automation or from Nuxeo core. */
+    private boolean automationCall = true;
+
+    /**
+     * Constructor.
+     * 
+     * @param coreSession
+     */
 	public TTCNxQueryBuilder(CoreSession coreSession) {
 		super(coreSession);
 	}
 	
+    /**
+     * Gets Fetcher according to client calling (automation or Nuxeo core).
+     */
 	@Override
     public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
-		this.fetcher = new TTCEsFetcher(getSession(), response, repoNames);
+        if (this.automationCall) {
+            this.fetcher = new TTCEsFetcher(getSession(), response, repoNames);
+        } else {
+            this.fetcher = super.getFetcher(response, repoNames);
+        }
         return this.fetcher;
     }
 
@@ -49,10 +67,63 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 	    }
 	    return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
 	}
-	
+
+    /**
+     * @return the automationCall
+     */
+    public boolean isAutomationCall() {
+        return automationCall;
+    }
+
+    /**
+     * @param automationCall the automationCall to set
+     * @return NxQueryBuilder
+     */
+    public NxQueryBuilder setAutomationCall(boolean automationCall) {
+        this.automationCall = automationCall;
+        return this;
+    }
+
     @Override
     public boolean isFetchFromElasticsearch() {
-        return true;
+        boolean is = true;
+        if (!this.automationCall) {
+            is = super.isFetchFromElasticsearch();
+        }
+        return is;
+    }
+
+    @Override
+    public QueryBuilder makeQuery() {
+        QueryBuilder esQueryBuilder = super.makeQuery();
+
+        // Adapt order by when dc:title (for the moment)
+        if (StringUtils.contains(getNxql().toLowerCase(), "order by")) {
+            adaptSortInfos(getNxql());
+        }
+
+        return esQueryBuilder;
+    }
+
+    /**
+     * Adapt field order when defined as lower case meta-field
+     * in ES mapping.
+     * 
+     * @param nxql
+     * @return
+     */
+    private void adaptSortInfos(String nxql) {
+        ListIterator<SortInfo> listIterator = super.getSortInfos().listIterator();
+
+        while (listIterator.hasNext()) {
+            SortInfo sortInfo = listIterator.next();
+            String sortColumn = sortInfo.getSortColumn();
+            if (StringUtils.equalsIgnoreCase("dc:title", sortColumn)) {
+                sortInfo.setSortColumn("dc:title.lowercase");
+
+            }
+        }
+
     }
 	
 }

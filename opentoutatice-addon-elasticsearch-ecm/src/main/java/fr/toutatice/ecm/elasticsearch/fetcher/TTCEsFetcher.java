@@ -33,7 +33,8 @@ public class TTCEsFetcher extends Fetcher {
 
 	@Override
 	public DocumentModelListImpl fetchDocuments() {
-		return new DocumentModelListImpl(); // since no DocumentModel fetch is desired anymore
+        // No DocumentModel fetch is desired anymore in automation call case
+        return new DocumentModelListImpl();
 	}
 	
     public SearchResponse getResponse() {
