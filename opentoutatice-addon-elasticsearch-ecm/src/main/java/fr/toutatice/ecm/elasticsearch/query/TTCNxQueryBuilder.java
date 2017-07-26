@@ -37,6 +37,12 @@ import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
 public class TTCNxQueryBuilder extends NxQueryBuilder {
 
+    private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
+
+    private static final String DC_TITLE = "dc:title";
+
+    private static final String LOWERCASE_SUFFIX = ".lowercase";
+
 	private Fetcher fetcher;
 	
     /** Indicates if this builder is used from automation or from Nuxeo core. */
@@ -73,7 +79,7 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
         ret = new SortBuilder[getSortInfos().size()];
         int i = 0;
         for (SortInfo sortInfo : getSortInfos()) {
-            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
+            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC);
         }
         return ret;
     }
@@ -135,12 +141,10 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
         while (listIterator.hasNext()) {
             SortInfo sortInfo = listIterator.next();
             String sortColumn = sortInfo.getSortColumn();
-            if (StringUtils.equalsIgnoreCase("dc:title", sortColumn)) {
-                sortInfo.setSortColumn("dc:title.lowercase");
-
+            if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn) || StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
+                sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
             }
         }
-
     }
 	
 }
