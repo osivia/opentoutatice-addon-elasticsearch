@@ -135,7 +135,20 @@
             "include_in_all": false
           }
        }
-   } ],
+   },{
+      "rcd_variables": {
+         "path_match": "rcd:globalVariablesValues.*",
+         "mapping": {
+                "type" : "string",
+                "fields": {
+                    "lowercase" : {
+                        "type":"string",
+                        "analyzer" : "lowercase_analyzer"       
+                    }
+                }
+          }
+       }
+   }],
    "properties" : {
       "dc:title" : {
          "type" : "multi_field",
