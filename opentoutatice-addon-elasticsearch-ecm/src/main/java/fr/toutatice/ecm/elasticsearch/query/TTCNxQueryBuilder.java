@@ -25,6 +25,9 @@ import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
@@ -59,6 +62,20 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
             this.fetcher = super.getFetcher(response, repoNames);
         }
         return this.fetcher;
+    }
+
+    @Override
+    public SortBuilder[] getSortBuilders() {
+        SortBuilder[] ret;
+        if (getSortInfos().isEmpty()) {
+            return new SortBuilder[0];
+        }
+        ret = new SortBuilder[getSortInfos().size()];
+        int i = 0;
+        for (SortInfo sortInfo : getSortInfos()) {
+            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
+        }
+        return ret;
     }
 
 	public SearchResponse getSearchResponse() {
