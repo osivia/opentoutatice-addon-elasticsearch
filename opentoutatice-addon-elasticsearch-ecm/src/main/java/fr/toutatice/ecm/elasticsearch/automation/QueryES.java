@@ -18,15 +18,21 @@
  */
 package fr.toutatice.ecm.elasticsearch.automation;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
@@ -38,8 +44,11 @@ import org.nuxeo.ecm.automation.jaxrs.DefaultJsonAdapter;
 import org.nuxeo.ecm.automation.jaxrs.JsonAdapter;
 import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonDocumentWriter;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.NuxeoPrincipal;
 import org.nuxeo.ecm.core.schema.SchemaManager;
 import org.nuxeo.ecm.core.schema.types.Schema;
+import org.nuxeo.ecm.core.security.SecurityService;
+import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
@@ -54,6 +63,10 @@ public class QueryES {
 	private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
 	public static final String ID = "Document.QueryES";
 
+	public static enum QueryLanguage {
+		NXQL, ES;
+	}
+	
 	@Context
 	CoreSession session;
 	
@@ -64,10 +77,16 @@ public class QueryES {
 	ElasticSearchService elasticSearchService;
 
 	@Context
+	ElasticSearchAdmin elasticSearchAdmin;
+
+	@Context
 	SchemaManager schemaManager;
 
 	@Param(name = "query", required = true)
 	protected String query;
+
+	@Param(name = "queryLanguage", required = false, description = "Language of the query parameter : NXQL or ES.", values = { "NXQL" })
+	protected String queryLanguage = QueryLanguage.NXQL.name();
 
 	@Param(name = "pageSize", required = false)
 	protected Integer pageSize;
@@ -84,7 +103,24 @@ public class QueryES {
 	protected String nxProperties;
 
 	@OperationMethod
-    public JsonAdapter run() throws OperationException {
+	public JsonAdapter run() throws OperationException {
+		try {
+			switch (QueryLanguage.valueOf(queryLanguage)) {
+			case NXQL:
+				return runNxqlSearch();
+			case ES:
+				return runEsSearch();
+			default:
+				throw new OperationException("Illegal argument value for parameter 'queryLanguage' : " + queryLanguage);
+			}
+		} catch (final IllegalArgumentException e) {
+			throw new OperationException("Illegal argument value for parameter 'queryLanguage' : " + queryLanguage, e);
+		}
+	}
+
+
+	@OperationMethod
+    public JsonAdapter runNxqlSearch() throws OperationException {
         // Compat mode
         Integer currentPageIndex = this.currentPageIndex;
         if (this.currentPageIndex == null) {
@@ -144,4 +180,48 @@ public class QueryES {
 		return schemas;
 	}
 	
+
+	protected JsonAdapter runEsSearch() throws OperationException {
+
+		final SearchRequestBuilder request = elasticSearchAdmin.getClient().prepareSearch(elasticSearchAdmin.getIndexNameForRepository(session.getRepositoryName())).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+		request.setSource(getESRequestPayload());
+
+		if (log.isDebugEnabled()) {
+			log.debug(String.format("Search query: curl -XGET 'http://localhost:9200/%s/_search?pretty' -d '%s'", elasticSearchAdmin.getIndexNameForRepository(session.getRepositoryName()), request.toString()));
+		}
+		try {
+			final SearchResponse esResponse = request.get();
+
+			if (log.isDebugEnabled()) {
+				log.debug("Result: " + esResponse.toString());
+			}
+
+			return new DefaultJsonAdapter(esResponse);
+		} catch (final ElasticsearchException e) {
+			throw new OperationException("Error while executing the ElasticSearch request", e);
+		}
+	}
+
+	public String getESRequestPayload() {
+		final Principal principal = session.getPrincipal();
+		if (principal == null || (principal instanceof NuxeoPrincipal && ((NuxeoPrincipal) principal).isAdministrator())) {
+			return query;
+		}
+
+		final String[] principals = SecurityService.getPrincipalsToCheck(principal);
+		final JSONObject payloadJson = JSONObject.fromObject(query);
+		JSONObject query;
+		if (payloadJson.has("query")) {
+			query = payloadJson.getJSONObject("query");
+			payloadJson.remove("query");
+		} else {
+			query = JSONObject.fromObject("{\"match_all\":{}}");
+		}
+		final JSONObject filterAcl = new JSONObject().element("terms", new JSONObject().element("ecm:acl", principals));
+		final JSONObject newQuery = new JSONObject().element("filtered", new JSONObject().element("query", query).element("filter", filterAcl));
+		payloadJson.put("query", newQuery);
+		final String filteredPayload = payloadJson.toString();
+
+		return filteredPayload;
+	}	
 }
