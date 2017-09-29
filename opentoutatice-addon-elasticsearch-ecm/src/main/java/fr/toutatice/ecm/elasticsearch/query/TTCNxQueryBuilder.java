@@ -79,7 +79,7 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
         ret = new SortBuilder[getSortInfos().size()];
         int i = 0;
         for (SortInfo sortInfo : getSortInfos()) {
-            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC);
+            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
         }
         return ret;
     }
