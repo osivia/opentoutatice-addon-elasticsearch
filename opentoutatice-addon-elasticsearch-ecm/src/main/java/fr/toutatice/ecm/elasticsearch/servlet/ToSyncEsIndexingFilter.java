@@ -59,7 +59,7 @@ public class ToSyncEsIndexingFilter implements Filter {
         }
 
         // Get ElasticSearch indexing mode (synchronous) according to configuration
-        final boolean syncEsFromConfig = Boolean.valueOf(Framework.getProperty(ES_INDEXING_SYNC_FORCE));
+        final boolean syncEsFromConfig = Boolean.valueOf(Framework.getProperty(ES_INDEXING_SYNC_FORCE, "true"));
         
         // Get ElasticSearch indexing mode (synchronous) according to header flag
         HttpServletRequest httpRequest = (HttpServletRequest) request;

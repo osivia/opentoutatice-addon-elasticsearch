@@ -56,7 +56,7 @@ public class VcsToEsQueryFilter implements Filter {
         HttpServletRequest httpReq = (HttpServletRequest) request;
 
         // Get ElasticSearch querying mode from configuration
-        final boolean queryingEsFromConfig = Boolean.valueOf(Framework.getProperty(QUERYING_ES_FORCE));
+        final boolean queryingEsFromConfig = Boolean.valueOf(Framework.getProperty(QUERYING_ES_FORCE, "true"));
         // Get ElasticSearch querying mode from header
         final boolean queryingVcs = Boolean.valueOf(httpReq.getHeader(QUERYING_VCS_FORCE_FLAG));
         

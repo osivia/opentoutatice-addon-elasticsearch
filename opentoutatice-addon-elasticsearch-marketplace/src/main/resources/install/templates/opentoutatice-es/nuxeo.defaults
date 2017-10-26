@@ -8,9 +8,9 @@ nuxeo.template.includes=opentoutatice
 
 #elasticsearch.fetchDocFromEs=false
 
-#ottc.es.indexing.sync.force=true
-#ottc.querying.es.force=true
+ottc.querying.es.force=true
+ottc.es.indexing.sync.force=true
 
 ## Disable ACLs optimization:
-#nuxeo.vcs.optimizations.acl.enabled=false
+nuxeo.vcs.optimizations.acl.enabled=false
 
