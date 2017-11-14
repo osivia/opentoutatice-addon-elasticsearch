@@ -42,7 +42,7 @@ import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.jaxrs.DefaultJsonAdapter;
 import org.nuxeo.ecm.automation.jaxrs.JsonAdapter;
-import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonDocumentWriter;
+import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonESDocumentWriter;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.NuxeoPrincipal;
 import org.nuxeo.ecm.core.schema.SchemaManager;
@@ -130,7 +130,9 @@ public class QueryES {
         NxQueryBuilder builder = new TTCNxQueryBuilder(this.session).nxql(SQLHelper.getInstance().escape(this.query));
         if (null != currentPageIndex && null != this.pageSize) {
             builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
-            builder.limit(this.pageSize);
+            // FIXME: use ElasticSearchComponent.scroll(NxQueryBuilder, long)
+            int limit = this.pageSize.intValue() == -1 ? 10000 : this.pageSize.intValue();
+            builder.limit(limit);
 		} else {
 			builder.limit(DEFAULT_MAX_RESULT_SIZE);
 		}
@@ -157,7 +159,7 @@ public class QueryES {
     // TODO: to remove when client ES query will send schema in header
     public String getSchemasFromHeader(OperationContext ctx) {
         HttpServletRequest httpRequest = (HttpServletRequest) ctx.get("request");
-        String schemas = httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+        String schemas = httpRequest.getHeader(JsonESDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
         return !StringUtils.equals("*", schemas) ? schemas : null;
     }
 
