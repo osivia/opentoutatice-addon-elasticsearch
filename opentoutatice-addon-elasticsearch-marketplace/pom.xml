@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>4.6-SNAPSHOT</version>
+		<version>4.6.2</version>
 	</parent>
 
 	<artifactId>opentoutatice-addon-elasticsearch-marketplace</artifactId>
@@ -36,7 +36,7 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/trunk</developerConnection>
+		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/tags/4.6.2/trunk</developerConnection>
 	</scm>
 
 	<distributionManagement>
