@@ -14,7 +14,7 @@
 		<nuxeo.version>8.10-HF17</nuxeo.version>
 		<!-- <nuxeo.cap.version>6.0</nuxeo.cap.version> -->
 		<elasticsearch.version>2.3.5</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.6-SNAPSHOT</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>5.0-SNAPSHOT</nuxeo.opentoutatice.version>
 	</properties>
 
 	<modules>
@@ -109,7 +109,7 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/trunk</developerConnection>
+		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/branches/8.10-migration</developerConnection>
 	</scm>
 
 	<distributionManagement>
