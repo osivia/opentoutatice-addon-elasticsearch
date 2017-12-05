@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.StringUtils;
 import org.nuxeo.ecm.automation.core.operations.services.DocumentPageProviderOperation;
 import org.nuxeo.ecm.automation.core.operations.services.query.DocumentPaginatedQuery;
+import org.nuxeo.runtime.api.Framework;
+
 
 /**
  * @author david
@@ -23,17 +25,19 @@ import org.nuxeo.ecm.automation.core.operations.services.query.DocumentPaginated
  */
 public class VcsToEsQueryFilter implements Filter {
 
-    /**
-     * Exception of QUERYING_FORCE_ES: if set to true, force given request in VCS.
-     */
+    private static final String APP_HEADER = "X-Application-Name";
+
+    private static final String APP_HEADER_VALUE = "OSIVIA Portal";
+
+    /** Querying using always ES. */
+    public static final String QUERYING_ES_FORCE = "ottc.querying.es.force";
+    /** Exception of QUERYING_FORCE_ES: if set to true, force given request in VCS. */
     public static final String QUERYING_VCS_FORCE_FLAG = "nx_querying_vcs_force";
 
     /** Operation resource of Document.QueryES. */
     private static final String QUERY_ES_OP_RESOURCE = "/site/automation/Document.QueryES";
 
-    /**
-     * Document.QueryES compatibility mode (set schema in parameter is deprecated).
-     */
+    /** Document.QueryES compatibility mode (set schema in parameter is deprecated). */
     public static final String QUERY_ES_COMPAT_MODE = "qEsCompat";
 
     @Override
@@ -51,14 +55,24 @@ public class VcsToEsQueryFilter implements Filter {
 
         HttpServletRequest httpReq = (HttpServletRequest) request;
 
+        // Get ElasticSearch querying mode from configuration
+        final boolean queryingEsFromConfig = Boolean.valueOf(Framework.getProperty(QUERYING_ES_FORCE, "true"));
         // Get ElasticSearch querying mode from header
         final boolean queryingVcs = Boolean.valueOf(httpReq.getHeader(QUERYING_VCS_FORCE_FLAG));
 
-        // Called operation
-        String opId = StringUtils.substringAfterLast(httpReq.getPathInfo(), "/");
 
-        if (!queryingVcs) {
+        // #1495 - Querying ES if request is from osivia portal only
+        boolean authorizedApp = false;
+
+        String applicationName = httpReq.getHeader(APP_HEADER);
+        if (StringUtils.isNotBlank(applicationName) && APP_HEADER_VALUE.equals(applicationName)) {
+            authorizedApp = true;
+        }
+
+
+        if (authorizedApp && queryingEsFromConfig && !queryingVcs) {
             // Check operation
+            String opId = StringUtils.substringAfterLast(httpReq.getPathInfo(), "/");
 
             if (DocumentPaginatedQuery.ID.equals(opId) || DocumentPageProviderOperation.ID.equals(opId)) {
                 // Redirect all Document.Query by Document.QueryES
@@ -70,6 +84,7 @@ public class VcsToEsQueryFilter implements Filter {
         } else {
             chain.doFilter(request, response);
         }
+
     }
 
     @Override
