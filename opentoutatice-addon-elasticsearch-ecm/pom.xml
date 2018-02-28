@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -8,7 +9,7 @@
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
 		<version>4.7-SNAPSHOT</version>
 	</parent>
-	
+
 	<artifactId>opentoutatice-addon-elasticsearch-ecm</artifactId>
 	<packaging>jar</packaging>
 	<name>elasticsearch plugin - ecm</name>
@@ -30,40 +31,47 @@
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
 		</dependency>
-		
+
 		<dependency>
-            <groupId>org.nuxeo.ecm.automation</groupId>
-            <artifactId>nuxeo-automation-features</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.nuxeo.ecm.automation</groupId>
-            <artifactId>nuxeo-automation-client</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>opentoutatice-ecm.platform</groupId>
-            <artifactId>opentoutatice-ecm-platform-core</artifactId>
-        </dependency>
+			<groupId>org.nuxeo.ecm.automation</groupId>
+			<artifactId>nuxeo-automation-features</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.nuxeo.ecm.automation</groupId>
+			<artifactId>nuxeo-automation-client</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>opentoutatice-ecm.platform</groupId>
+			<artifactId>opentoutatice-ecm-platform-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>opentoutatice-ecm.procedures</groupId>
+			<artifactId>opentoutatice-addon-procedures-ecm</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.3</version>
-					<configuration>
-						<archive>
-							<manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
-							<manifestEntries>
-								<Bundle-Version>${eclipseVersion}-t${buildNumber}</Bundle-Version>
-								<Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-							</manifestEntries>
-						</archive>
-					</configuration>
-				</plugin>
-			</plugins>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<archive>
+						<manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+						<manifestEntries>
+							<Bundle-Version>${eclipseVersion}-t${buildNumber}</Bundle-Version>
+							<Bundle-ManifestVersion>2</Bundle-ManifestVersion>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
 	</build>
-	
+
 </project>
