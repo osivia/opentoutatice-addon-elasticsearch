@@ -46,13 +46,6 @@
 			<groupId>opentoutatice-ecm.platform</groupId>
 			<artifactId>opentoutatice-ecm-platform-core</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>opentoutatice-ecm.procedures</groupId>
-			<artifactId>opentoutatice-addon-procedures-ecm</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
 	</dependencies>
 
 	<build>

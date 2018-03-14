@@ -60,27 +60,29 @@ import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 public class QueryES {
 
 	private static final Log log = LogFactory.getLog(QueryES.class);
-	private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+	
 	public static final String ID = "Document.QueryES";
+	
+	protected static final int DEFAULT_MAX_RESULT_SIZE = 10000;
 
 	public static enum QueryLanguage {
 		NXQL, ES;
 	}
 	
 	@Context
-	CoreSession session;
+	protected CoreSession session;
 	
 	@Context
-    OperationContext ctx;
+	protected OperationContext ctx;
 
     @Context
-	ElasticSearchService elasticSearchService;
+    protected ElasticSearchService elasticSearchService;
 
 	@Context
-	ElasticSearchAdmin elasticSearchAdmin;
+	protected ElasticSearchAdmin elasticSearchAdmin;
 
 	@Context
-	SchemaManager schemaManager;
+	protected SchemaManager schemaManager;
 
 	@Param(name = "query", required = true)
 	protected String query;
@@ -121,13 +123,29 @@ public class QueryES {
 
 	@OperationMethod
     public JsonAdapter runNxqlSearch() throws OperationException {
-        // Compat mode
+		
+        SearchResponse esResponse = nxqlSearch(getNxQueryBuilder());
+		
+		// Compat mode
+		String schemas = this.nxProperties;
+		if(this.nxProperties == null){
+            schemas = getSchemasFromHeader(this.ctx);
+		}
+
+        return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
+	}
+
+
+	protected SearchResponse nxqlSearch(TTCNxQueryBuilder builder) {
+		// QUery builder
+		builder.nxql(SQLHelper.getInstance().escape(this.query));
+		
+		  // Compat mode
         Integer currentPageIndex = this.currentPageIndex;
         if (this.currentPageIndex == null) {
             currentPageIndex = this.page;
         }
-
-        NxQueryBuilder builder = new TTCNxQueryBuilder(this.session).nxql(SQLHelper.getInstance().escape(this.query));
+		
         if (null != currentPageIndex && null != this.pageSize) {
             builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
             builder.limit(this.pageSize);
@@ -136,16 +154,11 @@ public class QueryES {
 		}
 
         this.elasticSearchService.query(builder);
-		SearchResponse esResponse = ((TTCNxQueryBuilder) builder).getSearchResponse();
-		
-		// Compat mode
-		String schemas = this.nxProperties;
-		if(this.nxProperties == null){
-            schemas = getSchemasFromHeader(this.ctx);
-		}
-
-
-        return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
+		return builder.getSearchResponse();
+	}
+	
+	protected TTCNxQueryBuilder getNxQueryBuilder() {
+		return new TTCNxQueryBuilder(this.session);
 	}
 
     /**
@@ -161,7 +174,7 @@ public class QueryES {
         return !StringUtils.equals("*", schemas) ? schemas : null;
     }
 
-    private List<String> formatSchemas(String nxProperties) {
+    protected List<String> formatSchemas(String nxProperties) {
 		List<String> schemas = new ArrayList<String>();
 
 		if (StringUtils.isNotBlank(nxProperties)) {
