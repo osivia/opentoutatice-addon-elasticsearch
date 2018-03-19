@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>4.6.2</version>
+		<version>4.8-SNAPSHOT</version>
 	</parent>
 	
 	<artifactId>opentoutatice-addon-elasticsearch-ecm</artifactId>
@@ -21,10 +21,6 @@
 		<dependency>
 			<groupId>org.nuxeo.elasticsearch</groupId>
 			<artifactId>nuxeo-elasticsearch-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.elasticsearch</groupId>
-			<artifactId>nuxeo-elasticsearch-web</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>

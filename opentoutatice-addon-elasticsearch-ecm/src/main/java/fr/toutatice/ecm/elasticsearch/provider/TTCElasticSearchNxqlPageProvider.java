@@ -7,12 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.nuxeo.ecm.core.api.ClientException;
-import org.nuxeo.ecm.core.api.ClientRuntimeException;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
-import org.nuxeo.ecm.core.query.QueryParseException;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.platform.query.api.Aggregate;
 import org.nuxeo.ecm.platform.query.api.AggregateDefinition;
 import org.nuxeo.ecm.platform.query.api.Bucket;
@@ -53,7 +51,7 @@ public class TTCElasticSearchNxqlPageProvider extends ElasticSearchNxqlPageProvi
             buildQuery(coreSession);
         }
         if (query == null) {
-            throw new ClientRuntimeException(String.format("Cannot perform null query: check provider '%s'", getName()));
+            throw new NuxeoException(String.format("Cannot perform null query: check provider '%s'", getName()));
         }
         // Build and execute the ES query
         ElasticSearchService ess = Framework.getLocalService(ElasticSearchService.class);
@@ -72,7 +70,7 @@ public class TTCElasticSearchNxqlPageProvider extends ElasticSearchNxqlPageProvi
             }
             setResultsCount(dmList.totalSize());
             currentPageDocuments = dmList;
-        } catch (ClientException | QueryParseException e) {
+        } catch (NuxeoException e) {
             error = e;
             errorMessage = e.getMessage();
             log.warn(e.getMessage(), e);
