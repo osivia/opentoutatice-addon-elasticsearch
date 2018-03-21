@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -12,24 +13,26 @@
 
 	<properties>
 		<nuxeo.version>8.10-HF22</nuxeo.version>
-		<!-- <nuxeo.cap.version>6.0</nuxeo.cap.version> -->
 		<elasticsearch.version>2.3.5</elasticsearch.version>
-		<nuxeo.opentoutatice.version>5.0-SNAPSHOT</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>4.8-SNAPSHOT</nuxeo.opentoutatice.version>
+		<javax.servlet.version>3.0.1</javax.servlet.version>
+
 	</properties>
 
 	<modules>
 		<module>opentoutatice-addon-elasticsearch-ecm</module>
-		<!-- <module>opentoutatice-addon-elasticsearch-marketplace</module> -->
+		<module>opentoutatice-addon-elasticsearch-marketplace</module>
 	</modules>
 
 	<dependencyManagement>
 		<dependencies>
-		<!-- 	<dependency>
+			<dependency>
 				<groupId>org.nuxeo.ecm.distribution</groupId>
-				<artifactId>nuxeo-distribution-cap</artifactId>
+				<artifactId>nuxeo-nxr-server</artifactId>
 				<version>${nuxeo.version}</version>
 				<type>pom</type>
-			</dependency> -->
+				<scope>import</scope>
+			</dependency>
 
 			<dependency>
 				<groupId>org.nuxeo.ecm.automation</groupId>
@@ -68,6 +71,12 @@
 				<groupId>opentoutatice-ecm.platform</groupId>
 				<artifactId>opentoutatice-ecm-platform-core</artifactId>
 				<version>${nuxeo.opentoutatice.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>${javax.servlet.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

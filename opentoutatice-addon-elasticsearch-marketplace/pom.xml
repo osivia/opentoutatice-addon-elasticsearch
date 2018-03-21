@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>5.0-SNAPSHOT</version>
+		<version>4.8-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>opentoutatice-addon-elasticsearch-marketplace</artifactId>
@@ -14,13 +15,13 @@
 	<name>elasticsearch plugin - marketplace</name>
 
 	<dependencies>
-        <dependency>
-            <groupId>org.nuxeo.ecm.distribution</groupId>
-            <artifactId>nuxeo-distribution-cap</artifactId>
-            <type>pom</type>
-        </dependency>
-    </dependencies>
-	
+		<dependency>
+			<groupId>org.nuxeo.ecm.distribution</groupId>
+			<artifactId>nuxeo-nxr-server</artifactId>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -34,20 +35,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-elasticsearch/trunk</developerConnection>
-	</scm>
-
-	<distributionManagement>
-		<repository>
-			<id>toutatice-releases</id>
-			<url>http://projet.toutatice.fr/nexus/content/repositories/toutatice-releases</url>
-		</repository>
-		<snapshotRepository>
-			<id>toutatice-snapshots</id>
-			<url>http://projet.toutatice.fr/nexus/content/repositories/toutatice-snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 </project>
