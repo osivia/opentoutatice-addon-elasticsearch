@@ -14,7 +14,7 @@
 	<properties>
 		<nuxeo.version>8.10-HF22</nuxeo.version>
 		<elasticsearch.version>2.3.5</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.8-SNAPSHOT</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>4.8</nuxeo.opentoutatice.version>
 		<javax.servlet.version>3.0.1</javax.servlet.version>
 
 	</properties>
@@ -77,6 +77,7 @@
 				<groupId>javax.servlet</groupId>
 				<artifactId>javax.servlet-api</artifactId>
 				<version>${javax.servlet.version}</version>
+				<scope>provided</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
