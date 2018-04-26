@@ -13,8 +13,8 @@
  *
  *
  * Contributors:
- *   mberhaut1
- *    
+ * mberhaut1
+ * 
  */
 package fr.toutatice.ecm.elasticsearch.query;
 
@@ -22,6 +22,8 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
@@ -37,30 +39,35 @@ import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
 public class TTCNxQueryBuilder extends NxQueryBuilder {
 
+    private static final Log log = LogFactory.getLog(TTCNxQueryBuilder.class);
+
     private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
 
     private static final String DC_TITLE = "dc:title";
 
     private static final String LOWERCASE_SUFFIX = ".lowercase";
 
-	private Fetcher fetcher;
-	
+    private Fetcher fetcher;
+
     /** Indicates if this builder is used from automation or from Nuxeo core. */
     private boolean automationCall = true;
+
+    protected CoreSession session;
 
     /**
      * Constructor.
      * 
      * @param coreSession
      */
-	public TTCNxQueryBuilder(CoreSession coreSession) {
-		super(coreSession);
-	}
-	
+    public TTCNxQueryBuilder(CoreSession coreSession) {
+        super(coreSession);
+        this.session = coreSession;
+    }
+
     /**
      * Gets Fetcher according to client calling (automation or Nuxeo core).
      */
-	@Override
+    @Override
     public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
         if (this.automationCall) {
             this.fetcher = new TTCEsFetcher(getSession(), response, repoNames);
@@ -84,12 +91,12 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
         return ret;
     }
 
-	public SearchResponse getSearchResponse() {
-	    if(this.fetcher != null){
-	        return ((TTCEsFetcher) this.fetcher).getResponse();
-	    }
-	    return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
-	}
+    public SearchResponse getSearchResponse() {
+        if (this.fetcher != null) {
+            return ((TTCEsFetcher) this.fetcher).getResponse();
+        }
+        return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
+    }
 
     /**
      * @return the automationCall
@@ -99,7 +106,8 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     }
 
     /**
-     * @param automationCall the automationCall to set
+     * @param automationCall
+     *            the automationCall to set
      * @return NxQueryBuilder
      */
     public NxQueryBuilder setAutomationCall(boolean automationCall) {
@@ -129,8 +137,7 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     }
 
     /**
-     * Adapt field order when defined as lower case meta-field
-     * in ES mapping.
+     * Adapt field order when defined as lower case meta-field in ES mapping.
      * 
      * @param nxql
      * @return
@@ -146,5 +153,5 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
             }
         }
     }
-	
+
 }

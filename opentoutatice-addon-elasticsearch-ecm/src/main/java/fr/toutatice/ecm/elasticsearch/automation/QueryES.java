@@ -51,7 +51,6 @@ import org.nuxeo.ecm.core.security.SecurityService;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.api.EsScrollResult;
-import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 
 import fr.toutatice.ecm.elasticsearch.helper.SQLHelper;
 import fr.toutatice.ecm.elasticsearch.query.TTCNxQueryBuilder;
@@ -63,8 +62,10 @@ import net.sf.json.JSONObject;
 public class QueryES {
 
     private static final Log log = LogFactory.getLog(QueryES.class);
-    private static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+
     public static final String ID = "Document.QueryES";
+
+    protected static final int DEFAULT_MAX_RESULT_SIZE = 10000;
 
     public static final int SCROLL_BUCKET_SIZE = 10000;
     /** Scroll loop duration in ms */
@@ -75,19 +76,19 @@ public class QueryES {
     }
 
     @Context
-    CoreSession session;
+    protected CoreSession session;
 
     @Context
-    OperationContext ctx;
+    protected OperationContext ctx;
 
     @Context
-    ElasticSearchService elasticSearchService;
+    protected ElasticSearchService elasticSearchService;
 
     @Context
-    ElasticSearchAdmin elasticSearchAdmin;
+    protected ElasticSearchAdmin elasticSearchAdmin;
 
     @Context
-    SchemaManager schemaManager;
+    protected SchemaManager schemaManager;
 
     @Param(name = "query", required = true)
     protected String query;
@@ -128,31 +129,21 @@ public class QueryES {
 
     @OperationMethod
     public JsonAdapter runNxqlSearch() throws OperationException {
-        // Compat mode
-        Integer currentPageIndex = this.currentPageIndex;
-        if (this.currentPageIndex == null) {
-            currentPageIndex = this.page;
-        }
 
-        NxQueryBuilder builder = new TTCNxQueryBuilder(this.session).nxql(SQLHelper.getInstance().escape(this.query));
-
-        // Pagination
-        if (currentPageIndex != null && this.pageSize != null) {
-            // Offset
-            builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
-            // PageSize
-            if (this.pageSize.intValue() != -1) {
-                builder.limit(this.pageSize.intValue());
-            }
-        } else {
-            builder.limit(DEFAULT_MAX_RESULT_SIZE);
-        }
+        Set<SearchResponse> esResponse = nxqlSearch(getNxQueryBuilder());
 
         // Compat mode
         String schemas = this.nxProperties;
         if (this.nxProperties == null) {
             schemas = getSchemasFromHeader(this.ctx);
         }
+
+        return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
+    }
+
+    protected Set<SearchResponse> nxqlSearch(TTCNxQueryBuilder builder) {
+        // Query
+        builder.nxql(SQLHelper.getInstance().escape(this.query));
 
         // Search
         Set<SearchResponse> esResponseSet = new HashSet<>(0);
@@ -171,10 +162,14 @@ public class QueryES {
 
         } else {
             this.elasticSearchService.query(builder);
-            esResponseSet.add(((TTCNxQueryBuilder) builder).getSearchResponse());
+            esResponseSet.add(builder.getSearchResponse());
         }
 
-        return new DefaultJsonAdapter(new TTCSearchResponse(esResponseSet, this.pageSize, currentPageIndex, formatSchemas(schemas)));
+        return esResponseSet;
+    }
+
+    protected TTCNxQueryBuilder getNxQueryBuilder() {
+        return new TTCNxQueryBuilder(this.session);
     }
 
     /**
@@ -190,7 +185,7 @@ public class QueryES {
         return !StringUtils.equals("*", schemas) ? schemas : null;
     }
 
-    private List<String> formatSchemas(String nxProperties) {
+    protected List<String> formatSchemas(String nxProperties) {
         List<String> schemas = new ArrayList<String>();
 
         if (StringUtils.isNotBlank(nxProperties)) {
