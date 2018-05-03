@@ -13,8 +13,8 @@
  *
  *
  * Contributors:
- *   mberhaut1
- *    
+ * mberhaut1
+ * 
  */
 package fr.toutatice.ecm.elasticsearch.query;
 
@@ -39,121 +39,119 @@ import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
 public class TTCNxQueryBuilder extends NxQueryBuilder {
 
-	private static final Log log = LogFactory.getLog(TTCNxQueryBuilder.class);
+    private static final Log log = LogFactory.getLog(TTCNxQueryBuilder.class);
 
-	private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
+    private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
 
-	private static final String DC_TITLE = "dc:title";
+    private static final String DC_TITLE = "dc:title";
 
-	private static final String LOWERCASE_SUFFIX = ".lowercase";
+    private static final String LOWERCASE_SUFFIX = ".lowercase";
 
-	private Fetcher fetcher;
+    private Fetcher fetcher;
 
-	/** Indicates if this builder is used from automation or from Nuxeo core. */
-	private boolean automationCall = true;
+    /** Indicates if this builder is used from automation or from Nuxeo core. */
+    private boolean automationCall = true;
 
-	protected CoreSession session;
+    protected CoreSession session;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param coreSession
-	 */
-	public TTCNxQueryBuilder(CoreSession coreSession) {
-		super(coreSession);
-		this.session = coreSession;
-	}
+    /**
+     * Constructor.
+     * 
+     * @param coreSession
+     */
+    public TTCNxQueryBuilder(CoreSession coreSession) {
+        super(coreSession);
+        this.session = coreSession;
+    }
 
-	/**
-	 * Gets Fetcher according to client calling (automation or Nuxeo core).
-	 */
-	@Override
-	public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
-		if (this.automationCall) {
-			this.fetcher = new TTCEsFetcher(getSession(), response, repoNames);
-		} else {
-			this.fetcher = super.getFetcher(response, repoNames);
-		}
-		return this.fetcher;
-	}
+    /**
+     * Gets Fetcher according to client calling (automation or Nuxeo core).
+     */
+    @Override
+    public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
+        if (this.automationCall) {
+            this.fetcher = new TTCEsFetcher(getSession(), response, repoNames);
+        } else {
+            this.fetcher = super.getFetcher(response, repoNames);
+        }
+        return this.fetcher;
+    }
 
-	@Override
-	public SortBuilder[] getSortBuilders() {
-		SortBuilder[] ret;
-		if (getSortInfos().isEmpty()) {
-			return new SortBuilder[0];
-		}
-		ret = new SortBuilder[getSortInfos().size()];
-		int i = 0;
-		for (SortInfo sortInfo : getSortInfos()) {
-			ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn())
-					.order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
-		}
-		return ret;
-	}
+    @Override
+    public SortBuilder[] getSortBuilders() {
+        SortBuilder[] ret;
+        if (getSortInfos().isEmpty()) {
+            return new SortBuilder[0];
+        }
+        ret = new SortBuilder[getSortInfos().size()];
+        int i = 0;
+        for (SortInfo sortInfo : getSortInfos()) {
+            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
+        }
+        return ret;
+    }
 
-	public SearchResponse getSearchResponse() {
-		if (this.fetcher != null) {
-			return ((TTCEsFetcher) this.fetcher).getResponse();
-		}
-		return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
-	}
+    public SearchResponse getSearchResponse() {
+        if (this.fetcher != null) {
+            return ((TTCEsFetcher) this.fetcher).getResponse();
+        }
+        return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
+    }
 
-	/**
-	 * @return the automationCall
-	 */
-	public boolean isAutomationCall() {
-		return automationCall;
-	}
+    /**
+     * @return the automationCall
+     */
+    public boolean isAutomationCall() {
+        return automationCall;
+    }
 
-	/**
-	 * @param automationCall
-	 *            the automationCall to set
-	 * @return NxQueryBuilder
-	 */
-	public NxQueryBuilder setAutomationCall(boolean automationCall) {
-		this.automationCall = automationCall;
-		return this;
-	}
+    /**
+     * @param automationCall
+     *            the automationCall to set
+     * @return NxQueryBuilder
+     */
+    public NxQueryBuilder setAutomationCall(boolean automationCall) {
+        this.automationCall = automationCall;
+        return this;
+    }
 
-	@Override
-	public boolean isFetchFromElasticsearch() {
-		boolean is = true;
-		if (!this.automationCall) {
-			is = super.isFetchFromElasticsearch();
-		}
-		return is;
-	}
+    @Override
+    public boolean isFetchFromElasticsearch() {
+        boolean is = true;
+        if (!this.automationCall) {
+            is = super.isFetchFromElasticsearch();
+        }
+        return is;
+    }
 
-	@Override
-	public QueryBuilder makeQuery() {
-		QueryBuilder esQueryBuilder = super.makeQuery();
+    @Override
+    public QueryBuilder makeQuery() {
+        QueryBuilder esQueryBuilder = super.makeQuery();
 
-		// Adapt order by when dc:title (for the moment)
-		if (StringUtils.contains(getNxql().toLowerCase(), "order by")) {
-			adaptSortInfos(getNxql());
-		}
+        // Adapt order by when dc:title (for the moment)
+        if (StringUtils.contains(getNxql().toLowerCase(), "order by")) {
+            adaptSortInfos(getNxql());
+        }
 
-		return esQueryBuilder;
-	}
+        return esQueryBuilder;
+    }
 
-	/**
-	 * Adapt field order when defined as lower case meta-field in ES mapping.
-	 * 
-	 * @param nxql
-	 * @return
-	 */
-	private void adaptSortInfos(String nxql) {
-		ListIterator<SortInfo> listIterator = super.getSortInfos().listIterator();
+    /**
+     * Adapt field order when defined as lower case meta-field in ES mapping.
+     * 
+     * @param nxql
+     * @return
+     */
+    private void adaptSortInfos(String nxql) {
+        ListIterator<SortInfo> listIterator = super.getSortInfos().listIterator();
 
-		while (listIterator.hasNext()) {
-			SortInfo sortInfo = listIterator.next();
-			String sortColumn = sortInfo.getSortColumn();
-			if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn)
-					|| StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
-				sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
-			}
-		}
-	}
+        while (listIterator.hasNext()) {
+            SortInfo sortInfo = listIterator.next();
+            String sortColumn = sortInfo.getSortColumn();
+            if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn) || StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
+                sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
+            }
+        }
+    }
 
 }

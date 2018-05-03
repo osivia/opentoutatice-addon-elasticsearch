@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -8,13 +9,14 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>4.7-SNAPSHOT</version>
+	<version>5.0-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF44</nuxeo.version>
-		<nuxeo.cap.version>6.0</nuxeo.cap.version>
-		<elasticsearch.version>1.1.2</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.7</nuxeo.opentoutatice.version>
+		<nuxeo.version>8.10-HF28</nuxeo.version>
+		<elasticsearch.version>2.3.5</elasticsearch.version>
+		<nuxeo.opentoutatice.version>5.0-SNAPSHOT</nuxeo.opentoutatice.version>
+		<javax.servlet.version>3.0.1</javax.servlet.version>
+
 	</properties>
 
 	<modules>
@@ -26,9 +28,10 @@
 		<dependencies>
 			<dependency>
 				<groupId>org.nuxeo.ecm.distribution</groupId>
-				<artifactId>nuxeo-distribution-cap</artifactId>
+				<artifactId>nuxeo-nxr-server</artifactId>
 				<version>${nuxeo.version}</version>
 				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 
 			<dependency>
@@ -69,6 +72,13 @@
 				<artifactId>opentoutatice-ecm-platform-core</artifactId>
 				<version>${nuxeo.opentoutatice.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>${javax.servlet.version}</version>
+				<scope>provided</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -91,8 +101,8 @@
 				<version>3.1</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -123,19 +133,5 @@
 		</snapshotRepository>
 	</distributionManagement>
 
-    <profiles>
-    	<profile>
-    		<id>ci</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<distributionManagement>
-    			<snapshotRepository>
-            		<id>galactica-ci-snapshots</id>
-            		<url>http://nexus:8081/repository/ci-snapshots</url>
-        		</snapshotRepository>
-    		</distributionManagement>
-    	</profile>
-    </profiles>
 </project>
 

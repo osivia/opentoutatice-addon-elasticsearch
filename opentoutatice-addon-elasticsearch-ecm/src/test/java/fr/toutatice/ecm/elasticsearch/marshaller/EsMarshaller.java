@@ -18,6 +18,10 @@
  */
 package fr.toutatice.ecm.elasticsearch.marshaller;
 
+import java.io.IOException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshaller;
@@ -26,6 +30,8 @@ import org.nuxeo.ecm.automation.client.model.Documents;
 
 public class EsMarshaller implements JsonMarshaller<Documents> {
 
+	private static final Log log = LogFactory.getLog(EsMarshaller.class);
+
 	@Override
 	public String getType() {
 		return "esresponse";
@@ -33,31 +39,36 @@ public class EsMarshaller implements JsonMarshaller<Documents> {
 
 	@Override
 	public Class<Documents> getJavaType() {
-        return Documents.class;
+		return Documents.class;
 	}
-	
+
 	@Override
-	public Documents read(JsonParser jp) throws Exception {
-        jp.nextToken();
-        String key = jp.getCurrentName();
-        if ("value".equals(key)) {
-            jp.nextToken(); // '{'
-            jp.nextToken(); // hopefully "entity-type"
-            jp.nextToken(); // its value            
-            String etype = jp.getText();
-            JsonMarshaller<?> jm = JsonMarshalling.getMarshaller(etype);
-            if (null != jm) {
-                return (Documents) jm.read(jp);            	
-            }
-        } else {
-        	throw new Exception("missing 'value' filed");
-        }
-		
+	public Documents read(JsonParser jp) {
+		try {
+			jp.nextToken();
+
+			String key = jp.getCurrentName();
+			if ("value".equals(key)) {
+				jp.nextToken(); // '{'
+				jp.nextToken(); // hopefully "entity-type"
+				jp.nextToken(); // its value
+				String etype = jp.getText();
+				JsonMarshaller<?> jm = JsonMarshalling.getMarshaller(etype);
+				if (null != jm) {
+					return (Documents) jm.read(jp);
+				}
+			} else {
+				log.error("missing 'value' filed");
+			}
+		} catch (IOException e) {
+			log.error(e);
+		}
+
 		return null;
 	}
 
 	@Override
-	public void write(JsonGenerator jg, Object value) throws Exception {
+	public void write(JsonGenerator jg, Object value) {
 		// nothing
 	}
 

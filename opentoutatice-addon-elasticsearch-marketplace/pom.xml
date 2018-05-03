@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>4.7-SNAPSHOT</version>
+		<version>5.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>opentoutatice-addon-elasticsearch-marketplace</artifactId>
@@ -14,13 +14,13 @@
 	<name>elasticsearch plugin - marketplace</name>
 
 	<dependencies>
-        <dependency>
-            <groupId>org.nuxeo.ecm.distribution</groupId>
-            <artifactId>nuxeo-distribution-cap</artifactId>
-            <type>pom</type>
-        </dependency>
-    </dependencies>
-	
+		<dependency>
+			<groupId>org.nuxeo.ecm.distribution</groupId>
+			<artifactId>nuxeo-nxr-server</artifactId>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -34,6 +34,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
 
 </project>

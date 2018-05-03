@@ -28,6 +28,10 @@
            "type" : "word_delimiter",
            "preserve_original" : true
          },
+         "asciifolding_filter" : {
+            "type" : "asciifolding",
+            "preserve_original" : true
+         },
          "en_stem_filter" : {
             "name" : "minimal_english",
             "type" : "stemmer"
@@ -71,24 +75,26 @@
       },
       "analyzer" : {
          "en_analyzer" : {
+            "char_filter":  [ "html_strip"],
             "filter" : [
                "word_delimiter_filter",
                "lowercase",
                "en_stop_filter",
                "en_stem_filter",
-               "asciifolding"
+               "asciifolding_filter"
             ],
             "type" : "custom",
             "tokenizer" : "standard"
          },
          "fr_analyzer" : {
             "alias" : "fulltext",
+			 "char_filter":  [ "html_strip"],
             "filter" : [
                "word_delimiter_filter",
                "lowercase",
                "fr_stop_filter",
                "fr_stem_filter",
-               "asciifolding",
+               "asciifolding_filter",
                "fr_elision_filter"
             ],
             "type" : "custom",
@@ -114,9 +120,6 @@
       </settings>
       <mapping>
 {
-   "_size" : {
-      "enabled" : true
-   },
    "_all" : {
       "analyzer" : "fulltext"
    },
@@ -206,21 +209,24 @@
          "type" : "multi_field",
          "fields" : {
             "children" : {
+               "analyzer" : "path_analyzer",
                "search_analyzer" : "keyword",
-               "index_analyzer" : "path_analyzer",
                "type" : "string"
             },
             "ecm:path" : {
                "index" : "not_analyzed",
                "type" : "string"
             }
-         },
-        "include_in_all": false
+         }
       },
       "ecm:pos": {
          "type": "integer"
       },
       "dc:created": {
+         "format": "dateOptionalTime",
+         "type": "date"
+      },
+      "dc:expired": {
          "format": "dateOptionalTime",
          "type": "date"
       },
@@ -236,33 +242,7 @@
       "ttc:webid" : {
         "type" : "string",
         "index" : "not_analyzed"
-      },
-          "vevent:allDay" : {
-            "type" : "boolean"
-          },
-          "vevent:dtend" : {
-            "type" : "date",
-            "format" : "dateOptionalTime"
-          },
-          "vevent:dtstart" : {
-            "type" : "date",
-            "format" : "dateOptionalTime"
-          },
-          "vevent:location" : {
-            "type" : "string"
-          },
-          "vevent:participants" : {
-            "type" : "string"
-          },
-          "vevent:status" : {
-            "type" : "string"
-          },
-          "vevent:transp" : {
-            "type" : "string"
-          },
-          "vevent:categories" : {
-            "type" : "string"
-          }
+      }
    }
 }
       </mapping>
