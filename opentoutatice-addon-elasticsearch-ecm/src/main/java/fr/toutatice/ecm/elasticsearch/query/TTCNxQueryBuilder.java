@@ -22,6 +22,7 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
@@ -32,6 +33,7 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
+import org.nuxeo.runtime.api.Framework;
 
 import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
@@ -144,6 +146,17 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
             if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn) || StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
                 sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
             }
+        }
+    }
+    
+    @Override
+    public void updateRequest(SearchRequestBuilder request) {
+        super.updateRequest(request);
+
+        // Comma separated list of indices
+        String searchIndices = Framework.getProperty("ottc.es.force.search.on.indices");
+        if (StringUtils.isNotBlank(searchIndices)) {
+            request.setIndices(StringUtils.split(searchIndices, ","));
         }
     }
 	
