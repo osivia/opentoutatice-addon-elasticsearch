@@ -14,6 +14,7 @@
 	<properties>
 		<nuxeo.version>8.10-HF28</nuxeo.version>
 		<elasticsearch.version>2.3.5</elasticsearch.version>
+		<nuxeo.distribution.version>8.10</nuxeo.distribution.version>		
 		<nuxeo.opentoutatice.version>5.0-SNAPSHOT</nuxeo.opentoutatice.version>
 		<javax.servlet.version>3.0.1</javax.servlet.version>
 
