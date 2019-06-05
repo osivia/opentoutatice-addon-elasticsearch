@@ -106,13 +106,13 @@ public class ReIndexES {
 	}
 	
     private void startReindexAll() {
-        log.warn("Re-indexing the entire repository: " + repositoryName);
+        log.info("Re-indexing the entire repository: " + repositoryName);
         esa.dropAndInitRepositoryIndex(repositoryName);
         esi.runReindexingWorker(repositoryName, "SELECT ecm:uuid FROM Document");
     }
 
     private void startReindexNxql() {
-        log.warn(String.format("Re-indexing from a NXQL query: %s on repository: %s", query, repositoryName));
+        log.info(String.format("Re-indexing from a NXQL query: %s on repository: %s", query, repositoryName));
         esi.runReindexingWorker(repositoryName, query);
     }
 
@@ -125,7 +125,7 @@ public class ReIndexES {
             DocumentRef ref = new IdRef(rootID);
             if (session.exists(ref)) {
                 DocumentModel doc = session.getDocument(ref);
-                log.warn(String.format("Re-indexing document: %s and its children on repository: %s", doc,
+                log.info(String.format("Re-indexing document: %s and its children on repository: %s", doc,
                         repositoryName));
                 IndexingCommand cmd = new IndexingCommand(doc, Type.INSERT, false, true);
                 esi.runIndexingWorker(Arrays.asList(cmd));
