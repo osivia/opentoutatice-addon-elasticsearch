@@ -8,18 +8,18 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>4.7</version>
+	<version>4.7-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF42</nuxeo.version>
+		<nuxeo.version>6.0-HF45</nuxeo.version>
 		<nuxeo.cap.version>6.0</nuxeo.cap.version>
 		<elasticsearch.version>1.1.2</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.7</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>4.7.16</nuxeo.opentoutatice.version>
 	</properties>
 
 	<modules>
 		<module>opentoutatice-addon-elasticsearch-ecm</module>
-		<module>opentoutatice-addon-elasticsearch-marketplace</module>
+		<!-- <module>opentoutatice-addon-elasticsearch-marketplace</module> -->
 	</modules>
 
 	<dependencyManagement>
