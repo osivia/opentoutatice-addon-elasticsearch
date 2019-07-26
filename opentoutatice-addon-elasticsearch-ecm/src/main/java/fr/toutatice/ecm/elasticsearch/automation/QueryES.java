@@ -33,6 +33,9 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.search.internal.InternalSearchHits;
+import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.core.Constants;
@@ -51,6 +54,7 @@ import org.nuxeo.ecm.core.security.SecurityService;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
+import org.nuxeo.runtime.api.Framework;
 
 import fr.toutatice.ecm.elasticsearch.helper.SQLHelper;
 import fr.toutatice.ecm.elasticsearch.query.TTCNxQueryBuilder;
@@ -63,7 +67,9 @@ public class QueryES {
 	
 	public static final String ID = "Document.QueryES";
 	
-	protected static final int DEFAULT_MAX_RESULT_SIZE = 10000;
+	protected static final long DEFAULT_MAX_SIZE_RESULTS = Long.valueOf(Framework.getProperty("ottc.es.query.default.limit", "1000"));
+	
+	protected static final int OLD_DEFAULT_MAX_SIZE_RESULTS = 10000;
 
 	public static enum QueryLanguage {
 		NXQL, ES;
@@ -123,16 +129,41 @@ public class QueryES {
 
 	@OperationMethod
     public JsonAdapter runNxqlSearch() throws OperationException {
+		// Response
+		TTCSearchResponse response = null;
 		
-        SearchResponse esResponse = nxqlSearch(getNxQueryBuilder());
-		
-		// Compat mode
-		String schemas = this.nxProperties;
-		if(this.nxProperties == null){
-            schemas = getSchemasFromHeader(this.ctx);
-		}
-
-        return new DefaultJsonAdapter(new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas)));
+		// Query builder
+		TTCNxQueryBuilder queryBuilder = getNxQueryBuilder();
+        SearchResponse esResponse = nxqlSearch(queryBuilder);
+        
+        // Bound results
+        long hits = esResponse.getHits().getHits().length;
+        if(hits > DEFAULT_MAX_SIZE_RESULTS) {
+        	// Monitoring
+        	if(log.isInfoEnabled()) {
+        		// Current principal name
+        		Principal principal = this.session.getPrincipal();
+        		String principalName = principal != null && principal.getName() != null ? principal.getName() : "null";
+        		
+        		log.info(String.format("[%s][hits: %s][limit: %s][%s]", principalName, String.valueOf(hits), String.valueOf(queryBuilder.getLimit()), this.query));
+        	}
+        	
+        	// Empty response
+        	SearchResponse emptyResponse = new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, new ShardSearchFailure[0]);
+        	response = new TTCSearchResponse(emptyResponse, 0, 0, null);
+        } else {
+        	// Compat mode
+    		String schemas = this.nxProperties;
+    		if(this.nxProperties == null){
+                schemas = getSchemasFromHeader(this.ctx);
+    		}
+    		
+    		// Response
+    		response = new TTCSearchResponse(esResponse, this.pageSize, currentPageIndex, formatSchemas(schemas));
+        }
+        
+        // Response builder
+        return new DefaultJsonAdapter(response);
 	}
 
 
@@ -150,7 +181,7 @@ public class QueryES {
             builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
             builder.limit(this.pageSize);
 		} else {
-			builder.limit(DEFAULT_MAX_RESULT_SIZE);
+			builder.limit(OLD_DEFAULT_MAX_SIZE_RESULTS);
 		}
 
         this.elasticSearchService.query(builder);

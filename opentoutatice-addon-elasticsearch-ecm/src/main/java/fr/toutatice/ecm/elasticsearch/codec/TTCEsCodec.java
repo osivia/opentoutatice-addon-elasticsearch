@@ -58,7 +58,12 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 			jg.writeNumberField("resultsCount", searchhits.length);
 			jg.writeNumberField("totalSize", upperhits.getTotalHits());
 			jg.writeNumberField("pageSize", value.getPageSize());
-			jg.writeNumberField("pageCount", upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0));
+			// Take empty response into account
+			long pageCount = 0;
+			if(value.getPageSize() > 0) {
+				pageCount = upperhits.getTotalHits() / value.getPageSize() + ((0 < upperhits.getTotalHits() % value.getPageSize()) ? 1 : 0);
+			}
+			jg.writeNumberField("pageCount", pageCount);
 			jg.writeNumberField("currentPageIndex", value.getCurrentPageIndex());
 		}
 
