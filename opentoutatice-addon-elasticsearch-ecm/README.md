@@ -6,7 +6,7 @@ Par défaut, une requête est dite volumineuse si elle retourne plus de 1000 ré
 Cette valeur peut être modifiée dans le <b>nuxeo.conf</b> via la propriété <b>ottc.es.query.default.limit</b>.
 
 Il y a trois UC pour lesquels cette valeur peut-être dépassée:
-- la requête est explicitement non paginée: limit = -1
+- la requête est explicitement non paginée: limit = -1 (Es interprète le -1 envalorisant la limite à 2147483647)
 - la requête n'indique aucun critère de pagination et utilise alors l'ancienne limite par défaut: 10000
 - la requête est explicitement paginée avec une limite supérieure à la valeur par défaut
 
@@ -36,6 +36,9 @@ Les requêtes de plus de 1000 résultats peuvent être tracées dans le fichier 
 - l'addon offre la possibilité d'effectuer des requêtes directement en ES (passthrough sans NXQL).Ces requêtes ne sont également pas tracées.
 
 #### TODO
+##### Paginer une requête non bornée
+Actuellement, si une requête est explicitement non paginée (-1), on interroge malgré to Es sans pagination (limite à 2147483647).
+Dans ce cas, il faudra paginer la requête, i.e. remplacer -1 par 1000.
 ##### Optimiser l'utilisation des patterns regex
 
 - `TTCEsCodec`: l.93
