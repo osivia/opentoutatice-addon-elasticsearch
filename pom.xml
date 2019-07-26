@@ -103,8 +103,8 @@
 
 	<scm>
 		<url>https://github.com/osivia/opentoutatice-addon-elasticsearch</url>
-		<connection>scm:git:ssh://git@github.com/osivia/opentoutatice-addon-elasticsearch.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/osivia/opentoutatice-addon-elasticsearch.git</developerConnection>     
+		<connection>scm:git:ssh://david.c.chevrier@gmail.com:ccjl170707qtacG@github.com/osivia/opentoutatice-addon-elasticsearch.git</connection>
+		<developerConnection>scm:git:ssh://david.c.chevrier@gmail.com:ccjl170707qtacG@github.com/osivia/opentoutatice-addon-elasticsearch.git</developerConnection>     
 		<tag>HEAD</tag> 
     </scm>
 
