@@ -11,10 +11,10 @@
 	<version>4.7-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF45</nuxeo.version>
-		<nuxeo.cap.version>6.0</nuxeo.cap.version>
+		<nuxeo.version>6.1.0</nuxeo.version>
+		<!-- <nuxeo.cap.version>6.0</nuxeo.cap.version> -->
 		<elasticsearch.version>1.1.2</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.7.16</nuxeo.opentoutatice.version>
+		<opentoutatice.version>4.7.17</opentoutatice.version>
 	</properties>
 
 	<modules>
@@ -67,7 +67,7 @@
 			<dependency>
 				<groupId>opentoutatice-ecm.platform</groupId>
 				<artifactId>opentoutatice-ecm-platform-core</artifactId>
-				<version>${nuxeo.opentoutatice.version}</version>
+				<version>${opentoutatice.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
