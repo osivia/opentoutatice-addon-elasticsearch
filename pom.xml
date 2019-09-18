@@ -11,13 +11,12 @@
 	<version>4.4-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF45</nuxeo.version>
-		<nuxeo.opentoutatice.version>4.4.16.1</nuxeo.opentoutatice.version>
+		<nuxeo.version>6.1.0</nuxeo.version>
+		<nuxeo.opentoutatice.version>4.4.18</nuxeo.opentoutatice.version>
 	</properties>
 
 	<modules>
 	   <module>opentoutatice-addon-elasticsearch-ecm</module>
-	   <module>opentoutatice-addon-elasticsearch-marketplace</module> 
 	</modules>
 
 	<build>
