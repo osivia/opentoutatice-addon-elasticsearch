@@ -11,7 +11,7 @@
 	<version>4.4-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.1.0</nuxeo.version>
+		<nuxeo.version>6.1.1</nuxeo.version>
 		<nuxeo.opentoutatice.version>4.4.18</nuxeo.opentoutatice.version>
 	</properties>
 
