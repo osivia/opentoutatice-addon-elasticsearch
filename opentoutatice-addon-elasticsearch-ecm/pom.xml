@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
+	<!-- Can have Eclipse m2e plugin error on following 'parent' tag -->
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
@@ -26,43 +29,96 @@
 			<groupId>org.nuxeo.elasticsearch</groupId>
 			<artifactId>nuxeo-elasticsearch-web</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>org.nuxeo.ecm.automation</groupId>
 			<artifactId>nuxeo-automation-features</artifactId>
 		</dependency>
 
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.nuxeo.ecm.automation</groupId>
 			<artifactId>nuxeo-automation-client</artifactId>
+		</dependency> -->
+		<dependency>
+			<groupId>toutatice-portail.cms</groupId>
+			<artifactId>toutatice-portail-cms-nuxeo-automation-client</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osivia.portal.core</groupId>
+        	<artifactId>osivia-portal-custom-lib-utils</artifactId>
+        	<scope>test</scope>
+    	</dependency>
+		<dependency>
+	    	<groupId>org.osivia.portal</groupId>
+    		<artifactId>osivia-portal-api</artifactId>
+	        <scope>test</scope>
+	    </dependency>
+    
+		
+		<dependency>
+			<groupId>org.nuxeo.ecm.platform</groupId>
+			<artifactId>nuxeo-platform-audit-core</artifactId>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>opentoutatice-ecm.platform</groupId>
 			<artifactId>opentoutatice-ecm-platform-core</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+		</dependency>
+		<!-- <dependency> <groupId>com.jcabi</groupId> <artifactId>jcabi-aspects</artifactId> 
+			</dependency> -->
+		<!-- <dependency> <groupId>org.aspectj</groupId> <artifactId>aspectjrt</artifactId> 
+			</dependency> -->
+
+		<!-- Tests -->
+		<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.elasticsearch</groupId>
+				<artifactId>nuxeo-elasticsearch-core</artifactId>
+				<classifier>tests</classifier>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.ecm.automation</groupId>
+				<artifactId>nuxeo-automation-test</artifactId>
+				<scope>test</scope>
+			</dependency>
+		<dependency>
+			<groupId>org.nuxeo.ecm.platform</groupId>
+			<artifactId>nuxeo-platform-audit-core</artifactId>
+			<version>${nuxeo.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3</version>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
 				<configuration>
-					<archive>
-						<manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
-						<manifestEntries>
-							<Bundle-Version>${eclipseVersion}-t${buildNumber}</Bundle-Version>
-							<Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-						</manifestEntries>
-					</archive>
+					<encoding>UTF-8</encoding>
+					<source>1.8</source>
+					<target>1.8</target> 
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+			</plugin>
+			<!-- <plugin> <groupId>com.jcabi</groupId> <artifactId>jcabi-maven-plugin</artifactId> 
+				</plugin> -->
 		</plugins>
 	</build>
 

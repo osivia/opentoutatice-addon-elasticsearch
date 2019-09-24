@@ -57,8 +57,9 @@ public class EsMarshaller implements JsonMarshaller<Documents> {
 	}
 
 	@Override
-	public void write(JsonGenerator jg, Object value) throws Exception {
-		// nothing
+	public void write(JsonGenerator jg, Documents value) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

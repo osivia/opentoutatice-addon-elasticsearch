@@ -19,20 +19,32 @@
 package fr.toutatice.ecm.elasticsearch.codec;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonProcessingException;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.nuxeo.ecm.automation.io.services.codec.ObjectCodec;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.TransientIndexUse;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
 
 import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
 public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
-	//	private static final Log log = LogFactory.getLog(TTCEsCodec.class);
+	private static final Log log = LogFactory.getLog(TTCEsCodec.class);
 
 	public TTCEsCodec() {
 		super(TTCSearchResponse.class);
@@ -67,36 +79,12 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 			jg.writeNumberField("currentPageIndex", value.getCurrentPageIndex());
 		}
 
-		jg.writeArrayFieldStart("entries");		
-		for (SearchHit hit : searchhits) {
-			Map<String, Object> source = hit.getSource();
-		    jg.writeStartObject();
-			
-			// convert ES JSON mapping into Nuxeo automation mapping
-			jg.writeStringField("entity-type", "document");
-			jg.writeStringField("repository", (String) source.get("ecm:repository"));
-			jg.writeStringField("uid", (String) source.get("ecm:uuid"));
-			jg.writeStringField("path", (String) source.get("ecm:path"));
-			jg.writeStringField("type", (String) source.get("ecm:primaryType"));
-			jg.writeStringField("state", (String) source.get("ecm:currentLifeCycleState"));
-			jg.writeStringField("parentRef", (String) source.get("ecm:parentId"));
-			jg.writeStringField("versionLabel", (String) source.get("ecm:versionLabel"));
-			jg.writeStringField("isCheckedOut", StringUtils.EMPTY);
-			jg.writeStringField("title", (String) source.get("dc:title"));
-			jg.writeStringField("lastModified", (String) source.get("dc:modified"));
-			jg.writeObjectField("facets", (List<String>) source.get("ecm:mixinType"));
-			jg.writeStringField("changeToken", (String) source.get("ecm:changeToken"));
-			//jg.writeStringField("ancestorId", (String) source.get("ecm:ancestorId"));
-			
-			jg.writeObjectFieldStart("properties");
-			for (String key : source.keySet()) {
-				if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
-					jg.writeObjectField(key, source.get(key));
-				}
-			}
-			jg.writeEndObject();
-			jg.writeEndObject();
-			jg.flush();
+		jg.writeArrayFieldStart("entries");
+		
+		if(hasToFilterDuplicate(value.getSearchResponse())) {
+			writeDuplicateFilteredEntries(jg, schemasRegex, value.getSearchResponse());
+		} else {
+			writeEntries(jg, schemasRegex, searchhits);
 		}
 		jg.writeEndArray();
 
@@ -104,4 +92,119 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         jg.flush();
 	}
 
+	protected boolean hasToFilterDuplicate(SearchResponse searchResponse) {
+		// Indicates if this response comes from a request built during zero down time re-indexing
+		// (we do not use ReIndexingRunnerManager.get()#isReIndexingInProgress here)
+		return searchResponse.getAggregations() != null ? searchResponse.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME) != null : false;
+	}
+
+	/**
+	 * @param jg
+	 * @param schemasRegex
+	 * @param searchhits
+	 * @throws IOException
+	 * @throws JsonGenerationException
+	 * @throws JsonProcessingException
+	 */
+	protected void writeEntries(JsonGenerator jg, String schemasRegex, SearchHit[] searchhits)
+			throws IOException, JsonGenerationException, JsonProcessingException {
+		for (SearchHit hit : searchhits) {
+			writeEntry(jg, schemasRegex, hit.getSource());
+		}
+	}
+	
+	protected void writeDuplicateFilteredEntries(JsonGenerator jg, String schemasRegex, SearchResponse searchResponse) throws JsonGenerationException, JsonProcessingException, IOException {
+		SearchHit[] searchHits = searchResponse.getHits().getHits();
+		StringTerms duplicateAggs = searchResponse.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
+		
+		// Build duplicate list
+		List<String> duplicateIds = new LinkedList<String>();
+		
+		for (Bucket bucket : duplicateAggs.getBuckets()) {
+			if(bucket.getDocCount() > 1) {
+				duplicateIds.add(bucket.getKey());
+			}
+		}
+		
+		if(log.isTraceEnabled()) {
+			StringBuffer sb = new StringBuffer();
+			Iterator<String> duplicatesIt = duplicateIds.iterator();
+			while(duplicatesIt.hasNext()) {
+				String dupId = duplicatesIt.next();
+				sb.append(dupId);
+				if(duplicatesIt.hasNext()) {
+					sb.append(", ");
+				}
+			}
+			log.trace(String.format("List of duplicates: [%s]", sb.toString()));
+		}
+		
+		if(duplicateIds.size() == 0) {
+			writeEntries(jg, schemasRegex, searchHits);
+		} else {
+			// Write filtering duplicate:
+			// index from which duplicates must be kept (index pointed by transient write alias)
+			// TODO: response can be managed few later time after re-indexing and write alias can not exist anymore
+			String newIdx = IndexNAliasManager.get().getIndexOfAlias(TransientIndexUse.Write.getAlias());
+			
+			for (SearchHit hit : searchHits) {
+				// Check duplicate
+				Map<String, Object> source = hit.getSource();
+				String uuid = (String) source.get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_FIELD);
+				
+				if(duplicateIds.contains(uuid)) {
+					// keep duplicate from new (re-indexing) index
+					if(StringUtils.equals(newIdx, hit.getIndex())) {
+						if(log.isTraceEnabled()) {
+							log.trace(String.format("Keeping duplicate [%s] from index [%s]", uuid, hit.getIndex()));
+						}
+						writeEntry(jg, schemasRegex, source);
+					} 
+				} else {
+					writeEntry(jg, schemasRegex, source);
+				}
+			}
+		}
+		
+	}
+
+	/**
+	 * @param jg
+	 * @param schemasRegex
+	 * @param hit
+	 * @throws IOException
+	 * @throws JsonGenerationException
+	 * @throws JsonProcessingException
+	 */
+	private void writeEntry(JsonGenerator jg, String schemasRegex, Map<String, Object> source)
+			throws IOException, JsonGenerationException, JsonProcessingException {
+		jg.writeStartObject();
+
+		// convert ES JSON mapping into Nuxeo automation mapping
+		jg.writeStringField("entity-type", "document");
+		jg.writeStringField("repository", (String) source.get("ecm:repository"));
+		jg.writeStringField("uid", (String) source.get("ecm:uuid"));
+		jg.writeStringField("path", (String) source.get("ecm:path"));
+		jg.writeStringField("type", (String) source.get("ecm:primaryType"));
+		jg.writeStringField("state", (String) source.get("ecm:currentLifeCycleState"));
+		jg.writeStringField("parentRef", (String) source.get("ecm:parentId"));
+		jg.writeStringField("versionLabel", (String) source.get("ecm:versionLabel"));
+		jg.writeStringField("isCheckedOut", StringUtils.EMPTY);
+		jg.writeStringField("title", (String) source.get("dc:title"));
+		jg.writeStringField("lastModified", (String) source.get("dc:modified"));
+		jg.writeObjectField("facets", (List<String>) source.get("ecm:mixinType"));
+		jg.writeStringField("changeToken", (String) source.get("ecm:changeToken"));
+		// jg.writeStringField("ancestorId", (String) source.get("ecm:ancestorId"));
+
+		jg.writeObjectFieldStart("properties");
+		for (String key : source.keySet()) {
+			if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
+				jg.writeObjectField(key, source.get(key));
+			}
+		}
+		jg.writeEndObject();
+		jg.writeEndObject();
+		jg.flush();
+	}
+	
 }

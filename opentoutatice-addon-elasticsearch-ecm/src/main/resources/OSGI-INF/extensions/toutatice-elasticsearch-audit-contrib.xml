@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <component name="fr.toutatice.ecm.elasticsearch.audit.contrib" version="1.0">
 
-	<require>org.nuxeo.ecm.platform.audit.service.NXAuditEventsService</require>
+	<!-- <require>org.nuxeo.ecm.platform.audit.service.NXAuditEventsService</require> -->
 	
 	<extension target="org.nuxeo.ecm.platform.audit.service.NXAuditEventsService" point="event">
 	

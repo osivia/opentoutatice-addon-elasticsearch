@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<component
+	name="org.opentoutatice.elasticsearch.core.zero.downtime.reindexing.docs.work.queue.contrib">
+
+	<extension point="queues"
+		target="org.nuxeo.ecm.core.work.service">
+		
+		<queue id="zeroDownTimeEsReIndexing">
+			<name>Zero Down Time ElasticSearch Re-Indexing</name>
+			<maxThreads>${elasticsearch.zero.down.time.reindexing.maxThreads:=1}</maxThreads>
+			<!-- queue capacity -->
+			<capacity>${elasticsearch.zero.down.time.reindexing.capacity:=1}</capacity>
+			<category>zeroDownTimeEsReIndexing</category>
+			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=60}</clearCompletedAfterSeconds>
+		</queue>
+	</extension>
+
+</component>
