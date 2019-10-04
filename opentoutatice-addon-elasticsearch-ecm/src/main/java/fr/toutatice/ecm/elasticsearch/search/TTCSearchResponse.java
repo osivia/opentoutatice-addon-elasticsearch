@@ -13,8 +13,8 @@
  *
  *
  * Contributors:
- *   mberhaut1
- *    
+ * mberhaut1
+ *
  */
 package fr.toutatice.ecm.elasticsearch.search;
 
@@ -25,56 +25,56 @@ import org.elasticsearch.action.search.SearchResponse;
 
 public class TTCSearchResponse {
 
-	private Integer pageSize;
-	private Integer currentPageIndex;
-	private SearchResponse searchResponse;
-	private List<String> schemas;
+    private Integer pageSize;
+    private Integer currentPageIndex;
+    private SearchResponse searchResponse;
+    private List<String> schemas;
 
-	public TTCSearchResponse(SearchResponse searchResponse, Integer pageSize, Integer currentPageIndex, List<String> schemas) {
-		this.pageSize = pageSize;
-		this.searchResponse = searchResponse;
-		this.currentPageIndex = currentPageIndex;
-		this.schemas = schemas;
-	}
-	
-	public int getPageSize() {
-		return pageSize.intValue();
-	}
-	
-	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
-	}
+    public TTCSearchResponse(SearchResponse searchResponse, Integer pageSize, Integer currentPageIndex, List<String> schemas) {
+        this.pageSize = pageSize;
+        this.searchResponse = searchResponse;
+        this.currentPageIndex = currentPageIndex;
+        this.schemas = schemas;
+    }
 
-	public int getCurrentPageIndex() {
-		return currentPageIndex.intValue();
-	}
+    public int getPageSize() {
+        return this.pageSize.intValue();
+    }
 
-	public void setCurrentPageIndex(int currentPageIndex) {
-		this.currentPageIndex = currentPageIndex;
-	}
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
 
-	public SearchResponse getSearchResponse() {
-		return searchResponse;
-	}
+    public int getCurrentPageIndex() {
+        return this.currentPageIndex.intValue();
+    }
 
-	public void setSearchResponse(SearchResponse searchResponse) {
-		this.searchResponse = searchResponse;
-	}
+    public void setCurrentPageIndex(int currentPageIndex) {
+        this.currentPageIndex = currentPageIndex;
+    }
 
-	public List<String> getSchemas() {
-		return schemas;
-	}
+    public SearchResponse getSearchResponse() {
+        return this.searchResponse;
+    }
 
-	public void setSchemas(List<String> schemas) {
-		this.schemas = schemas;
-	}
+    public void setSearchResponse(SearchResponse searchResponse) {
+        this.searchResponse = searchResponse;
+    }
 
-	public boolean isPaginable() {
-		return ((null != pageSize) && (null != currentPageIndex));
-	}
+    public List<String> getSchemas() {
+        return this.schemas;
+    }
 
-	public String getSchemasRegex() {
-		return (null != schemas && 0 < schemas.size()) ? "^(" + StringUtils.join(schemas, "|") + "):.+$" : ".*";
-	}
+    public void setSchemas(List<String> schemas) {
+        this.schemas = schemas;
+    }
+
+    public boolean isPaginable() {
+        return ((null != this.pageSize) && (null != this.currentPageIndex));
+    }
+
+    public String getSchemasRegex() {
+        return ((null != this.schemas) && (0 < this.schemas.size())) ? "^(" + StringUtils.join(this.schemas, "|") + "):.+$" : ".*";
+    }
 
 }

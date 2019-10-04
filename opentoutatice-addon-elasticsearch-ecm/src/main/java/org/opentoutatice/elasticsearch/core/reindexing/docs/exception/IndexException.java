@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.exception;
 
@@ -9,21 +9,21 @@ package org.opentoutatice.elasticsearch.core.reindexing.docs.exception;
  */
 public class IndexException extends Exception {
 
-	private static final long serialVersionUID = 6231243942965978804L;
+    private static final long serialVersionUID = 6231243942965978804L;
 
-	/**
-	 * @param message
-	 */
-	public IndexException(String message) {
-		super(message);
-	}
+    /**
+     * @param message
+     */
+    public IndexException(String message) {
+        super(message);
+    }
 
-	/**
-	 * @param cause
-	 */
-	public IndexException(Throwable cause) {
-		super(cause);
-	}
-	
-	
+    /**
+     * @param cause
+     */
+    public IndexException(Throwable cause) {
+        super(cause);
+    }
+
+
 }

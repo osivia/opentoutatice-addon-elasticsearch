@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.service;
 
@@ -46,12 +46,11 @@ import com.codahale.metrics.Timer.Context;
  */
 public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
 
-	private static final Log log = LogFactory.getLog(OttcElasticSearchServiceImpl.class);
+    private static final Log log = LogFactory.getLog(OttcElasticSearchServiceImpl.class);
 
     private static final java.lang.String LOG_MIN_DURATION_FETCH_KEY = "org.nuxeo.elasticsearch.core.log_min_duration_fetch_ms";
 
-    private static final long LOG_MIN_DURATION_FETCH_NS = Long.parseLong(Framework.getProperty(
-            LOG_MIN_DURATION_FETCH_KEY, "200")) * 1000000;
+    private static final long LOG_MIN_DURATION_FETCH_NS = Long.parseLong(Framework.getProperty(LOG_MIN_DURATION_FETCH_KEY, "200")) * 1000000;
 
     // Metrics
     protected final MetricRegistry registry = SharedMetricRegistries.getOrCreate(MetricsService.class.getName());
@@ -64,41 +63,38 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
 
     public OttcElasticSearchServiceImpl(OttcElasticSearchAdminImpl esa) {
         this.esa = esa;
-        searchTimer = registry.timer(MetricRegistry.name("nuxeo", "elasticsearch", "service", "search"));
-        fetchTimer = registry.timer(MetricRegistry.name("nuxeo", "elasticsearch", "service", "fetch"));
+        this.searchTimer = this.registry.timer(MetricRegistry.name("nuxeo", "elasticsearch", "service", "search"));
+        this.fetchTimer = this.registry.timer(MetricRegistry.name("nuxeo", "elasticsearch", "service", "fetch"));
     }
 
     @Deprecated
     @Override
-    public DocumentModelList query(CoreSession session, String nxql, int limit, int offset, SortInfo... sortInfos)
-            throws ClientException {
+    public DocumentModelList query(CoreSession session, String nxql, int limit, int offset, SortInfo... sortInfos) throws ClientException {
         NxQueryBuilder query = new NxQueryBuilder(session).nxql(nxql).limit(limit).offset(offset).addSort(sortInfos);
-        return query(query);
+        return this.query(query);
     }
 
     @Deprecated
     @Override
-    public DocumentModelList query(CoreSession session, QueryBuilder queryBuilder, int limit, int offset,
-            SortInfo... sortInfos) throws ClientException {
-        NxQueryBuilder query = new NxQueryBuilder(session).esQuery(queryBuilder).limit(limit).offset(offset).addSort(
-                sortInfos);
-        return query(query);
+    public DocumentModelList query(CoreSession session, QueryBuilder queryBuilder, int limit, int offset, SortInfo... sortInfos) throws ClientException {
+        NxQueryBuilder query = new NxQueryBuilder(session).esQuery(queryBuilder).limit(limit).offset(offset).addSort(sortInfos);
+        return this.query(query);
     }
 
     @Override
     public DocumentModelList query(NxQueryBuilder queryBuilder) throws ClientException {
-        return queryAndAggregate(queryBuilder).getDocuments();
+        return this.queryAndAggregate(queryBuilder).getDocuments();
     }
 
     @Override
     public EsResult queryAndAggregate(NxQueryBuilder queryBuilder) throws ClientException {
-        SearchResponse response = search(queryBuilder);
-        List<Aggregate> aggs = getAggregates(queryBuilder, response);
+        SearchResponse response = this.search(queryBuilder);
+        List<Aggregate> aggs = this.getAggregates(queryBuilder, response);
         if (queryBuilder.returnsDocuments()) {
-            DocumentModelListImpl docs = getDocumentModels(queryBuilder, response);
+            DocumentModelListImpl docs = this.getDocumentModels(queryBuilder, response);
             return new EsResult(docs, aggs);
         } else {
-            IterableQueryResult rows = getRows(queryBuilder, response);
+            IterableQueryResult rows = this.getRows(queryBuilder, response);
             return new EsResult(rows, aggs);
         }
     }
@@ -106,17 +102,17 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
     protected DocumentModelListImpl getDocumentModels(NxQueryBuilder queryBuilder, SearchResponse response) {
         DocumentModelListImpl ret;
         long totalSize = response.getHits().getTotalHits();
-        if (!queryBuilder.returnsDocuments() || response.getHits().getHits().length == 0) {
+        if (!queryBuilder.returnsDocuments() || (response.getHits().getHits().length == 0)) {
             ret = new DocumentModelListImpl(0);
             ret.setTotalSize(totalSize);
             return ret;
         }
-        Context stopWatch = fetchTimer.time();
-        Fetcher fetcher = queryBuilder.getFetcher(response, esa.getRepositoryMap());
+        Context stopWatch = this.fetchTimer.time();
+        Fetcher fetcher = queryBuilder.getFetcher(response, this.esa.getRepositoryMap());
         try {
             ret = fetcher.fetchDocuments();
         } finally {
-            logMinDurationFetch(stopWatch.stop(), totalSize);
+            this.logMinDurationFetch(stopWatch.stop(), totalSize);
         }
         ret.setTotalSize(totalSize);
         return ret;
@@ -124,8 +120,7 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
 
     private void logMinDurationFetch(long duration, long totalSize) {
         if (log.isDebugEnabled() && (duration > LOG_MIN_DURATION_FETCH_NS)) {
-            String msg = String.format("Slow fetch duration_ms:\t%.2f\treturning:\t%d documents", duration / 1000000.0,
-                    totalSize);
+            String msg = String.format("Slow fetch duration_ms:\t%.2f\treturning:\t%d documents", duration / 1000000.0, totalSize);
             if (log.isTraceEnabled()) {
                 log.trace(msg, new Throwable("Slow fetch document stack trace"));
             } else {
@@ -154,58 +149,57 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
     private IterableQueryResult getRows(NxQueryBuilder queryBuilder, SearchResponse response) {
         return new EsResultSetImpl(response, queryBuilder.getSelectFieldsAndTypes());
     }
-    
+
     // Backup of method
-//    protected SearchResponse search(NxQueryBuilder query) {
-//        Context stopWatch = searchTimer.time();
-//        try {
-//            SearchRequestBuilder request = buildEsSearchRequest(query);
-//            logSearchRequest(request, query);
-//            SearchResponse response = request.execute().actionGet();
-//            logSearchResponse(response);
-//            return response;
-//        } finally {
-//            stopWatch.stop();
-//        }
-//    }
+    // protected SearchResponse search(NxQueryBuilder query) {
+    // Context stopWatch = searchTimer.time();
+    // try {
+    // SearchRequestBuilder request = buildEsSearchRequest(query);
+    // logSearchRequest(request, query);
+    // SearchResponse response = request.execute().actionGet();
+    // logSearchResponse(response);
+    // return response;
+    // } finally {
+    // stopWatch.stop();
+    // }
+    // }
 
     // Re-indexing FORK ===========================
     // protected-> public for tests
     public SearchResponse search(NxQueryBuilder query) {
-        Context stopWatch = searchTimer.time();
+        Context stopWatch = this.searchTimer.time();
         try {
-            SearchRequestBuilder request = buildEsSearchRequest(query);
-            
+            SearchRequestBuilder request = this.buildEsSearchRequest(query);
+
             // FIXME: Duplicate re-indexing filter is managed, for the moment, for one repository configuration only
-            if(query.getSearchRepositories().size() == 1) {
-	            try {
-					if(ReIndexingRunnerManager.get().isReIndexingInProgress(query.getSearchRepositories().get(0))) {
-						request = ReIndexingTransientAggregate.get().aggregateDuplicate(request, query.getLimit());
-					}
-				} catch (InterruptedException e) {
-					if(log.isErrorEnabled()) {
-						log.error(e);
-					}
-				}
+            if (query.getSearchRepositories().size() == 1) {
+                try {
+                    if (ReIndexingRunnerManager.get().isReIndexingInProgress(query.getSearchRepositories().get(0))) {
+                        request = ReIndexingTransientAggregate.get().aggregateDuplicate(request, query.getLimit());
+                    }
+                } catch (InterruptedException e) {
+                    if (log.isErrorEnabled()) {
+                        log.error(e);
+                    }
+                }
             }
-            
-            logSearchRequest(request, query);
+
+            this.logSearchRequest(request, query);
             SearchResponse response = request.execute().actionGet();
-            logSearchResponse(response);
+            this.logSearchResponse(response);
             return response;
         } finally {
             stopWatch.stop();
         }
     }
-    
+
     protected SearchRequestBuilder buildEsSearchRequest(NxQueryBuilder query) {
-        SearchRequestBuilder request = esa.getClient().prepareSearch(
-                esa.getSearchIndexes(query.getSearchRepositories())).setTypes(DOC_TYPE).setSearchType(
-                SearchType.DFS_QUERY_THEN_FETCH);
+        SearchRequestBuilder request = this.esa.getClient().prepareSearch(this.esa.getSearchIndexes(query.getSearchRepositories())).setTypes(DOC_TYPE)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
         query.updateRequest(request);
         if (query.isFetchFromElasticsearch()) {
             // fetch the _source without the binaryfulltext field
-            request.setFetchSource(esa.getIncludeSourceFields(), esa.getExcludeSourceFields());
+            request.setFetchSource(this.esa.getIncludeSourceFields(), this.esa.getExcludeSourceFields());
         }
         return request;
     }
@@ -218,13 +212,13 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
 
     protected void logSearchRequest(SearchRequestBuilder request, NxQueryBuilder query) {
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Search query: curl -XGET 'http://localhost:9200/%s/%s/_search?pretty' -d '%s'",
-                    getSearchIndexesAsString(query), DOC_TYPE, request.toString()));
+            log.debug(String.format("Search query: curl -XGET 'http://localhost:9200/%s/%s/_search?pretty' -d '%s'", this.getSearchIndexesAsString(query),
+                    DOC_TYPE, request.toString()));
         }
     }
 
     protected String getSearchIndexesAsString(NxQueryBuilder query) {
-        return StringUtils.join(esa.getSearchIndexes(query.getSearchRepositories()), ',');
+        return StringUtils.join(this.esa.getSearchIndexes(query.getSearchRepositories()), ',');
     }
 
 }

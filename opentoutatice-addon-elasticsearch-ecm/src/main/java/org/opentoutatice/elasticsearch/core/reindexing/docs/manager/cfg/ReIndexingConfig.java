@@ -1,12 +1,12 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.manager.cfg;
 
 import org.apache.commons.lang.Validate;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.name.IndexName;
 
 /**
  * @author david
@@ -14,52 +14,52 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.name.IndexName;
  */
 public class ReIndexingConfig {
 
-	private OttcElasticSearchIndexOrAliasConfig nxAliasCfg;
+    private OttcElasticSearchIndexOrAliasConfig nxAliasCfg;
 
-	private IndexName initialIndex;
-	private IndexName newIndex;
+    private IndexName initialIndex;
+    private IndexName newIndex;
 
-	public ReIndexingConfig(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
-		super();
-		build(nxAliasCfg);
-	}
+    public ReIndexingConfig(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
+        super();
+        this.build(nxAliasCfg);
+    }
 
-	public synchronized void build(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
-		nxAliasCfg(nxAliasCfg);
-		// Initialize indices attributes
-		String indexName = IndexNAliasManager.get().getIndexOfAlias(nxAliasCfg.getAliasName());
-		setInitialIndex(new IndexName(indexName));
-		setNewIndex(buildNewIndexName(getInitialIndex()));
-	}
-	
-	public IndexName buildNewIndexName(IndexName initialIndexName) {
-		Validate.notNull(initialIndexName);
-		return new IndexName(initialIndexName.getNamePart(), System.currentTimeMillis());
-	}
+    public synchronized void build(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
+        this.nxAliasCfg(nxAliasCfg);
+        // Initialize indices attributes
+        String indexName = IndexNAliasManager.get().getIndexOfAlias(nxAliasCfg.getAliasName());
+        this.setInitialIndex(new IndexName(indexName));
+        this.setNewIndex(this.buildNewIndexName(this.getInitialIndex()));
+    }
 
-	public OttcElasticSearchIndexOrAliasConfig getNxAliasCfg() {
-		return this.nxAliasCfg;
-	}
+    public IndexName buildNewIndexName(IndexName initialIndexName) {
+        Validate.notNull(initialIndexName);
+        return new IndexName(initialIndexName.getNamePart(), System.currentTimeMillis());
+    }
 
-	public ReIndexingConfig nxAliasCfg(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
-		this.nxAliasCfg = nxAliasCfg;
-		return this;
-	}
+    public OttcElasticSearchIndexOrAliasConfig getNxAliasCfg() {
+        return this.nxAliasCfg;
+    }
 
-	public IndexName getInitialIndex() {
-		return initialIndex;
-	}
+    public ReIndexingConfig nxAliasCfg(OttcElasticSearchIndexOrAliasConfig nxAliasCfg) {
+        this.nxAliasCfg = nxAliasCfg;
+        return this;
+    }
 
-	public void setInitialIndex(IndexName initialIndex) {
-		this.initialIndex = initialIndex;
-	}
+    public IndexName getInitialIndex() {
+        return this.initialIndex;
+    }
 
-	public IndexName getNewIndex() {
-		return newIndex;
-	}
+    public void setInitialIndex(IndexName initialIndex) {
+        this.initialIndex = initialIndex;
+    }
 
-	private void setNewIndex(IndexName newIndex) {
-		this.newIndex = newIndex;
-	}
+    public IndexName getNewIndex() {
+        return this.newIndex;
+    }
+
+    private void setNewIndex(IndexName newIndex) {
+        this.newIndex = newIndex;
+    }
 
 }

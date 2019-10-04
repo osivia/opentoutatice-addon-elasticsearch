@@ -13,8 +13,8 @@
  *
  *
  * Contributors:
- *   mberhaut1
- *    
+ * mberhaut1
+ *
  */
 package fr.toutatice.ecm.elasticsearch.fetcher;
 
@@ -27,18 +27,19 @@ import org.nuxeo.elasticsearch.fetcher.Fetcher;
 
 public class TTCEsFetcher extends Fetcher {
 
-	public TTCEsFetcher(CoreSession session, SearchResponse response, Map<String, String> repoNames) {
-		super(session, response, repoNames);
-	}
+    public TTCEsFetcher(CoreSession session, SearchResponse response, Map<String, String> repoNames) {
+        super(session, response, repoNames);
+    }
 
-	@Override
-	public DocumentModelListImpl fetchDocuments() {
+    @Override
+    public DocumentModelListImpl fetchDocuments() {
         // No DocumentModel fetch is desired anymore in automation call case
         return new DocumentModelListImpl();
-	}
-	
+    }
+
+    @Override
     public SearchResponse getResponse() {
         return super.getResponse();
     }
-    
+
 }

@@ -21,21 +21,21 @@ import org.nuxeo.ecm.automation.io.services.codec.ObjectCodec;
 
 public class TTCRawEsCodec extends ObjectCodec<SearchResponse> {
 
-	// private static final Log log = LogFactory.getLog(TTCEsCodec.class);
+    // private static final Log log = LogFactory.getLog(TTCEsCodec.class);
 
-	public TTCRawEsCodec() {
-		super(SearchResponse.class);
-	}
+    public TTCRawEsCodec() {
+        super(SearchResponse.class);
+    }
 
-	@Override
-	public String getType() {
-		return "rawesresponse";
-	}
+    @Override
+    public String getType() {
+        return "rawesresponse";
+    }
 
-	@Override
-	public void write(JsonGenerator jg, SearchResponse searchResponse) throws IOException {
-		jg.writeRawValue(searchResponse.toString());
-		jg.flush();
-	}
+    @Override
+    public void write(JsonGenerator jg, SearchResponse searchResponse) throws IOException {
+        jg.writeRawValue(searchResponse.toString());
+        jg.flush();
+    }
 
 }

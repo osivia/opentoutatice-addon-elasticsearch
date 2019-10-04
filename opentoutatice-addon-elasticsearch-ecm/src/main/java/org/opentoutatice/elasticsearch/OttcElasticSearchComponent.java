@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch;
 
@@ -53,7 +53,8 @@ import org.nuxeo.runtime.transaction.TransactionHelper;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchAdmin;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchService;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.EsStateCheckException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchAdminImpl;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchIndexingImpl;
@@ -67,474 +68,471 @@ import com.google.common.util.concurrent.MoreExecutors;
  * @author dchevrier <chevrier.david.pro@gmail.com>
  *
  */
-public class OttcElasticSearchComponent extends DefaultComponent
-		implements OttcElasticSearchAdmin, OttcElasticSearchIndexing, OttcElasticSearchService {
+public class OttcElasticSearchComponent extends DefaultComponent implements OttcElasticSearchAdmin, OttcElasticSearchIndexing, OttcElasticSearchService {
 
-	private static final Log log = LogFactory.getLog(ElasticSearchComponent.class);
+    private static final Log log = LogFactory.getLog(ElasticSearchComponent.class);
 
-	private static final String EP_REMOTE = "elasticSearchRemote";
+    private static final String EP_REMOTE = "elasticSearchRemote";
 
-	private static final String EP_LOCAL = "elasticSearchLocal";
+    private static final String EP_LOCAL = "elasticSearchLocal";
 
-	public static final String EP_INDEX = "elasticSearchIndex";
+    public static final String EP_INDEX = "elasticSearchIndex";
 
-	private static final String EP_DOC_WRITER = "elasticSearchDocWriter";
+    private static final String EP_DOC_WRITER = "elasticSearchDocWriter";
 
-	private static final long REINDEX_TIMEOUT = 20;
+    private static final long REINDEX_TIMEOUT = 20;
 
-	// Indexing commands that where received before the index initialization
-	private final List<IndexingCommand> stackedCommands = Collections
-			.synchronizedList(new ArrayList<IndexingCommand>());
+    // Indexing commands that where received before the index initialization
+    private final List<IndexingCommand> stackedCommands = Collections.synchronizedList(new ArrayList<IndexingCommand>());
 
-	private final Map<String, ElasticSearchIndexConfig> indexConfig = new HashMap<>();
+    private final Map<String, ElasticSearchIndexConfig> indexConfig = new HashMap<>();
 
-	private ElasticSearchLocalConfig localConfig;
+    private ElasticSearchLocalConfig localConfig;
 
-	private ElasticSearchRemoteConfig remoteConfig;
+    private ElasticSearchRemoteConfig remoteConfig;
 
-	private OttcElasticSearchAdminImpl esa;
+    private OttcElasticSearchAdminImpl esa;
 
-	private OttcElasticSearchIndexingImpl esi;
+    private OttcElasticSearchIndexingImpl esi;
 
-	private OttcElasticSearchServiceImpl ess;
+    private OttcElasticSearchServiceImpl ess;
 
-	protected JsonESDocumentWriter jsonESDocumentWriter;
+    protected JsonESDocumentWriter jsonESDocumentWriter;
 
-	private ListeningExecutorService waiterExecutorService;
+    private ListeningExecutorService waiterExecutorService;
 
-	private final AtomicInteger runIndexingWorkerCount = new AtomicInteger(0);
+    private final AtomicInteger runIndexingWorkerCount = new AtomicInteger(0);
 
-	// Nuxeo Component impl ====================================================
-	@Override
-	public void registerContribution(Object contribution, String extensionPoint, ComponentInstance contributor) {
-		switch (extensionPoint) {
-		case EP_LOCAL:
-			ElasticSearchLocalConfig localContrib = (ElasticSearchLocalConfig) contribution;
-			if (localContrib.isEnabled()) {
-				localConfig = localContrib;
-				remoteConfig = null;
-				log.info("Registering local embedded configuration: " + localConfig + ", loaded from "
-						+ contributor.getName());
-			} else if (localConfig != null) {
-				log.info("Disabling previous local embedded configuration, deactivated by " + contributor.getName());
-				localConfig = null;
-			}
-			break;
-		case EP_REMOTE:
-			ElasticSearchRemoteConfig remoteContribution = (ElasticSearchRemoteConfig) contribution;
-			if (remoteContribution.isEnabled()) {
-				remoteConfig = remoteContribution;
-				localConfig = null;
-				log.info(
-						"Registering remote configuration: " + remoteConfig + ", loaded from " + contributor.getName());
-			} else if (remoteConfig != null) {
-				log.info("Disabling previous remote configuration, deactivated by " + contributor.getName());
-				remoteConfig = null;
-			}
-			break;
-		case EP_INDEX:
-			ElasticSearchIndexConfig idx = (ElasticSearchIndexConfig) contribution;
-			ElasticSearchIndexConfig previous = indexConfig.get(idx.getName());
-			if (idx.isEnabled()) {
-				idx.merge(previous);
-				indexConfig.put(idx.getName(), idx);
-				log.info("Registering index configuration: " + idx + ", loaded from " + contributor.getName());
-			} else if (previous != null) {
-				log.info("Disabling index configuration: " + previous + ", deactivated by " + contributor.getName());
-				indexConfig.remove(idx.getName());
-			}
-			break;
-		case EP_DOC_WRITER:
-			ElasticSearchDocWriterDescriptor writerDescriptor = (ElasticSearchDocWriterDescriptor) contribution;
-			try {
-				jsonESDocumentWriter = writerDescriptor.getKlass().newInstance();
-			} catch (IllegalAccessException | InstantiationException e) {
-				log.error("Can not instantiate jsonESDocumentWriter from " + writerDescriptor.getKlass());
-				throw new RuntimeException(e);
-			}
-			break;
-		default:
-			throw new IllegalStateException("Invalid EP: " + extensionPoint);
-		}
-	}
+    // Nuxeo Component impl ====================================================
+    @Override
+    public void registerContribution(Object contribution, String extensionPoint, ComponentInstance contributor) {
+        switch (extensionPoint) {
+            case EP_LOCAL:
+                ElasticSearchLocalConfig localContrib = (ElasticSearchLocalConfig) contribution;
+                if (localContrib.isEnabled()) {
+                    this.localConfig = localContrib;
+                    this.remoteConfig = null;
+                    log.info("Registering local embedded configuration: " + this.localConfig + ", loaded from " + contributor.getName());
+                } else if (this.localConfig != null) {
+                    log.info("Disabling previous local embedded configuration, deactivated by " + contributor.getName());
+                    this.localConfig = null;
+                }
+                break;
+            case EP_REMOTE:
+                ElasticSearchRemoteConfig remoteContribution = (ElasticSearchRemoteConfig) contribution;
+                if (remoteContribution.isEnabled()) {
+                    this.remoteConfig = remoteContribution;
+                    this.localConfig = null;
+                    log.info("Registering remote configuration: " + this.remoteConfig + ", loaded from " + contributor.getName());
+                } else if (this.remoteConfig != null) {
+                    log.info("Disabling previous remote configuration, deactivated by " + contributor.getName());
+                    this.remoteConfig = null;
+                }
+                break;
+            case EP_INDEX:
+                ElasticSearchIndexConfig idx = (ElasticSearchIndexConfig) contribution;
+                ElasticSearchIndexConfig previous = this.indexConfig.get(idx.getName());
+                if (idx.isEnabled()) {
+                    idx.merge(previous);
+                    this.indexConfig.put(idx.getName(), idx);
+                    log.info("Registering index configuration: " + idx + ", loaded from " + contributor.getName());
+                } else if (previous != null) {
+                    log.info("Disabling index configuration: " + previous + ", deactivated by " + contributor.getName());
+                    this.indexConfig.remove(idx.getName());
+                }
+                break;
+            case EP_DOC_WRITER:
+                ElasticSearchDocWriterDescriptor writerDescriptor = (ElasticSearchDocWriterDescriptor) contribution;
+                try {
+                    this.jsonESDocumentWriter = writerDescriptor.getKlass().newInstance();
+                } catch (IllegalAccessException | InstantiationException e) {
+                    log.error("Can not instantiate jsonESDocumentWriter from " + writerDescriptor.getKlass());
+                    throw new RuntimeException(e);
+                }
+                break;
+            default:
+                throw new IllegalStateException("Invalid EP: " + extensionPoint);
+        }
+    }
 
-//	@Override
-//	public void unregisterContribution(Object contribution, String extensionPoint, ComponentInstance contributor) {
-//		switch (extensionPoint) {
-//		case EP_INDEX:
-//			ElasticSearchIndexConfig idx = (ElasticSearchIndexConfig) contribution;
-//
-//			log.info("Unregistering index configuration: " + idx);
-//			indexConfig.remove(idx.getName());
-//			break;
-//		default:
-//			throw new IllegalStateException("Invalid EP: " + extensionPoint);
-//
-//		}
-//	}
+    // @Override
+    // public void unregisterContribution(Object contribution, String extensionPoint, ComponentInstance contributor) {
+    // switch (extensionPoint) {
+    // case EP_INDEX:
+    // ElasticSearchIndexConfig idx = (ElasticSearchIndexConfig) contribution;
+    //
+    // log.info("Unregistering index configuration: " + idx);
+    // indexConfig.remove(idx.getName());
+    // break;
+    // default:
+    // throw new IllegalStateException("Invalid EP: " + extensionPoint);
+    //
+    // }
+    // }
 
-	@Override
-	public void applicationStarted(ComponentContext context) throws InterruptedException, ExecutionException {
-		if (!isElasticsearchEnabled()) {
-			log.info("Elasticsearch service is disabled");
-			return;
-		}
-		
-		esa = new OttcElasticSearchAdminImpl(localConfig, remoteConfig, indexConfig);
-		esi = new OttcElasticSearchIndexingImpl(esa, jsonESDocumentWriter);
-		ess = new OttcElasticSearchServiceImpl(esa);
-		initListenerThreadPool();
-		processStackedCommands();
-		reindexOnStartup();
-	}
+    @Override
+    public void applicationStarted(ComponentContext context) throws InterruptedException, ExecutionException {
+        if (!this.isElasticsearchEnabled()) {
+            log.info("Elasticsearch service is disabled");
+            return;
+        }
 
-	private void reindexOnStartup() {
-		boolean reindexOnStartup = Boolean.parseBoolean(Framework.getProperty(REINDEX_ON_STARTUP_PROPERTY, "false"));
-		if (!reindexOnStartup) {
-			return;
-		}
-		for (String repositoryName : esa.getInitializedRepositories()) {
-			log.warn(String.format("Indexing repository: %s on startup", repositoryName));
-			runReindexingWorker(repositoryName, "SELECT ecm:uuid FROM Document");
-			try {
-				prepareWaitForIndexing().get(REINDEX_TIMEOUT, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			} catch (ExecutionException e) {
-				log.error(e.getMessage(), e);
-			} catch (TimeoutException e) {
-				log.warn(String.format("Indexation of repository %s not finised after %d s, continuing in background",
-						repositoryName, REINDEX_TIMEOUT));
-			}
-		}
-	}
+        this.esa = new OttcElasticSearchAdminImpl(this.localConfig, this.remoteConfig, this.indexConfig);
+        this.esi = new OttcElasticSearchIndexingImpl(this.esa, this.jsonESDocumentWriter);
+        this.ess = new OttcElasticSearchServiceImpl(this.esa);
+        this.initListenerThreadPool();
+        this.processStackedCommands();
+        this.reindexOnStartup();
+    }
 
-	protected boolean isElasticsearchEnabled() {
-		return Boolean.parseBoolean(Framework.getProperty(ES_ENABLED_PROPERTY, "true"));
-	}
+    private void reindexOnStartup() {
+        boolean reindexOnStartup = Boolean.parseBoolean(Framework.getProperty(REINDEX_ON_STARTUP_PROPERTY, "false"));
+        if (!reindexOnStartup) {
+            return;
+        }
+        for (String repositoryName : this.esa.getInitializedRepositories()) {
+            log.warn(String.format("Indexing repository: %s on startup", repositoryName));
+            this.runReindexingWorker(repositoryName, "SELECT ecm:uuid FROM Document");
+            try {
+                this.prepareWaitForIndexing().get(REINDEX_TIMEOUT, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                log.error(e.getMessage(), e);
+            } catch (TimeoutException e) {
+                log.warn(String.format("Indexation of repository %s not finised after %d s, continuing in background", repositoryName, REINDEX_TIMEOUT));
+            }
+        }
+    }
 
-	@Override
-	public void deactivate(ComponentContext context) {
-		if (esa != null) {
-			esa.disconnect();
-		}
-	}
+    protected boolean isElasticsearchEnabled() {
+        return Boolean.parseBoolean(Framework.getProperty(ES_ENABLED_PROPERTY, "true"));
+    }
 
-	@Override
-	public int getApplicationStartedOrder() {
-		RepositoryService component = (RepositoryService) Framework.getRuntime()
-				.getComponent("org.nuxeo.ecm.core.repository.RepositoryServiceComponent");
-		return component.getApplicationStartedOrder() / 2;
-	}
+    @Override
+    public void deactivate(ComponentContext context) {
+        if (this.esa != null) {
+            this.esa.disconnect();
+        }
+    }
 
-	void processStackedCommands() {
-		if (!stackedCommands.isEmpty()) {
-			log.info(String.format("Processing %d indexing commands stacked during startup", stackedCommands.size()));
-			runIndexingWorker(stackedCommands);
-			stackedCommands.clear();
-			log.debug("Done");
-		}
-	}
+    @Override
+    public int getApplicationStartedOrder() {
+        RepositoryService component = (RepositoryService) Framework.getRuntime().getComponent("org.nuxeo.ecm.core.repository.RepositoryServiceComponent");
+        return component.getApplicationStartedOrder() / 2;
+    }
 
-	// Es Admin ================================================================
-	
-	public synchronized OttcElasticSearchAdminImpl getElasticSearchAdmin() {
-		return this.esa;
-	}
-	
-	@Override
-	public Client getClient() {
-		return esa.getClient();
-	}
-	
-	//===
-	
-	public Map<String, String> getIndexNames() {
-		return this.esa.getIndexNames();
-	}
+    void processStackedCommands() {
+        if (!this.stackedCommands.isEmpty()) {
+            log.info(String.format("Processing %d indexing commands stacked during startup", this.stackedCommands.size()));
+            this.runIndexingWorker(this.stackedCommands);
+            this.stackedCommands.clear();
+            log.debug("Done");
+        }
+    }
 
-	public Map<String, String> getRepoNames() {
-		return this.esa.getRepoNames();
-	}
-	
-	//===
+    // Es Admin ================================================================
 
-	@Override
-	public void initIndexes(boolean dropIfExists) {
-		esa.initIndexes(dropIfExists);
-	}
+    public synchronized OttcElasticSearchAdminImpl getElasticSearchAdmin() {
+        return this.esa;
+    }
 
-	@Override
-	public void dropAndInitIndex(String indexName) {
-		esa.dropAndInitIndex(indexName);
-	}
+    @Override
+    public Client getClient() {
+        return this.esa.getClient();
+    }
 
-	@Override
-	public void dropAndInitRepositoryIndex(String repositoryName) {
-		esa.dropAndInitRepositoryIndex(repositoryName);
-	}
+    // ===
 
-	@Override
-	public List<String> getRepositoryNames() {
-		return esa.getRepositoryNames();
-	}
+    @Override
+    public Map<String, String> getIndexNames() {
+        return this.esa.getIndexNames();
+    }
 
-	@Override
-	public String getIndexNameForRepository(String repositoryName) {
-		return esa.getIndexNameForRepository(repositoryName);
-	}
+    @Override
+    public Map<String, String> getRepoNames() {
+        return this.esa.getRepoNames();
+    }
 
-	@Override
-	public int getPendingWorkerCount() {
-		WorkManager wm = Framework.getLocalService(WorkManager.class);
-		return wm.getQueueSize(INDEXING_QUEUE_ID, Work.State.SCHEDULED);
-	}
+    // ===
 
-	@Override
-	public int getRunningWorkerCount() {
-		WorkManager wm = Framework.getLocalService(WorkManager.class);
-		return runIndexingWorkerCount.get() + wm.getQueueSize(INDEXING_QUEUE_ID, Work.State.RUNNING);
-	}
+    @Override
+    public void initIndexes(boolean dropIfExists) {
+        this.esa.initIndexes(dropIfExists);
+    }
 
-	@Override
-	public int getTotalCommandProcessed() {
-		return esa.getTotalCommandProcessed();
-	}
+    @Override
+    public void dropAndInitIndex(String indexName) {
+        this.esa.dropAndInitIndex(indexName);
+    }
 
-	@Override
-	public boolean isEmbedded() {
-		return esa.isEmbedded();
-	}
+    @Override
+    public void dropAndInitRepositoryIndex(String repositoryName) {
+        this.esa.dropAndInitRepositoryIndex(repositoryName);
+    }
 
-	@Override
-	public boolean useExternalVersion() {
-		return esa.useExternalVersion();
-	}
+    @Override
+    public List<String> getRepositoryNames() {
+        return this.esa.getRepositoryNames();
+    }
 
-	@Override
-	public boolean isIndexingInProgress() {
-		return (runIndexingWorkerCount.get() > 0) || (getPendingWorkerCount() > 0) || (getRunningWorkerCount() > 0);
-	}
+    @Override
+    public String getIndexNameForRepository(String repositoryName) {
+        return this.esa.getIndexNameForRepository(repositoryName);
+    }
 
-	@Override
-	public ListenableFuture<Boolean> prepareWaitForIndexing() {
-		return waiterExecutorService.submit(new Callable<Boolean>() {
-			@Override
-			public Boolean call() throws Exception {
-				WorkManager wm = Framework.getLocalService(WorkManager.class);
-				wm.awaitCompletion(INDEXING_QUEUE_ID, 300, TimeUnit.SECONDS);
-				return true;
-			}
-		});
-	}
+    @Override
+    public int getPendingWorkerCount() {
+        WorkManager wm = Framework.getLocalService(WorkManager.class);
+        return wm.getQueueSize(INDEXING_QUEUE_ID, Work.State.SCHEDULED);
+    }
 
-	private static class NamedThreadFactory implements ThreadFactory {
-		@SuppressWarnings("NullableProblems")
-		@Override
-		public Thread newThread(Runnable r) {
-			return new Thread(r, "waitForEsIndexing");
-		}
-	}
+    @Override
+    public int getRunningWorkerCount() {
+        WorkManager wm = Framework.getLocalService(WorkManager.class);
+        return this.runIndexingWorkerCount.get() + wm.getQueueSize(INDEXING_QUEUE_ID, Work.State.RUNNING);
+    }
 
-	protected void initListenerThreadPool() {
-		waiterExecutorService = MoreExecutors
-				.listeningDecorator(Executors.newCachedThreadPool(new NamedThreadFactory()));
-	}
+    @Override
+    public int getTotalCommandProcessed() {
+        return this.esa.getTotalCommandProcessed();
+    }
 
-	@Override
-	public void refresh() {
-		esa.refresh();
-	}
+    @Override
+    public boolean isEmbedded() {
+        return this.esa.isEmbedded();
+    }
 
-	@Override
-	public void refreshRepositoryIndex(String repositoryName) {
-		esa.refreshRepositoryIndex(repositoryName);
-	}
+    @Override
+    public boolean useExternalVersion() {
+        return this.esa.useExternalVersion();
+    }
 
-	@Override
-	public void flush() {
-		esa.flush();
-	}
+    @Override
+    public boolean isIndexingInProgress() {
+        return (this.runIndexingWorkerCount.get() > 0) || (this.getPendingWorkerCount() > 0) || (this.getRunningWorkerCount() > 0);
+    }
 
-	@Override
-	public void flushRepositoryIndex(String repositoryName) {
-		esa.flushRepositoryIndex(repositoryName);
-	}
+    @Override
+    public ListenableFuture<Boolean> prepareWaitForIndexing() {
+        return this.waiterExecutorService.submit(new Callable<Boolean>() {
 
-	@Override
-	public void optimize() {
-		esa.optimize();
-	}
+            @Override
+            public Boolean call() throws Exception {
+                WorkManager wm = Framework.getLocalService(WorkManager.class);
+                wm.awaitCompletion(INDEXING_QUEUE_ID, 300, TimeUnit.SECONDS);
+                return true;
+            }
+        });
+    }
 
-	@Override
-	public void optimizeRepositoryIndex(String repositoryName) {
-		esa.optimizeRepositoryIndex(repositoryName);
-	}
+    private static class NamedThreadFactory implements ThreadFactory {
 
-	@Override
-	public void optimizeIndex(String indexName) {
-		esa.optimizeIndex(indexName);
-	}
+        @SuppressWarnings("NullableProblems")
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "waitForEsIndexing");
+        }
+    }
 
-	// ES Indexing =============================================================
+    protected void initListenerThreadPool() {
+        this.waiterExecutorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(new NamedThreadFactory()));
+    }
 
-	@Override
-	public void indexNonRecursive(IndexingCommand cmd) throws ClientException {
-		List<IndexingCommand> cmds = new ArrayList<>(1);
-		cmds.add(cmd);
-		indexNonRecursive(cmds);
-	}
+    @Override
+    public void refresh() {
+        this.esa.refresh();
+    }
 
-	@Override
-	public void indexNonRecursive(List<IndexingCommand> cmds) throws ClientException {
-		if (!isReady()) {
-			stackCommands(cmds);
-			return;
-		}
-		if (log.isDebugEnabled()) {
-			log.debug("Process indexing commands: " + Arrays.toString(cmds.toArray()));
-		}
-		esi.indexNonRecursive(cmds);
-	}
+    @Override
+    public void refreshRepositoryIndex(String repositoryName) {
+        this.esa.refreshRepositoryIndex(repositoryName);
+    }
 
-	protected void stackCommands(List<IndexingCommand> cmds) {
-		if (log.isDebugEnabled()) {
-			log.debug("Delaying indexing commands: Waiting for Index to be initialized."
-					+ Arrays.toString(cmds.toArray()));
-		}
-		stackedCommands.addAll(cmds);
-	}
+    @Override
+    public void flush() {
+        this.esa.flush();
+    }
 
-	@Override
-	public void runIndexingWorker(List<IndexingCommand> cmds) {
-		if (!isReady()) {
-			stackCommands(cmds);
-			return;
-		}
-		runIndexingWorkerCount.incrementAndGet();
-		try {
-			dispatchWork(cmds);
-		} finally {
-			runIndexingWorkerCount.decrementAndGet();
-		}
-	}
+    @Override
+    public void flushRepositoryIndex(String repositoryName) {
+        this.esa.flushRepositoryIndex(repositoryName);
+    }
 
-	/**
-	 * Dispatch jobs between sync and async worker
-	 */
-	protected void dispatchWork(List<IndexingCommand> cmds) {
-		Map<String, List<IndexingCommand>> syncCommands = new HashMap<>();
-		Map<String, List<IndexingCommand>> asyncCommands = new HashMap<>();
-		for (IndexingCommand cmd : cmds) {
-			if (cmd.isSync()) {
-				List<IndexingCommand> syncCmds = syncCommands.get(cmd.getRepositoryName());
-				if (syncCmds == null) {
-					syncCmds = new ArrayList<>();
-				}
-				syncCmds.add(cmd);
-				syncCommands.put(cmd.getRepositoryName(), syncCmds);
-			} else {
-				List<IndexingCommand> asyncCmds = asyncCommands.get(cmd.getRepositoryName());
-				if (asyncCmds == null) {
-					asyncCmds = new ArrayList<>();
-				}
-				asyncCmds.add(cmd);
-				asyncCommands.put(cmd.getRepositoryName(), asyncCmds);
-			}
-		}
-		runIndexingSyncWorker(syncCommands);
-		scheduleIndexingAsyncWorker(asyncCommands);
-	}
+    @Override
+    public void optimize() {
+        this.esa.optimize();
+    }
 
-	protected void scheduleIndexingAsyncWorker(Map<String, List<IndexingCommand>> asyncCommands) {
-		if (asyncCommands.isEmpty()) {
-			return;
-		}
-		WorkManager wm = Framework.getLocalService(WorkManager.class);
-		for (String repositoryName : asyncCommands.keySet()) {
-			IndexingWorker idxWork = new IndexingWorker(repositoryName, asyncCommands.get(repositoryName));
-			// we are in afterCompletion don't wait for a commit
-			wm.schedule(idxWork, false);
-		}
-	}
+    @Override
+    public void optimizeRepositoryIndex(String repositoryName) {
+        this.esa.optimizeRepositoryIndex(repositoryName);
+    }
 
-	protected void runIndexingSyncWorker(Map<String, List<IndexingCommand>> syncCommands) {
-		if (syncCommands.isEmpty()) {
-			return;
-		}
-		Transaction transaction = TransactionHelper.suspendTransaction();
-		try {
-			for (String repositoryName : syncCommands.keySet()) {
-				IndexingWorker idxWork = new IndexingWorker(repositoryName, syncCommands.get(repositoryName));
-				idxWork.run();
-			}
-		} finally {
-			if (transaction != null) {
-				TransactionHelper.resumeTransaction(transaction);
-			}
+    @Override
+    public void optimizeIndex(String indexName) {
+        this.esa.optimizeIndex(indexName);
+    }
 
-		}
-	}
+    // ES Indexing =============================================================
 
-	@Override
-	public void runReindexingWorker(String repositoryName, String nxql) {
-		if (nxql == null || nxql.isEmpty()) {
-			throw new IllegalArgumentException("Expecting an NXQL query");
-		}
-		ScrollingIndexingWorker worker = new ScrollingIndexingWorker(repositoryName, nxql);
-		WorkManager wm = Framework.getLocalService(WorkManager.class);
-		wm.schedule(worker);
-	}
-	
-	/* ========== 'FORK' for zero down time Es re-indexing ========== */
-	
-	@Override
-	public boolean reIndexAllDocumentsWithZeroDownTime(String repository)
-			throws EsStateCheckException, ReIndexingException {
-		return this.esi.reIndexAllDocumentsWithZeroDownTime(repository);
-	}
-	
-	@Override
-	public boolean isZeroDownTimeReIndexingInProgress(String repository) throws InterruptedException {
-		return this.esa.isZeroDownTimeReIndexingInProgress(repository);
-	}
-	
-	// FIXME: to remove when new service exposition will be ok (Framework.getService)
-	public OttcElasticSearchServiceImpl getEsService() {
-		return this.ess;
-	}
+    @Override
+    public void indexNonRecursive(IndexingCommand cmd) throws ClientException {
+        List<IndexingCommand> cmds = new ArrayList<>(1);
+        cmds.add(cmd);
+        this.indexNonRecursive(cmds);
+    }
 
-	// ES Search ===============================================================
-	@Override
-	public DocumentModelList query(NxQueryBuilder queryBuilder) throws ClientException {
-		return ess.query(queryBuilder);
-	}
+    @Override
+    public void indexNonRecursive(List<IndexingCommand> cmds) throws ClientException {
+        if (!this.isReady()) {
+            this.stackCommands(cmds);
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Process indexing commands: " + Arrays.toString(cmds.toArray()));
+        }
+        this.esi.indexNonRecursive(cmds);
+    }
 
-	@Override
-	public EsResult queryAndAggregate(NxQueryBuilder queryBuilder) throws ClientException {
-		return ess.queryAndAggregate(queryBuilder);
-	}
+    protected void stackCommands(List<IndexingCommand> cmds) {
+        if (log.isDebugEnabled()) {
+            log.debug("Delaying indexing commands: Waiting for Index to be initialized." + Arrays.toString(cmds.toArray()));
+        }
+        this.stackedCommands.addAll(cmds);
+    }
 
-	@Deprecated
-	@Override
-	public DocumentModelList query(CoreSession session, String nxql, int limit, int offset, SortInfo... sortInfos)
-			throws ClientException {
-		NxQueryBuilder query = new NxQueryBuilder(session).nxql(nxql).limit(limit).offset(offset).addSort(sortInfos);
-		return query(query);
-	}
+    @Override
+    public void runIndexingWorker(List<IndexingCommand> cmds) {
+        if (!this.isReady()) {
+            this.stackCommands(cmds);
+            return;
+        }
+        this.runIndexingWorkerCount.incrementAndGet();
+        try {
+            this.dispatchWork(cmds);
+        } finally {
+            this.runIndexingWorkerCount.decrementAndGet();
+        }
+    }
 
-	@Deprecated
-	@Override
-	public DocumentModelList query(CoreSession session, QueryBuilder queryBuilder, int limit, int offset,
-			SortInfo... sortInfos) throws ClientException {
-		NxQueryBuilder query = new NxQueryBuilder(session).esQuery(queryBuilder).limit(limit).offset(offset)
-				.addSort(sortInfos);
-		return query(query);
-	}
+    /**
+     * Dispatch jobs between sync and async worker
+     */
+    protected void dispatchWork(List<IndexingCommand> cmds) {
+        Map<String, List<IndexingCommand>> syncCommands = new HashMap<>();
+        Map<String, List<IndexingCommand>> asyncCommands = new HashMap<>();
+        for (IndexingCommand cmd : cmds) {
+            if (cmd.isSync()) {
+                List<IndexingCommand> syncCmds = syncCommands.get(cmd.getRepositoryName());
+                if (syncCmds == null) {
+                    syncCmds = new ArrayList<>();
+                }
+                syncCmds.add(cmd);
+                syncCommands.put(cmd.getRepositoryName(), syncCmds);
+            } else {
+                List<IndexingCommand> asyncCmds = asyncCommands.get(cmd.getRepositoryName());
+                if (asyncCmds == null) {
+                    asyncCmds = new ArrayList<>();
+                }
+                asyncCmds.add(cmd);
+                asyncCommands.put(cmd.getRepositoryName(), asyncCmds);
+            }
+        }
+        this.runIndexingSyncWorker(syncCommands);
+        this.scheduleIndexingAsyncWorker(asyncCommands);
+    }
 
-	// misc ====================================================================
-	private boolean isReady() {
-		return (esa != null) && esa.isReady();
-	}
+    protected void scheduleIndexingAsyncWorker(Map<String, List<IndexingCommand>> asyncCommands) {
+        if (asyncCommands.isEmpty()) {
+            return;
+        }
+        WorkManager wm = Framework.getLocalService(WorkManager.class);
+        for (String repositoryName : asyncCommands.keySet()) {
+            IndexingWorker idxWork = new IndexingWorker(repositoryName, asyncCommands.get(repositoryName));
+            // we are in afterCompletion don't wait for a commit
+            wm.schedule(idxWork, false);
+        }
+    }
+
+    protected void runIndexingSyncWorker(Map<String, List<IndexingCommand>> syncCommands) {
+        if (syncCommands.isEmpty()) {
+            return;
+        }
+        Transaction transaction = TransactionHelper.suspendTransaction();
+        try {
+            for (String repositoryName : syncCommands.keySet()) {
+                IndexingWorker idxWork = new IndexingWorker(repositoryName, syncCommands.get(repositoryName));
+                idxWork.run();
+            }
+        } finally {
+            if (transaction != null) {
+                TransactionHelper.resumeTransaction(transaction);
+            }
+
+        }
+    }
+
+    @Override
+    public void runReindexingWorker(String repositoryName, String nxql) {
+        if ((nxql == null) || nxql.isEmpty()) {
+            throw new IllegalArgumentException("Expecting an NXQL query");
+        }
+        ScrollingIndexingWorker worker = new ScrollingIndexingWorker(repositoryName, nxql);
+        WorkManager wm = Framework.getLocalService(WorkManager.class);
+        wm.schedule(worker);
+    }
+
+    /* ========== 'FORK' for zero down time Es re-indexing ========== */
+
+    @Override
+    public boolean reIndexAllDocumentsWithZeroDownTime(String repository) throws ReIndexingStatusException, ReIndexingStateException, ReIndexingException {
+        return this.esi.reIndexAllDocumentsWithZeroDownTime(repository);
+    }
+
+    @Override
+    public boolean isZeroDownTimeReIndexingInProgress(String repository) throws InterruptedException {
+        return this.esa.isZeroDownTimeReIndexingInProgress(repository);
+    }
+
+    // FIXME: to remove when new service exposition will be ok (Framework.getService)
+    public OttcElasticSearchServiceImpl getEsService() {
+        return this.ess;
+    }
+
+    @Override
+    public String getConfiguredIndexOrAliasNameForRepository(String repositoryName) {
+        return this.esa.getConfiguredIndexOrAliasNameForRepository(repositoryName);
+    }
+
+    // ES Search ===============================================================
+    @Override
+    public DocumentModelList query(NxQueryBuilder queryBuilder) throws ClientException {
+        return this.ess.query(queryBuilder);
+    }
+
+    @Override
+    public EsResult queryAndAggregate(NxQueryBuilder queryBuilder) throws ClientException {
+        return this.ess.queryAndAggregate(queryBuilder);
+    }
+
+    @Deprecated
+    @Override
+    public DocumentModelList query(CoreSession session, String nxql, int limit, int offset, SortInfo... sortInfos) throws ClientException {
+        NxQueryBuilder query = new NxQueryBuilder(session).nxql(nxql).limit(limit).offset(offset).addSort(sortInfos);
+        return this.query(query);
+    }
+
+    @Deprecated
+    @Override
+    public DocumentModelList query(CoreSession session, QueryBuilder queryBuilder, int limit, int offset, SortInfo... sortInfos) throws ClientException {
+        NxQueryBuilder query = new NxQueryBuilder(session).esQuery(queryBuilder).limit(limit).offset(offset).addSort(sortInfos);
+        return this.query(query);
+    }
+
+    // misc ====================================================================
+    private boolean isReady() {
+        return (this.esa != null) && this.esa.isReady();
+    }
 
 }

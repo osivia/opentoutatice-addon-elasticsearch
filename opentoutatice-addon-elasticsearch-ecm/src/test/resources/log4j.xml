@@ -12,53 +12,59 @@
 
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern"
-				value="[%t] %d{HH:mm:ss,SSS} %-5p [%C{1}] %m%n" /> 
+				value="[%t] %d{HH:mm:ss,SSS} %-5p [%C{1}] %m%n" />
 		</layout>
 	</appender>
 
-	<appender name="FILE" class="org.apache.log4j.FileAppender">
+	<appender name="ES" class="org.apache.log4j.FileAppender">
 		<errorHandler
 			class="org.apache.log4j.helpers.OnlyOnceErrorHandler" />
-		<param name="File" value="target/trace.log" />
+		<param name="File"
+			value="target/zero-down-time-elasticsearch-reindexing.log" />
 		<param name="Append" value="false" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern"
-				value="[%t] %d{HH:mm:ss,SSS} [%t] %-5p [%C{1}] %m %X%n" />
+				value="[%t] %d{HH:mm:ss,SSS} [%t] %-5p [%C{1}] %m %n" />
 		</layout>
 	</appender>
 
 	<category name="org">
 		<priority value="WARN" />
-	</category> 
+	</category>
 
-	<category name="org.opentoutatice.elasticsearch">
-		<priority value="TRACE" />
+	<category name="org.tst.opentoutatice.elasticsearch">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="org.opentoutatice.elasticsearch"
+		additivity="true">
+		<appender-ref ref="ES" />
+		<priority value="INFO" />
 	</category>
 	
+	<category name="org.nuxeo.ecm.core.work.AbstractWork" additivity="true">
+		<appender-ref ref="ES" />
+		<priority value="INFO" />
+	</category>
+
+
 	<category name="fr.toutatice.ecm.elasticsearch">
-		<priority value="TRACE" />
+		<priority value="INFO" />
 	</category>
-	
+
 	<category name="org.nuxeo.elasticsearch">
-    	<priority value="DEBUG" />
-    </category>
-    
-  <!--   <category name="org.nuxeo.ecm.core.storage.sql.SessionImpl">
-    	<priority value="DEBUG" />
-    </category>
-    
-    <category name="org.nuxeo.ecm.core.management.jtajca">
-	  <priority value="TRACE" />
+		<priority value="INFO" />
 	</category>
-	
-	 <category name="org.nuxeo.runtime.transaction">
-	  <priority value="TRACE" />
-	</category> -->
+
+	<!-- <category name="org.nuxeo.ecm.core.storage.sql.SessionImpl"> <priority 
+		value="DEBUG" /> </category> <category name="org.nuxeo.ecm.core.management.jtajca"> 
+		<priority value="TRACE" /> </category> <category name="org.nuxeo.runtime.transaction"> 
+		<priority value="TRACE" /> </category> -->
 
 	<root>
 		<priority value="ERROR" />
 		<appender-ref ref="CONSOLE" />
-		<appender-ref ref="FILE" />
+		<!-- <appender-ref ref="FILE" /> -->
 	</root>
 
 </log4j:configuration>

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.api;
 
@@ -12,11 +12,13 @@ import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
  *
  */
 public interface OttcElasticSearchAdmin extends ElasticSearchAdmin {
-	
-	Map<String, String> getIndexNames();
 
-	Map<String, String> getRepoNames();
-	
-	boolean isZeroDownTimeReIndexingInProgress(String repository) throws InterruptedException;
+    Map<String, String> getIndexNames();
+
+    Map<String, String> getRepoNames();
+
+    String getConfiguredIndexOrAliasNameForRepository(String repositoryName);
+
+    boolean isZeroDownTimeReIndexingInProgress(String repository) throws InterruptedException;
 
 }

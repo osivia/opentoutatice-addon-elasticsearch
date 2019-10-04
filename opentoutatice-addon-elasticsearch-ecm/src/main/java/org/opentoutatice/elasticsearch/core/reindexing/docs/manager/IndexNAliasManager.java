@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.manager;
 
@@ -21,271 +21,284 @@ import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.TransientIndexUse;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.exception.IndexException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.name.IndexName;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.TransientIndexUse;
 
 /**
- * 
+ *
  * @author dchevrier <chevrier.david.pro@gmail.com>
  *
  */
 // TODO: manage IndexManager instance lifecycle in OSGI way? At least, in more integrated way?
 public class IndexNAliasManager {
 
-	private static final Log log = LogFactory.getLog(IndexNAliasManager.class);
+    private static final Log log = LogFactory.getLog(IndexNAliasManager.class);
 
-	private static final String FORMER_ALIAS_PREFIX = "former-";
+    private static final String FORMER_ALIAS_PREFIX = "former-";
 
-	private OttcElasticSearchIndexing elasticSearchIndexing;
+    private OttcElasticSearchIndexing elasticSearchIndexing;
 
-	/**
-	 * Es Admin Transport client.
-	 */
-	private AdminClient adminClient;
+    /**
+     * Es Admin Transport client.
+     */
+    private AdminClient adminClient;
 
-	private static IndexNAliasManager instance;
+    private static IndexNAliasManager instance;
 
-	private IndexNAliasManager(AdminClient adminClient) {
-		super();
-		this.adminClient = adminClient;
-	}
-	
-	public static synchronized void init(AdminClient adminClient) {
-		Validate.isTrue(instance == null);
-		instance = new IndexNAliasManager(adminClient);
-	}
+    private IndexNAliasManager(AdminClient adminClient) {
+        super();
+        this.adminClient = adminClient;
+    }
 
-	// Must be called after OttcElasticSearchComponent#applicationStarted
-	public static synchronized IndexNAliasManager get() {
-		return instance;
-	}
+    public static synchronized void init(AdminClient adminClient) {
+        Validate.isTrue(instance == null);
+        instance = new IndexNAliasManager(adminClient);
+    }
 
-	public Boolean indexExists(String indexName) {
-		return getAdminClient().indices().prepareExists(indexName).execute().actionGet().isExists();
-	}
+    // Must be called after OttcElasticSearchComponent#applicationStarted
+    public static synchronized IndexNAliasManager get() {
+        return instance;
+    }
 
-	public Boolean aliasExists(String aliasName) {
-		return getAdminClient().indices().prepareAliasesExist(aliasName).execute().actionGet().isExists();
-	}
+    public Boolean indexExists(String indexName) {
+        return this.getAdminClient().indices().prepareExists(indexName).execute().actionGet().isExists();
+    }
 
-	public String getIndexOfAlias(String alias) {
-		return getAdminClient().indices().prepareGetAliases(alias).get().getAliases().keysIt().next();
-	}
-	
-	public List<String> getIndicesOfAlias(String alias) throws NoSuchElementException {
-		List<String> indices = null;
-		
-		ImmutableOpenMap<String,List<AliasMetaData>> aliases = getAdminClient().indices().prepareGetAliases(alias).get().getAliases();
-		if(aliases != null && aliases.size() > 0) {
-			indices = new ArrayList<String>();
-			UnmodifiableIterator<String> keysIt = aliases.keysIt();
-			
-			while(keysIt.hasNext()) {
-				String index = keysIt.next();
-				if(index != null) {
-					indices.add(index);
-				}
-			}
-		} else {
-			throw new NoSuchElementException(String.format("Alias [%s] does not exist.", alias));
-		}
-		
-		return indices;
-	}
+    public Boolean aliasExists(String aliasName) {
+        return this.getAdminClient().indices().prepareAliasesExist(aliasName).execute().actionGet().isExists();
+    }
 
-	public synchronized String getTransientAlias(String repositoryName, TransientIndexUse use) {
-		String alias = null;
+    public String getIndexOfAlias(String alias) {
+        return this.getAdminClient().indices().prepareGetAliases(alias).get().getAliases().keysIt().next();
+    }
 
-		if (log.isTraceEnabled()) {
-			log.trace(String.format("Getting %s alias for repository [%s] ", use.getAlias(), repositoryName));
-		}
+    public List<String> getIndicesOfAlias(String alias) throws NoSuchElementException {
+        List<String> indices = null;
 
-		if (TransientIndexUse.Read.equals(use)) {
-			alias = TransientIndexUse.Read.getAlias();
-		} else {
-			alias = TransientIndexUse.Write.getAlias();
-		}
+        ImmutableOpenMap<String, List<AliasMetaData>> aliases = this.getAdminClient().indices().prepareGetAliases(alias).get().getAliases();
+        if ((aliases != null) && (aliases.size() > 0)) {
+            indices = new ArrayList<String>();
+            UnmodifiableIterator<String> keysIt = aliases.keysIt();
 
-		if (log.isTraceEnabled()) {
-			log.trace(String.format("%s alias for repository [%s]: [%s] ", use.getAlias(), repositoryName, alias));
-		}
+            while (keysIt.hasNext()) {
+                String index = keysIt.next();
+                if (index != null) {
+                    indices.add(index);
+                }
+            }
+        } else {
+            throw new NoSuchElementException(String.format("Alias [%s] does not exist.", alias));
+        }
 
-		return alias;
-	}
+        return indices;
+    }
 
-	public Boolean transientAliasesExists() {
-		return aliasExists(TransientIndexUse.Read.getAlias()) && aliasExists(TransientIndexUse.Write.getAlias());
-	}
+    public synchronized String getTransientAlias(String repositoryName, TransientIndexUse use) {
+        String alias = null;
 
-	/**
-	 * @param newIdxCfg
-	 * @return
-	 * @throws IndexException
-	 * @throws ExecutionException
-	 * @throws InterruptedException
-	 * @throws IndexExistenceException
-	 */
-	public OttcElasticSearchIndexOrAliasConfig createNewIndex(IndexName newIndexName, OttcElasticSearchIndexOrAliasConfig nxAliasCfg)
-			throws IndexException, InterruptedException, ExecutionException {
-		// Result
-		OttcElasticSearchIndexOrAliasConfig transientCfg = null;
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("Getting %s alias for repository [%s] ", use.getAlias(), repositoryName));
+        }
 
-		if (log.isDebugEnabled()) {
-			log.debug("About to create new index ...");
-		}
+        if (TransientIndexUse.Read.equals(use)) {
+            alias = TransientIndexUse.Read.getAlias();
+        } else {
+            alias = TransientIndexUse.Write.getAlias();
+        }
 
-		String newIndex = newIndexName.toString();
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("%s alias for repository [%s]: [%s] ", use.getAlias(), repositoryName, alias));
+        }
 
-		if (!indexExists(newIndex)) {
-			getAdminClient().indices().prepareCreate(newIndex).setSettings(nxAliasCfg.getSettings()).get();
+        return alias;
+    }
 
-			getAdminClient().indices().preparePutMapping(newIndex).setType(nxAliasCfg.getType())
-					.setSource(nxAliasCfg.getMapping()).get();
+    public Boolean mayTransientAliasesExist() {
+        return this.aliasExists(TransientIndexUse.Read.getAlias()) || this.aliasExists(TransientIndexUse.Write.getAlias());
+    }
 
-			transientCfg = nxAliasCfg.clone();
-			transientCfg.setName(newIndex);
+    public Boolean transientAliasesExist() {
+        return this.aliasExists(TransientIndexUse.Read.getAlias()) && this.aliasExists(TransientIndexUse.Write.getAlias());
+    }
 
-		} else {
-			throw new IndexException(String.format("Index [%s] yet exists.", transientCfg));
-		}
+    /**
+     * @param newIdxCfg
+     * @return
+     * @throws IndexException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     * @throws IndexExistenceException
+     */
+    public OttcElasticSearchIndexOrAliasConfig createNewIndex(IndexName newIndexName, OttcElasticSearchIndexOrAliasConfig nxAliasCfg)
+            throws IndexException, InterruptedException, ExecutionException {
+        // Result
+        OttcElasticSearchIndexOrAliasConfig transientCfg = null;
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("New index [%s] created.", transientCfg));
-		}
+        if (log.isDebugEnabled()) {
+            log.debug("About to create new index ...");
+        }
 
-		return transientCfg;
-	}
+        String newIndex = newIndexName.toString();
 
-	public void createAliasFor(String indexName, String aliasName) {
-		getAdminClient().indices().prepareAliases().addAlias(indexName, aliasName);
-	}
+        if (!this.indexExists(newIndex)) {
+            this.getAdminClient().indices().prepareCreate(newIndex).setSettings(nxAliasCfg.getSettings()).get();
 
-	/**
-	 * @param initialIdxName
-	 * @param newIdxName
-	 * @throws ReIndexingException 
-	 */
-	public void createTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("About to create transient aliases: [%s on (%s, %s) | %s on %s]...", TransientIndexUse.Read.getAlias(), initialIndex.toString(), newIndex.toString(),
-					TransientIndexUse.Write.getAlias(), newIndex.toString()));
-		}
+            this.getAdminClient().indices().preparePutMapping(newIndex).setType(nxAliasCfg.getType()).setSource(nxAliasCfg.getMapping()).get();
 
-		try {
-			// FIXME: check atomicity!!!!!!
-			getAdminClient().indices().prepareAliases()
-					.addAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
-					.addAlias(newIndex.toString(), TransientIndexUse.Read.getAlias())
-					.addAlias(newIndex.toString(), TransientIndexUse.Write.getAlias()).get();
-		} catch (ElasticsearchException e) {
-			throw new ReIndexingException(e);
-		}
+            transientCfg = nxAliasCfg.clone();
+            transientCfg.setName(newIndex);
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] created.", TransientIndexUse.Read.getAlias(), initialIndex.toString(), newIndex.toString(),
-					TransientIndexUse.Write.getAlias(), newIndex.toString()));
-		}
-	}
+        } else {
+            throw new IndexException(String.format("Index [%s] yet exists.", transientCfg));
+        }
 
-	public void updateEsAlias(String aliasName, IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("About to update [%s] alias: switch from [%s] index to [%s] index ...",
-					aliasName, initialIndex.toString(), newIndex.toString()));
-		}
+        if (log.isInfoEnabled()) {
+            log.info(String.format("New index [%s] created.", transientCfg));
+        }
 
-		try {
-			// FIXME: check atomicity!!!!!!
-			getAdminClient().indices().prepareAliases().addAlias(newIndex.toString(), aliasName)
-					.removeAlias(initialIndex.toString(), aliasName).get();
-		} catch (ElasticsearchException e) {
-			throw new ReIndexingException(e);
-		}
+        return transientCfg;
+    }
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Alias [%s] updated: switched from [%s] index to [%s] index.",
-					aliasName, initialIndex.toString(), newIndex.toString()));
-		}
-	}
+    public void createAliasFor(String indexName, String aliasName) {
+        this.getAdminClient().indices().prepareAliases().addAlias(indexName, aliasName);
+    }
 
-	public void updateEsFormerAlias(String aliasName, IndexName initialIndex) throws ReIndexingException {
-		String formerAlias = FORMER_ALIAS_PREFIX.concat(aliasName);
+    /**
+     * @param initialIdxName
+     * @param newIdxName
+     * @throws ReIndexingException
+     */
+    public void createTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to create transient aliases: [%s on (%s, %s) | %s on %s]...", TransientIndexUse.Read.getAlias(),
+                    initialIndex.toString(), newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+        }
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("About to update [%s] alias to [%s] index ...", formerAlias,
-					initialIndex.toString()));
-		}
+        try {
+            // FIXME: check atomicity!!!!!!
+            this.getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
+                    .addAlias(newIndex.toString(), TransientIndexUse.Read.getAlias()).addAlias(newIndex.toString(), TransientIndexUse.Write.getAlias()).get();
+        } catch (ElasticsearchException e) {
+            throw new ReIndexingException(e);
+        }
 
-		try {
-			if(aliasExists(aliasName)) {
-				String formerIndex = getIndexOfAlias(aliasName);
-				getAdminClient().indices().prepareAliases().removeAlias(formerIndex, formerAlias);
-			}
-			// FIXME: check atomicity!!!!!!
-			getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), formerAlias).get();
-		} catch (ElasticsearchException e) {
-			throw new ReIndexingException(e);
-		}
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] created.", TransientIndexUse.Read.getAlias(), initialIndex.toString(),
+                    newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+        }
+    }
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Alias [%s] updated to [%s] index.", formerAlias, initialIndex.toString()));
-		}
-	}
+    public void updateEsAlias(String aliasName, IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to update [%s] alias: switch from [%s] index to [%s] index ...", aliasName, initialIndex.toString(),
+                    newIndex.toString()));
+        }
 
-	/**
-	 * @param initialCfg
-	 * @param newCfg
-	 * @throws ReIndexingException
-	 */
-	public void deleteTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("About to delete transient aliases: [%s on (%s, %s) | %s on %s] ...", TransientIndexUse.Read.getAlias(), initialIndex.toString(), newIndex.toString(),
-					TransientIndexUse.Write.getAlias(), newIndex.toString()));
-		}
+        try {
+            // FIXME: check atomicity!!!!!!
+            this.getAdminClient().indices().prepareAliases().addAlias(newIndex.toString(), aliasName).removeAlias(initialIndex.toString(), aliasName).get();
+        } catch (ElasticsearchException e) {
+            throw new ReIndexingException(e);
+        }
 
-		try {
-			// FIXME: check atomicity!!!!!!
-			getAdminClient().indices().prepareAliases()
-					.removeAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
-					.removeAlias(newIndex.toString(), TransientIndexUse.Read.getAlias())
-					.removeAlias(newIndex.toString(), TransientIndexUse.Write.getAlias()).get();
-		} catch (ElasticsearchException e) {
-			throw new ReIndexingException(e);
-		}
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Alias [%s] updated: switched from [%s] index to [%s] index.", aliasName, initialIndex.toString(), newIndex.toString()));
+        }
+    }
 
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] deleted.", TransientIndexUse.Read.getAlias(), initialIndex.toString(), newIndex.toString(),
-					TransientIndexUse.Write.getAlias(), newIndex.toString()));
-		}
-	}
+    public void updateEsFormerAlias(String aliasName, IndexName initialIndex) throws ReIndexingException {
+        String formerAlias = this.getFormerAliasName(aliasName);
 
-	/**
-	 * @param name
-	 */
-	public void deleteIndex(String name) {
-		getAdminClient().indices().prepareDelete(name).get();
-	}
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to update [%s] alias to [%s] index ...", formerAlias, initialIndex.toString()));
+        }
 
-	// Set ElasticSearchIndexing on fly cause difficult to instantiate at startup
-	public OttcElasticSearchIndexing getElasticSearchIndexing() {
-		if (this.elasticSearchIndexing == null) {
-			setElasticSearchIndexing((OttcElasticSearchIndexing) Framework.getService(ElasticSearchIndexing.class));
-		}
-		return elasticSearchIndexing;
-	}
+        try {
+            if (this.aliasExists(aliasName)) {
+                String formerIndex = this.getIndexOfAlias(aliasName);
+                this.getAdminClient().indices().prepareAliases().removeAlias(formerIndex, formerAlias);
+            }
+            // FIXME: check atomicity!!!!!!
+            this.getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), formerAlias).get();
+        } catch (ElasticsearchException e) {
+            throw new ReIndexingException(e);
+        }
 
-	private void setElasticSearchIndexing(OttcElasticSearchIndexing elasticSearchIndexing) {
-		this.elasticSearchIndexing = elasticSearchIndexing;
-	}
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Alias [%s] updated to [%s] index.", formerAlias, initialIndex.toString()));
+        }
+    }
 
-	public AdminClient getAdminClient() {
-		return this.adminClient;
-	}
+    /**
+     * @param aliasName
+     * @return
+     */
+    public String getFormerAliasName(String aliasName) {
+        return FORMER_ALIAS_PREFIX.concat(aliasName);
+    }
 
-	public IndexNAliasManager adminClient(Client esClient) {
-		this.adminClient = esClient.admin();
-		return get();
-	}
+    /**
+     * @param initialCfg
+     * @param newCfg
+     * @throws ReIndexingException
+     */
+    public void deleteTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to delete transient aliases: [%s on (%s, %s) | %s on %s] ...", TransientIndexUse.Read.getAlias(),
+                    initialIndex.toString(), newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+        }
+
+        try {
+            // FIXME: check atomicity!!!!!!
+            this.getAdminClient().indices().prepareAliases().removeAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
+                    .removeAlias(newIndex.toString(), TransientIndexUse.Read.getAlias()).removeAlias(newIndex.toString(), TransientIndexUse.Write.getAlias())
+                    .get();
+        } catch (ElasticsearchException e) {
+            throw new ReIndexingException(e);
+        }
+
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] deleted.", TransientIndexUse.Read.getAlias(), initialIndex.toString(),
+                    newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+        }
+    }
+
+    /**
+     * @param name
+     */
+    public void deleteIndex(String name) {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to delete index [%s] ...", name));
+        }
+
+        this.getAdminClient().indices().prepareDelete(name).get();
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Index [%s] deleted", name));
+        }
+    }
+
+    // Set ElasticSearchIndexing on fly cause difficult to instantiate at startup
+    public OttcElasticSearchIndexing getElasticSearchIndexing() {
+        if (this.elasticSearchIndexing == null) {
+            this.setElasticSearchIndexing((OttcElasticSearchIndexing) Framework.getService(ElasticSearchIndexing.class));
+        }
+        return this.elasticSearchIndexing;
+    }
+
+    private void setElasticSearchIndexing(OttcElasticSearchIndexing elasticSearchIndexing) {
+        this.elasticSearchIndexing = elasticSearchIndexing;
+    }
+
+    public AdminClient getAdminClient() {
+        return this.adminClient;
+    }
+
+    public IndexNAliasManager adminClient(Client esClient) {
+        this.adminClient = esClient.admin();
+        return get();
+    }
 
 }
