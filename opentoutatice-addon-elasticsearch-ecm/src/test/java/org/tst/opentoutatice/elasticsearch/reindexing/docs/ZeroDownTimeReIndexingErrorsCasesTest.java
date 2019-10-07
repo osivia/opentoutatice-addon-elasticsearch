@@ -70,6 +70,9 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
 
     @Inject
     protected Session automationSession;
+    
+    protected static int nbAliases = 1;
+    protected static int nbIndices = 1;
 
     // Error is fired at end of initialization step
     @Test
@@ -94,8 +97,8 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
     public void testC_ReIndexingWithErrorOnSwitchingStep() throws Exception {
         // Es state = {nbIndices, nbAliases}
         int[] expectedInitialEsState = {2, 1};
-        // New index creating & former alias created
-        int[] expectedFinalEsState = {3, 2};
+        // New index creating 
+        int[] expectedFinalEsState = {3, 1};
         this.testErrorRecovery(ReIndexingRunnerStep.switching, expectedInitialEsState, expectedFinalEsState);
     }
 
@@ -104,9 +107,9 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
     @Test
     public void testD_ReIndexingWithErrorOnInitializationStepAndRecovery() throws Exception {
         // Es state = {nbIndices, nbAliases}
-        int[] expectedInitialEsState = {3, 2};
+        int[] expectedInitialEsState = {3, 1};
         // New index creating & read/write alias kept
-        int[] expectedFinalEsState = {4, 4};
+        int[] expectedFinalEsState = {4, 3};
         System.setProperty(ReIndexingTestConstants.FIRE_TEST_ERRORS_ON_STEP_RECOVERY_PROP, ReIndexingRunnerStep.initialization.name());
         this.testErrorRecovery(ReIndexingRunnerStep.initialization, expectedInitialEsState, expectedFinalEsState);
     }
@@ -116,9 +119,9 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
     @Test
     public void testE_ReIndexingWithErrorOnIndexingStepAndRecovery() throws Exception {
         // Es state = {nbIndices, nbAliases}
-        int[] expectedInitialEsState = {4, 4};
+        int[] expectedInitialEsState = {4, 3};
         // New index creating & read/write alias kept
-        int[] expectedFinalEsState = {5, 4};
+        int[] expectedFinalEsState = {5, 3};
         System.setProperty(ReIndexingTestConstants.FIRE_TEST_ERRORS_ON_STEP_RECOVERY_PROP, ReIndexingRunnerStep.indexing.name());
         // TODO: re-indexing is not launched cause bad initial state ("c'est normal")
         Exception exc = null;

@@ -25,7 +25,7 @@ public class ZeroDownTimeConfigFeature extends SimpleFeature {
         System.setProperty("elasticsearch.reindex.bucketWriteSize", "1");
 
         // To "suspend" re-indexing process
-        System.setProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "2");
+        System.setProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "3");
     }
 
 }

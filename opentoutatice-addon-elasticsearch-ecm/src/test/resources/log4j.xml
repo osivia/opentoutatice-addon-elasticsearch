@@ -39,7 +39,7 @@
 	<category name="org.opentoutatice.elasticsearch"
 		additivity="true">
 		<appender-ref ref="ES" />
-		<priority value="INFO" />
+		<priority value="DEBUG" />
 	</category>
 	
 	<category name="org.nuxeo.ecm.core.work.AbstractWork" additivity="true">

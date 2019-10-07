@@ -16,6 +16,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonNode;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
@@ -25,6 +26,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.nuxeo.ecm.automation.client.RemoteException;
 import org.nuxeo.ecm.automation.client.Session;
 import org.nuxeo.ecm.automation.client.model.Document;
 import org.nuxeo.ecm.automation.client.model.Documents;
@@ -33,6 +35,7 @@ import org.nuxeo.ecm.core.api.CoreInstance;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
+import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
@@ -114,14 +117,12 @@ public class ZeroDownTimeReIndexingTest {
 
     /**
      * Create docs.
+     * @throws Exception 
      *
-     * @throws InterruptedException
      * @throws IndexExistenceException
-     * @throws ExecutionException
-     * @throws IndexException
      */
     @Before
-    public void prepareRepository() throws InterruptedException, IndexException, ExecutionException {
+    public void prepareRepository() throws Exception {
         // FIXME: can be done with CoreRepoistory Test class?
         log.debug("Starting populate repo...");
 
@@ -143,13 +144,22 @@ public class ZeroDownTimeReIndexingTest {
             this.session.save();
 
             // Docs in container
+            DocumentModel docToVersion = null;
             for (int nb = 0; nb < NB_DOCS; nb++) {
                 String docSuffix = String.valueOf(nb + 1);
                 DocumentModel docModelToCreate = this.session.createDocumentModel(container.getPathAsString(), "Note_".concat(docSuffix), "Note");
-                this.session.createDocument(docModelToCreate);
+                docToVersion = this.session.createDocument(docModelToCreate);
                 // Commit to fire indexing
-                this.session.save();
             }
+            this.session.save();
+            
+            // For test:Are versions indexed?:
+            for(int nbVersion = 0; nbVersion < 3; nbVersion++) {
+                this.session.checkIn(docToVersion.getRef(), VersioningOption.MAJOR, StringUtils.EMPTY);
+                this.session.checkOut(docToVersion.getRef());
+            }
+            this.session.save();
+            
         } catch (Exception e) {
             TransactionHelper.setTransactionRollbackOnly();
         } finally {
@@ -165,6 +175,20 @@ public class ZeroDownTimeReIndexingTest {
             Thread.sleep(500);
         }
         this.esAdmin.refreshRepositoryIndex(this.session.getRepositoryName());
+        
+        // Test: are versions indexed?
+//        NxQueryBuilder qBuilder = new NxQueryBuilder(this.session);
+//        qBuilder.nxql("select * from Document");
+//        DocumentModelList allDocs = this.esService.query(qBuilder);
+//        log.debug("Docs in index from Core: ");
+//        for(DocumentModel doc : allDocs) {
+//            log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
+//        }
+//        Documents allDocsFromAutomation = this.esQueryFromAutomation("select * from Document");
+//        log.debug("Docs in index from Automation: ");
+//        for(DocumentModel doc : allDocs) {
+//            log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
+//        }
 
         log.debug("Repo populated.");
 
@@ -305,7 +329,7 @@ public class ZeroDownTimeReIndexingTest {
 
         // Check duplicates before end of suspend time
         Long suspendTime = Long.valueOf(Framework.getProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME));
-        Thread.sleep(suspendTime.longValue() - 1000);
+        Thread.sleep((suspendTime.longValue() - 1)*1000);
 
         // Query must have duplicates
         try (CoreSession session_ = CoreInstance.openCoreSessionSystem(repoName)) {
@@ -359,6 +383,25 @@ public class ZeroDownTimeReIndexingTest {
 
         // Asserts:
         this.checkFinalEsState(repoName, intermediateEsState, intermediateDocs);
+    }
+    
+    @Test
+    public void testF_ZeroDownTimeReIndexingYetRunningFromAutomation() throws Exception {
+        // Launch zero down time re-indexing
+        launchReIndexingFromAutomation(this.automationSession, users);
+        // Do not wait & launch concurrent call
+        RemoteException exc = null;
+        try {
+            launchReIndexingFromAutomation(this.automationSession, users);
+        } catch (RemoteException e) {
+            exc = e;
+        }
+
+        Assert.assertNotNull(exc);
+        JsonNode excAsJsonNode = ((org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause()).getOtherNodes()
+                .get("className");
+
+        Assert.assertEquals(ReIndexingStatusException.class.getCanonicalName(), excAsJsonNode.getTextValue());
     }
 
     /**

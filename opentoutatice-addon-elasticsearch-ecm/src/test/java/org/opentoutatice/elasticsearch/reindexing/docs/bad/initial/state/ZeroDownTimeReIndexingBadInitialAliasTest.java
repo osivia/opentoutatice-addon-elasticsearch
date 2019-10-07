@@ -7,13 +7,15 @@ import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.nuxeo.ecm.automation.client.RemoteException;
 import org.nuxeo.ecm.automation.client.Session;
 import org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable;
@@ -51,6 +53,7 @@ import com.google.inject.Inject;
         "fr.toutatice.ecm.platform.elasticsearch:usermanger-test.xml", "fr.toutatice.ecm.platform.elasticsearch:log4j.xml"})
 @Jetty(port = 18080)
 @RepositoryConfig(cleanup = Granularity.METHOD)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ZeroDownTimeReIndexingBadInitialAliasTest {
 
     private static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingBadInitialAliasTest.class);
@@ -73,26 +76,7 @@ public class ZeroDownTimeReIndexingBadInitialAliasTest {
     static final String[][] users = {{"VirtualAdministrator", "secret"}, {"Administrator", "Administrator"}};
 
     @Test
-    public void testZeroDownTimeReIndexingYetRunningFromAutomation() throws Exception {
-        // Launch zero down time re-indexing
-        this.launchReIndexingFromAutomation();
-        // Do not wait & launch concurrent call
-        RemoteException exc = null;
-        try {
-            this.launchReIndexingFromAutomation();
-        } catch (RemoteException e) {
-            exc = e;
-        }
-
-        Assert.assertNotNull(exc);
-        JsonNode excAsJsonNode = ((org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause()).getOtherNodes()
-                .get("className");
-
-        Assert.assertEquals(ReIndexingStatusException.class.getCanonicalName(), excAsJsonNode.getTextValue());
-    }
-
-    @Test
-    public void testZeroDownTimeReIndexingAliasWithManyIndicesFromAutomation() throws Exception {
+    public void testA_ZeroDownTimeReIndexingAliasWithManyIndicesFromAutomation() throws Exception {
         // Launch zero down time re-indexing
         RemoteException exc = null;
         try {
@@ -112,26 +96,26 @@ public class ZeroDownTimeReIndexingBadInitialAliasTest {
                 StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "[2] indices defined for alias [nxutest-alias]"));
     }
 
-    @Test
-    public void testZeroDownTimeReIndexingBadFormerAliasFromAutomation() throws Exception {
-        // Launch zero down time re-indexing
-        RemoteException exc = null;
-        try {
-            this.launchReIndexingFromAutomation();
-        } catch (RemoteException e) {
-            exc = e;
-        }
-
-        Assert.assertNotNull(exc);
-
-        RemoteThrowable remoteCause = (org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause();
-
-        JsonNode excAsJsonNode = remoteCause.getOtherNodes().get("className");
-        Assert.assertEquals(ReIndexingStateException.class.getCanonicalName(), excAsJsonNode.getTextValue());
-
-        Assert.assertEquals(Boolean.TRUE,
-                StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "One or both of transient aliases"));
-    }
+//    @Test
+//    public void testC_ZeroDownTimeReIndexingBadFormerAliasFromAutomation() throws Exception {
+//        // Launch zero down time re-indexing
+//        RemoteException exc = null;
+//        try {
+//            this.launchReIndexingFromAutomation();
+//        } catch (RemoteException e) {
+//            exc = e;
+//        }
+//
+//        Assert.assertNotNull(exc);
+//
+//        RemoteThrowable remoteCause = (org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause();
+//
+//        JsonNode excAsJsonNode = remoteCause.getOtherNodes().get("className");
+//        Assert.assertEquals(ReIndexingStateException.class.getCanonicalName(), excAsJsonNode.getTextValue());
+//
+//        Assert.assertEquals(Boolean.TRUE,
+//                StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "One or both of transient aliases"));
+//    }
 
 
     public String launchReIndexingFromAutomation() throws Exception {

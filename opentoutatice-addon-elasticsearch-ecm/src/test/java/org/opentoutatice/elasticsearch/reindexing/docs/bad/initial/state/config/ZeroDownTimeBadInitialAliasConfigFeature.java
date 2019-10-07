@@ -16,7 +16,6 @@ public class ZeroDownTimeBadInitialAliasConfigFeature extends ZeroDownTimeConfig
     @Override
     public void initialize(FeaturesRunner runner) throws Exception {
         super.initialize(runner);
-        // No alias and index creation at startup
         System.setProperty(ReIndexingTestConstants.CREATE_BAD_ALIAS_N_INDEX_ON_STARTUP_TEST, "true");
     }
 

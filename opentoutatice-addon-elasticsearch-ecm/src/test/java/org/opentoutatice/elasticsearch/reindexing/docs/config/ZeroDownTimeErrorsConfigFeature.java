@@ -15,7 +15,7 @@ public class ZeroDownTimeErrorsConfigFeature extends ZeroDownTimeConfigFeature {
     @Override
     public void initialize(FeaturesRunner runner) throws Exception {
         super.initialize(runner);
-        System.setProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "1500");
+        System.setProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "1");
     }
 
 }

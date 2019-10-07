@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.collect.UnmodifiableIterator;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
@@ -64,6 +65,22 @@ public class IndexNAliasManager {
 
     public Boolean indexExists(String indexName) {
         return this.getAdminClient().indices().prepareExists(indexName).execute().actionGet().isExists();
+    }
+    
+    public List<String> getIndices(){
+        List<String> indices = null;
+        
+        ImmutableOpenMap<String, IndexMetaData> indicesMap = getAdminClient().cluster().prepareState().get().getState().getMetaData().getIndices();
+        if (indicesMap != null) {
+            indices = new ArrayList<String>();
+            UnmodifiableIterator<String> indicesIt = indicesMap.keysIt();
+            while (indicesIt.hasNext()) {
+                String index = indicesIt.next();
+                indices.add(index);
+            }
+        }
+        
+        return indices;
     }
 
     public Boolean aliasExists(String aliasName) {
@@ -162,7 +179,7 @@ public class IndexNAliasManager {
     }
 
     public void createAliasFor(String indexName, String aliasName) {
-        this.getAdminClient().indices().prepareAliases().addAlias(indexName, aliasName);
+        this.getAdminClient().indices().prepareAliases().addAlias(indexName, aliasName).get();
     }
 
     /**
@@ -228,6 +245,23 @@ public class IndexNAliasManager {
 
         if (log.isInfoEnabled()) {
             log.info(String.format("Alias [%s] updated to [%s] index.", formerAlias, initialIndex.toString()));
+        }
+    }
+
+    public void fixAlias(String aliasName, String currentIndex, IndexName initialIndex) throws ReIndexingException {
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("About to fix [%s] alias: setting to [%s] index ...", aliasName, initialIndex.toString()));
+        }
+
+        try {
+            this.getAdminClient().indices().prepareAliases().removeAlias(currentIndex, aliasName).addAlias(initialIndex.toString(), aliasName).get();
+        } catch (ElasticsearchException e) {
+            throw new ReIndexingException(e);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("ALias [%s] fixed: set to [%s] index", aliasName, initialIndex.toString()));
         }
     }
 

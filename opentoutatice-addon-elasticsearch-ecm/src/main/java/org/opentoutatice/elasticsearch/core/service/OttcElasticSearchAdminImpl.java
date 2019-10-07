@@ -544,7 +544,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     public String getConfiguredIndexOrAliasNameForRepository(String repositoryName) {
         String ret = this.indexNames.get(repositoryName);
         if (ret == null) {
-            throw new NoSuchElementException("No index defined for repository: " + repositoryName);
+            throw new NoSuchElementException("No index or alias defined for repository: " + repositoryName);
         }
         return ret;
     }

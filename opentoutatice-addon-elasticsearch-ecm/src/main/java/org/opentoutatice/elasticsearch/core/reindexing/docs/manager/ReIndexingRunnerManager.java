@@ -5,6 +5,7 @@ package org.opentoutatice.elasticsearch.core.reindexing.docs.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
@@ -17,9 +18,11 @@ import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatusBuilder;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.ReIndexingWork;
@@ -47,11 +50,12 @@ public class ReIndexingRunnerManager {
     private OttcElasticSearchAdminImpl esAdmin;
     private OttcElasticSearchIndexing esIndexing;
 
-    private Map<String, ReIndexingRunnerStep> runnerStepByRepository = new HashMap<String, ReIndexingRunnerStep>(1);
-    private Map<String, Long> startTimeByRepository = new HashMap<String, Long>(1);
-    private Map<String, Long> endTimeByRepository = new HashMap<String, Long>(1);
-    
-    private Map<String, IndexName> lastIndexByRepository = new HashMap<String, IndexName>(1);
+    // For logs infos
+    private Map<String, ReIndexingRunnerStep> runnerStepByWork = new HashMap<String, ReIndexingRunnerStep>(1);
+    private Map<String, Long> startTimeByWork = new HashMap<String, Long>(1);
+    private Map<String, Long> endTimeByWork = new HashMap<String, Long>(1);
+    private Map<String, IndexName> newIndexByWork = new HashMap<String, IndexName>(1);
+    private Map<String, Long> initialNbDocsInBdd = new HashMap<String, Long>(1);
 
     private static ReIndexingRunnerManager instance;
 
@@ -166,12 +170,20 @@ public class ReIndexingRunnerManager {
         return isInProgress;
     }
 
-    protected void launchReIndexingRunner(OttcElasticSearchIndexOrAliasConfig aliasCfg) {
-        ReIndexingWork reIndexingWork = new ReIndexingWork(aliasCfg, this.getEsAdmin(), this.getEsIndexing());
+    protected void launchReIndexingRunner(OttcElasticSearchIndexOrAliasConfig aliasCfg) throws ReIndexingStateException {
+        // Get initial Es State for possible recovery
+        EsState initialEsState = null;
+        try {
+            initialEsState = EsStateChecker.get().getEsState();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ReIndexingStateException(e);
+        }
+
+        ReIndexingWork reIndexingWork = new ReIndexingWork(aliasCfg, this.getEsAdmin(), this.getEsIndexing(), initialEsState);
         this.getWorkManager().schedule(reIndexingWork);
 
         if (log.isInfoEnabled()) {
-            log.info(String.format("=============== ES Reindexing Process [LAUNCHED] for [%s] repository ===============", aliasCfg.getRepositoryName()));
+            logLaunchingInfos(reIndexingWork.getId(), aliasCfg.getRepositoryName(), initialEsState);
         }
     }
 
@@ -192,6 +204,32 @@ public class ReIndexingRunnerManager {
         }
 
         return inProgress;
+    }
+
+    // Logs =================================
+
+    private void logLaunchingInfos(String workId, String repositoryName, EsState initialEsState) {
+        StringBuffer sb = new StringBuffer(
+                String.format("=============== ES Reindexing Process [LAUNCHED] for [%s] repository ===============", repositoryName));
+        sb.append(System.lineSeparator());
+        sb.append(String.format("State: %s", initialEsState != null ? initialEsState.toString() : "---")).append(System.lineSeparator());
+
+        // For initial logs
+        long initialNbDocsInBdd = ReIndexingProcessStatusBuilder.get().getNbDocsInBdd(repositoryName);
+        // To be access for end status logs in work
+        ReIndexingRunnerManager.get().setInitialNbDocsInBddFor(workId, initialNbDocsInBdd);
+
+        sb.append(String.format("Number of documents in BDD to index: [%s] ", String.valueOf(initialNbDocsInBdd))).append(System.lineSeparator());
+
+        log.info(sb.toString());
+    }
+
+    public void cleanLogsInfos() {
+        this.runnerStepByWork.clear();
+        this.startTimeByWork.clear();
+        this.endTimeByWork.clear();
+        this.newIndexByWork.clear();
+        this.initialNbDocsInBdd.clear();
     }
 
     // Getters & Setters =====================
@@ -228,36 +266,43 @@ public class ReIndexingRunnerManager {
         this.esIndexing = esIndexing;
     }
 
-    public ReIndexingRunnerStep getRunnerStepFor(String repository) {
-        return this.runnerStepByRepository.get(repository);
+    public ReIndexingRunnerStep getRunnerStepFor(String work) {
+        return this.runnerStepByWork.get(work);
     }
 
-    public void setRunnerStepFor(String repository, ReIndexingRunnerStep step) {
-        this.runnerStepByRepository.put(repository, step);
+    public void setRunnerStepFor(String work, ReIndexingRunnerStep step) {
+        this.runnerStepByWork.put(work, step);
     }
 
-    public long getStartTimeFor(String repository) {
-        return this.startTimeByRepository.get(repository);
+    public long getStartTimeFor(String work) {
+        return this.startTimeByWork.get(work);
     }
 
-    public void setStartTimeFor(String repository) {
-        this.startTimeByRepository.put(repository, System.currentTimeMillis());
+    public void setStartTimeFor(String work) {
+        this.startTimeByWork.put(work, System.currentTimeMillis());
     }
 
-    public long getEndTimeFor(String repository) {
-        return this.endTimeByRepository.get(repository);
+    public long getEndTimeFor(String work) {
+        return this.endTimeByWork.get(work);
     }
 
-    public void setEndTimeFor(String repository) {
-        this.endTimeByRepository.put(repository, System.currentTimeMillis());
-    }
-    
-    public IndexName getLastIndexFor(String repository) {
-        return this.lastIndexByRepository.get(repository);
-    }
-    
-    public void setLastIndexFor(String repository, IndexName index) {
-        this.lastIndexByRepository.put(repository, index);
+    public void setEndTimeFor(String work) {
+        this.endTimeByWork.put(work, System.currentTimeMillis());
     }
 
+    public IndexName getNewIndexFor(String work) {
+        return this.newIndexByWork.get(work);
+    }
+
+    public void setNewIndexFor(String work, IndexName index) {
+        this.newIndexByWork.put(work, index);
+    }
+
+    public Long getInitialNbDocsInBddFor(String work) {
+        return this.initialNbDocsInBdd.get(work);
+    }
+
+    public void setInitialNbDocsInBddFor(String work, Long nbDocs) {
+        this.initialNbDocsInBdd.put(work, nbDocs);
+    }
 }
