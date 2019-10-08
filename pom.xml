@@ -14,7 +14,7 @@
 
 	<properties>
 		<nuxeo.version>6.1.1</nuxeo.version>
-		<nuxeo.opentoutatice.version>4.7-SNAPSHOT</nuxeo.opentoutatice.version>
+		<nuxeo.opentoutatice.version>4.7.17.2</nuxeo.opentoutatice.version>
 		<elasticsearch.transport.client.version>1.1.2</elasticsearch.transport.client.version>
 		<elasticsearch.rest.client.version>6.6.2</elasticsearch.rest.client.version>
 		<osv.toutatice.automation.client.version>4.7.19</osv.toutatice.automation.client.version>
@@ -96,26 +96,26 @@
 				<version>${nuxeo.version}</version>
 				<scope>test</scope>
 			</dependency>
-			
+
 			<!-- Osivia Toutatice automation client -->
 			<dependency>
 				<groupId>toutatice-portail.cms</groupId>
-        		<artifactId>toutatice-portail-cms-nuxeo-automation-client</artifactId>
-        		<version>${osv.toutatice.automation.client.version}</version>
-        		<scope>test</scope>
-   			 </dependency>
-   			 <dependency>
+				<artifactId>toutatice-portail-cms-nuxeo-automation-client</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
 				<groupId>org.osivia.portal.core</groupId>
-	        	<artifactId>osivia-portal-custom-lib-utils</artifactId>
-	        	<version>${osv.toutatice.automation.client.version}</version>
-	        	<scope>test</scope>
-	    	</dependency>
-	    	<dependency>
-	    		<groupId>org.osivia.portal</groupId>
-    			<artifactId>osivia-portal-api</artifactId>
-    			<version>${osv.toutatice.automation.client.version}</version>
-	        	<scope>test</scope>
-	    	</dependency>
+				<artifactId>osivia-portal-custom-lib-utils</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.osivia.portal</groupId>
+				<artifactId>osivia-portal-api</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>
@@ -137,7 +137,16 @@
 				<configuration>
 					<encoding>UTF-8</encoding>
 					<source>1.8</source>
-					<target>1.8</target> 
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<additionalOptions>
+						<additionalOption>-Xdoclint:none</additionalOption>
+					</additionalOptions>
 				</configuration>
 			</plugin>
 			<plugin>
