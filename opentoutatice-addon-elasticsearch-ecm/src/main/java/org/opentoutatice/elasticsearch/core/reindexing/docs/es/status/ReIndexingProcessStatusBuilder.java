@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.count.CountResponse;
 import org.nuxeo.ecm.core.api.CoreInstance;
 import org.nuxeo.ecm.core.api.CoreSession;
@@ -19,15 +21,14 @@ import org.opentoutatice.elasticsearch.api.OttcElasticSearchAdmin;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.RecoveringReIndexingException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexingRunnerStep;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexingRunnerStepStateStatus;
 
 /**
  * @author david
  *
  */
 public class ReIndexingProcessStatusBuilder {
+    
+    private static final Log log = LogFactory.getLog(ReIndexingProcessStatusBuilder.class);
 
     // FIXME: are versions indexed?
     // Note: COUNT(ecm:uuid) doesn't work???! -> return 0!
@@ -35,7 +36,7 @@ public class ReIndexingProcessStatusBuilder {
     public static final String NB_CREATED_DOCS_DURING_REINDEXING = "select ecm:uuid from Document where dc:created >= TIMESTAMP '%s'";
     public static final String NB_MODIFIED_DOCS_DURING_REINDEXING = "select ecm:uuid from Document where dc:modified >= TIMESTAMP '%s'";
     
-    public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 
     private static ReIndexingProcessStatusBuilder instance;
 
@@ -152,6 +153,9 @@ public class ReIndexingProcessStatusBuilder {
         CoreSession session = null;
         IterableQueryResult rows = null;
         try {
+            if(log.isDebugEnabled()) {
+                log.debug(String.format("Querying: [%s]", query));
+            }
             session = CoreInstance.openCoreSessionSystem(repository);
             rows = session.queryAndFetch(query, NXQL.NXQL, new Object[0]);
             nb = rows.size();

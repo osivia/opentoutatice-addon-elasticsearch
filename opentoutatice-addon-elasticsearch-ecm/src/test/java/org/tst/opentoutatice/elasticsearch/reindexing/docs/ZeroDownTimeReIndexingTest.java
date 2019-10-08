@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.nuxeo.ecm.core.api.CoreInstance;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
+import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
@@ -60,7 +62,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.exception.IndexException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatusBuilder;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
@@ -251,17 +253,24 @@ public class ZeroDownTimeReIndexingTest {
                 tx = TransactionHelper.startTransaction();
             }
             DocumentModel wsToCreate = this.session.createDocumentModel("Workspace");
+            // Create 2 documents
             createdWs = this.session.createDocument(wsToCreate);
+            this.session.createDocument(wsToCreate);
             log.debug(String.format("[========== Writing test launched for [%s] ==========]", createdWs.getId()));
+            
             // To fire indexing (sync for ws)
-
             ElasticSearchInlineListener.useSyncIndexing.set(true);
+            this.session.save();
+            
+            // Delete yet existing Note
+            this.session.removeDocument(new PathRef("/ws_container/Note_1"));
             this.session.save();
         } catch (Exception e) {
             TransactionHelper.setTransactionRollbackOnly();
         } finally {
             if (tx) {
                 TransactionHelper.commitOrRollbackTransaction();
+                log.debug(String.format("Documents created (& one removed) at [%s]", ReIndexingProcessStatusBuilder.dateFormat.format(new Date())));
                 TransactionHelper.startTransaction();
             }
         }
@@ -299,7 +308,7 @@ public class ZeroDownTimeReIndexingTest {
         Assert.assertNotNull(reFoundWs);
 
         DocumentModelList incrementedWorkspaces = this.getWorkspaces(repoName);
-        Assert.assertEquals(incrementedWorkspaces.size(), workspaces.size() + 1);
+        Assert.assertEquals(incrementedWorkspaces.size(), workspaces.size() + 2);
 
         // ===========================================================
 

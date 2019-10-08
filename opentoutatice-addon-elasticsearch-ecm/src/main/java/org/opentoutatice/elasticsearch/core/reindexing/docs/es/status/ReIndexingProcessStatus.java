@@ -18,7 +18,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexi
  */
 public class ReIndexingProcessStatus {
 
-    public static final String CONTRIBUTED_DOCS_DURING_REINDEXING_QUERY = "select count(ecm:uuid) from Document where (dc:created >= datetime '%s') or (dc:modified >= datetime '%s')";
+    public static final String CONTRIBUTED_DOCS_DURING_REINDEXING_QUERY = "select * from Document where (dc:created >= datetime '%s') or (dc:modified >= datetime '%s')";
 
     protected static DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
