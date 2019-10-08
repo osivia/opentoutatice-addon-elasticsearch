@@ -10,11 +10,10 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>4.7-SNAPSHOT</version>
+	<version>4.7-es-alias-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF45</nuxeo.version>
-		<!-- <nuxeo.version>6.1.1</nuxeo.version> -->
+		<nuxeo.version>6.1.1</nuxeo.version>
 		<nuxeo.opentoutatice.version>4.7-SNAPSHOT</nuxeo.opentoutatice.version>
 		<elasticsearch.transport.client.version>1.1.2</elasticsearch.transport.client.version>
 		<elasticsearch.rest.client.version>6.6.2</elasticsearch.rest.client.version>

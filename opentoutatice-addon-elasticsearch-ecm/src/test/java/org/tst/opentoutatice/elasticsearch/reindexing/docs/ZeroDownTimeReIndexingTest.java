@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -172,23 +173,24 @@ public class ZeroDownTimeReIndexingTest {
         }
 
         // Waiting Es indexation
-        Thread.sleep(500); // Commit time
+        Thread.sleep(1000); // Commit time
         while (this.esAdmin.isIndexingInProgress()) {
             Thread.sleep(500);
         }
         this.esAdmin.refreshRepositoryIndex(this.session.getRepositoryName());
         
         // Test: are versions indexed?
-//        NxQueryBuilder qBuilder = new NxQueryBuilder(this.session);
-//        qBuilder.nxql("select * from Document");
-//        DocumentModelList allDocs = this.esService.query(qBuilder);
-//        log.debug("Docs in index from Core: ");
-//        for(DocumentModel doc : allDocs) {
-//            log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
-//        }
+        NxQueryBuilder qBuilder = new NxQueryBuilder(this.session);
+        qBuilder.nxql("select * from Document");
+        DocumentModelList allDocs = this.esService.query(qBuilder);
+        log.debug("Docs in index from Core: ");
+        for(DocumentModel doc : allDocs) {
+            
+            log.debug(String.format("%s | %s | %s | %s", doc.getName(), doc.getVersionLabel(), doc.isVersion(), ReIndexingProcessStatusBuilder.dateFormat.format(((GregorianCalendar) doc.getPropertyValue("dc:created")).getTime())));
+        }
 //        Documents allDocsFromAutomation = this.esQueryFromAutomation("select * from Document");
 //        log.debug("Docs in index from Automation: ");
-//        for(DocumentModel doc : allDocs) {
+//        for(Document doc : allDocsFromAutomation) {
 //            log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
 //        }
 
