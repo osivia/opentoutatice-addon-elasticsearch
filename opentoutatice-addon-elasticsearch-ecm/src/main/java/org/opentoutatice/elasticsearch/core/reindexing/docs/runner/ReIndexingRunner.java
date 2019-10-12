@@ -232,7 +232,9 @@ public class ReIndexingRunner {
 
         WorkManager workManager = Framework.getService(WorkManager.class);
 
-        final String waitIndicatorForLogs = "...";
+        if(log.isInfoEnabled()) {
+            log.info("...");
+        }
         boolean awaitCompletion = false;
 
         do {
@@ -244,10 +246,7 @@ public class ReIndexingRunner {
                 log.trace(String.format("Await completed: [%s]", String.valueOf(awaitCompletion)));
             }
 
-            if (log.isInfoEnabled()) {
-                log.info(waitIndicatorForLogs);
-            }
-        } while (!(awaitCompletion = workManager.awaitCompletion(ElasticSearchConstants.INDEXING_QUEUE_ID, timeOut, TimeUnit.MILLISECONDS)));
+        } while (!(awaitCompletion = workManager.awaitCompletion(ReIndexingConstants.RENDEXING_QUEUE_ID, timeOut, TimeUnit.MILLISECONDS)));
 
         Validate.isTrue(awaitCompletion);
 

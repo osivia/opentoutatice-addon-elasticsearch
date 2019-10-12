@@ -52,7 +52,7 @@ public class ReIndexingWork extends AbstractWork {
 
     @Override
     public String getCategory() {
-        return ReIndexingConstants.REINDEXING_MANEGR_QUEUE_ID;
+        return ReIndexingConstants.REINDEXING_MANAGER_QUEUE_ID;
     }
 
     @Override

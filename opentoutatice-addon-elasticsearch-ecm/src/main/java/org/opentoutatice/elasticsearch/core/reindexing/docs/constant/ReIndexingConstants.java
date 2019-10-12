@@ -14,7 +14,7 @@ public interface ReIndexingConstants {
      */
     String REINDEXING_WAIT_LOOP_TIME = "ottc.reindexing.check.loop.period";
     
-    String REINDEXING_MANEGR_QUEUE_ID = "zeroDownTimeEsReIndexingManager";
+    String REINDEXING_MANAGER_QUEUE_ID = "zeroDownTimeEsReIndexingManager";
     
     String RENDEXING_QUEUE_ID = "zeroDownTimeEsReIndexing";
 

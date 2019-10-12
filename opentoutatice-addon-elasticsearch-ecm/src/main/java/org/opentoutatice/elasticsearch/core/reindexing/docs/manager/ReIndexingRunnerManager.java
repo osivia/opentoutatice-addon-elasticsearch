@@ -196,7 +196,7 @@ public class ReIndexingRunnerManager {
     public boolean isReIndexingInProgress(String repositoryName) throws InterruptedException {
         // Check at queue level for the moment
         // but could look at work level (getWorkManager().getWorkState(workId))
-        boolean inProgress = !this.getWorkManager().awaitCompletion(ReIndexingConstants.REINDEXING_MANEGR_QUEUE_ID, 100, TimeUnit.MILLISECONDS);
+        boolean inProgress = !this.getWorkManager().awaitCompletion(ReIndexingConstants.REINDEXING_MANAGER_QUEUE_ID, 100, TimeUnit.MILLISECONDS);
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
