@@ -200,14 +200,14 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
     }
 
     protected void logSearchResponse(SearchResponse response) {
-        if (log.isDebugEnabled()) {
-            log.debug("Response: " + response.toString());
+        if (log.isTraceEnabled()) {
+            log.trace("Response: " + response.toString());
         }
     }
 
     protected void logSearchRequest(SearchRequestBuilder request, NxQueryBuilder query) {
-        if (log.isDebugEnabled()) {
-            log.debug(String.format("Search query: curl -XGET 'http://localhost:9200/%s/%s/_search?pretty' -d '%s'", this.getSearchIndexesAsString(query),
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("Search query: curl -XGET 'http://localhost:9200/%s/%s/_search?pretty' -d '%s'", this.getSearchIndexesAsString(query),
                     DOC_TYPE, request.toString()));
         }
     }
