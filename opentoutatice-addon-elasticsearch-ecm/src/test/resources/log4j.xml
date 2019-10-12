@@ -79,7 +79,7 @@
 	<!-- Total & json response -->
 	<category name="fr.toutatice.ecm.elasticsearch" additivity="false">
 		<appender-ref ref="ES-QUERY" />
-		<priority value="DEBUG" />
+		<priority value="TRACE" />
 	</category>
 
 	<!-- <category name="org.nuxeo.ecm.core.storage.sql.SessionImpl"> <priority 

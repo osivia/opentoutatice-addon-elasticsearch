@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -18,6 +19,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -37,6 +40,7 @@ import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
+import org.nuxeo.ecm.platform.query.api.Bucket;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
@@ -63,6 +67,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexing
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
 import org.opentoutatice.elasticsearch.reindexing.docs.config.ZeroDownTimeConfigFeature;
 import org.opentoutatice.elasticsearch.reindexing.docs.feature.EmbeddedAutomationServerFeatureWithOsvClient;
@@ -340,23 +345,23 @@ public class ZeroDownTimeReIndexingTest {
         Thread.sleep((suspendTime.longValue() - 1) * 1000);
 
         // Query must have duplicates
-//        try (CoreSession session_ = CoreInstance.openCoreSessionSystem(repoName)) {
-//            NxQueryBuilder qBuilder = new NxQueryBuilder(session_);
-//            qBuilder.nxql(ALL_DOCS_QUERY);
-//
-//            SearchResponse response = ((OttcElasticSearchComponent) this.esService).getEsService().search(qBuilder);
-//            StringTerms duplicateAggs = response.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
-//            // Build duplicate list
-//            List<String> duplicateIds = new LinkedList<String>();
-//
-//            for (Bucket bucket : duplicateAggs.getBuckets()) {
-//                if (bucket.getDocCount() > 1) {
-//                    duplicateIds.add(bucket.getKey());
-//                }
-//            }
-//
-//            Assert.assertEquals(Boolean.TRUE, duplicateIds.size() > 0);
-//        }
+        try (CoreSession session_ = CoreInstance.openCoreSessionSystem(repoName)) {
+            NxQueryBuilder qBuilder = new NxQueryBuilder(session_);
+            qBuilder.nxql(ALL_DOCS_QUERY);
+
+            SearchResponse response = ((OttcElasticSearchComponent) this.esService).getEsService().search(qBuilder);
+            StringTerms duplicateAggs = response.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
+            // Build duplicate list
+            List<String> duplicateIds = new LinkedList<String>();
+
+            for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket bucket : duplicateAggs.getBuckets()) {
+                if (bucket.getDocCount() > 1) {
+                    duplicateIds.add(bucket.getKey());
+                }
+            }
+
+            Assert.assertEquals(Boolean.TRUE, duplicateIds.size() > 0);
+        }
         
         log.debug("------------------------------------------------------------------------------");
         long startTime = System.currentTimeMillis();
@@ -371,7 +376,7 @@ public class ZeroDownTimeReIndexingTest {
         Assert.assertEquals(allDocsInfirstIndex.size(), filteredDocs.size());
 
 
-        //waitReIndexing(repoName);
+        waitReIndexing(repoName);
         Assert.assertEquals(Boolean.FALSE, ReIndexingRunnerManager.get().isReIndexingInProgress(repoName));
 
         // For global tests

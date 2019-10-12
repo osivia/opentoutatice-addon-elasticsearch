@@ -22,7 +22,7 @@ public class ScrollingReIndexingWorker extends ScrollingIndexingWorker {
 
     @Override
     public String getCategory() {
-        return ReIndexingConstants.RENDEXING_QUEUE_ID;
+        return ReIndexingConstants.REINDEXING_QUEUE_ID;
     }
 
     @Override

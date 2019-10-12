@@ -16,6 +16,6 @@ public interface ReIndexingConstants {
     
     String REINDEXING_MANAGER_QUEUE_ID = "zeroDownTimeEsReIndexingManager";
     
-    String RENDEXING_QUEUE_ID = "zeroDownTimeEsReIndexing";
+    String REINDEXING_QUEUE_ID = "zeroDownTimeEsReIndexing";
 
 }

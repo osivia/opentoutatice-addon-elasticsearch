@@ -130,7 +130,7 @@ public class QueryES {
         // For performance logs
         long startTime = System.currentTimeMillis();
         if(log.isDebugEnabled()) {
-            log.debug(String.format("NXQL Query: [%s]", this.getNxQueryBuilder().getNxql()));
+            log.debug(String.format("NXQL Query: [%s]", this.query));
         }
         
         // Response

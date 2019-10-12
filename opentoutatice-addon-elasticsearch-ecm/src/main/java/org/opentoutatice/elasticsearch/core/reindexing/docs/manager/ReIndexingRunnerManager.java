@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.helper.Validate;
+import org.nuxeo.ecm.core.work.api.Work.State;
 import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
@@ -48,6 +49,8 @@ public class ReIndexingRunnerManager {
 
     private OttcElasticSearchAdminImpl esAdmin;
     private OttcElasticSearchIndexing esIndexing;
+    
+    private String currentWorkId;
 
     // For logs infos
     private Map<String, ReIndexingRunnerStep> runnerStepByWork = new HashMap<String, ReIndexingRunnerStep>(1);
@@ -179,6 +182,7 @@ public class ReIndexingRunnerManager {
         }
 
         ReIndexingWork reIndexingWork = new ReIndexingWork(aliasCfg, this.getEsAdmin(), this.getEsIndexing(), initialEsState);
+        this.setCurrentWorkId(reIndexingWork.getId());
         this.getWorkManager().schedule(reIndexingWork);
 
         if (log.isInfoEnabled()) {
@@ -194,10 +198,9 @@ public class ReIndexingRunnerManager {
      * @throws InterruptedException
      */
     public boolean isReIndexingInProgress(String repositoryName) throws InterruptedException {
-        // Check at queue level for the moment
-        // but could look at work level (getWorkManager().getWorkState(workId))
-        boolean inProgress = !this.getWorkManager().awaitCompletion(ReIndexingConstants.REINDEXING_MANAGER_QUEUE_ID, 100, TimeUnit.MILLISECONDS);
-
+        State workState = this.getWorkManager().getWorkState(getCurrentWorkId());
+        boolean inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
+        
         if (log.isTraceEnabled()) {
             log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
         }
@@ -263,6 +266,14 @@ public class ReIndexingRunnerManager {
 
     private void setEsIndexing(OttcElasticSearchIndexing esIndexing) {
         this.esIndexing = esIndexing;
+    }
+    
+    public String getCurrentWorkId() {
+        return currentWorkId;
+    }
+    
+    private void setCurrentWorkId(String currentWorkId) {
+        this.currentWorkId = currentWorkId;
     }
 
     public ReIndexingRunnerStep getRunnerStepFor(String work) {

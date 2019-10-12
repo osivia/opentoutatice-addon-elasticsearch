@@ -246,7 +246,7 @@ public class ReIndexingRunner {
                 log.trace(String.format("Await completed: [%s]", String.valueOf(awaitCompletion)));
             }
 
-        } while (!(awaitCompletion = workManager.awaitCompletion(ReIndexingConstants.RENDEXING_QUEUE_ID, timeOut, TimeUnit.MILLISECONDS)));
+        } while (!(awaitCompletion = workManager.awaitCompletion(ReIndexingConstants.REINDEXING_QUEUE_ID, timeOut, TimeUnit.MILLISECONDS)));
 
         Validate.isTrue(awaitCompletion);
 

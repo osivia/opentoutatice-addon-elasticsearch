@@ -153,12 +153,12 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
     // Re-indexing FORK ===========================
     // protected-> public for tests
     public SearchResponse search(NxQueryBuilder query) {
-        // For logs
-        long startTime = System.currentTimeMillis();
-        
         Context stopWatch = this.searchTimer.time();
         try {
             SearchRequestBuilder request = this.buildEsSearchRequest(query);
+            
+            // For logs performance
+            long startTime = System.currentTimeMillis();
 
             // FIXME: Duplicate re-indexing filter is managed, for the moment, for one repository configuration only
             if (query.getSearchRepositories().size() == 1) {
@@ -172,12 +172,21 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
                     }
                 }
             }
-
-            this.logSearchRequest(request, query);
-            SearchResponse response = request.execute().actionGet();
             
             if(log.isDebugEnabled()) {
                 long duration = System.currentTimeMillis() - startTime;
+                log.debug(String.format("#Add aggregate: [TE_%s_TE] ms", String.valueOf(duration)));
+            }
+
+            this.logSearchRequest(request, query);
+            
+            // For logs performance
+            long startTime_ = System.currentTimeMillis();
+            
+            SearchResponse response = request.execute().actionGet();
+            
+            if(log.isDebugEnabled()) {
+                long duration = System.currentTimeMillis() - startTime_;
                 log.debug(String.format("#Es search: [TE_%s_TE] ms", String.valueOf(duration)));
             }
             
