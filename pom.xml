@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>elasticsearch plugin - parent</name>
 	<description>Addon elasticsearch service</description>
-	<version>4.7-es-alias-SNAPSHOT</version>
+	<version>4.7-es-alias-RC04</version>
 
 	<properties>
 		<nuxeo.version>6.1.1</nuxeo.version>
@@ -179,7 +179,7 @@
 		<url>https://github.com/osivia/opentoutatice-addon-elasticsearch</url>
 		<connection>scm:git:ssh://git@github.com/osivia/opentoutatice-addon-elasticsearch.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/osivia/opentoutatice-addon-elasticsearch.git</developerConnection>
-		<tag>4.7-es-alias</tag>
+		<tag>4.7-es-alias-RC04</tag>
 	</scm>
 
 	<distributionManagement>
