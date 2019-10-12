@@ -35,7 +35,6 @@ import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.ecm.core.repository.RepositoryService;
 import org.nuxeo.ecm.core.work.api.Work;
 import org.nuxeo.ecm.core.work.api.WorkManager;
-import org.nuxeo.elasticsearch.ElasticSearchComponent;
 import org.nuxeo.elasticsearch.api.EsResult;
 import org.nuxeo.elasticsearch.commands.IndexingCommand;
 import org.nuxeo.elasticsearch.config.ElasticSearchDocWriterDescriptor;
@@ -56,6 +55,7 @@ import org.opentoutatice.elasticsearch.api.OttcElasticSearchService;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.works.ScrollingReIndexingWorker;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchAdminImpl;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchIndexingImpl;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchServiceImpl;
@@ -70,7 +70,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class OttcElasticSearchComponent extends DefaultComponent implements OttcElasticSearchAdmin, OttcElasticSearchIndexing, OttcElasticSearchService {
 
-    private static final Log log = LogFactory.getLog(ElasticSearchComponent.class);
+    private static final Log log = LogFactory.getLog(OttcElasticSearchComponent.class);
 
     private static final String EP_REMOTE = "elasticSearchRemote";
 
@@ -473,17 +473,41 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
         }
     }
 
+    // @Override
+    // public void runReindexingWorker(String repositoryName, String nxql) {
+    // if ((nxql == null) || nxql.isEmpty()) {
+    // throw new IllegalArgumentException("Expecting an NXQL query");
+    // }
+    // ScrollingIndexingWorker worker = new ScrollingIndexingWorker(repositoryName, nxql);
+    // WorkManager wm = Framework.getLocalService(WorkManager.class);
+    // wm.schedule(worker);
+    // }
+
+    /* ========== 'FORK' for zero down time Es re-indexing ========== */
+
     @Override
     public void runReindexingWorker(String repositoryName, String nxql) {
+        runReindexingWorker(repositoryName, nxql, false);
+    }
+
+    public void runReindexingWorker(String repositoryName, String nxql, boolean zeroDownTime) {
+        ScrollingIndexingWorker worker = null;
+        WorkManager wm = Framework.getLocalService(WorkManager.class);
+
         if ((nxql == null) || nxql.isEmpty()) {
             throw new IllegalArgumentException("Expecting an NXQL query");
         }
-        ScrollingIndexingWorker worker = new ScrollingIndexingWorker(repositoryName, nxql);
-        WorkManager wm = Framework.getLocalService(WorkManager.class);
+        // To use different queue
+        if (!zeroDownTime) {
+            worker = new ScrollingIndexingWorker(repositoryName, nxql);
+        } else {
+            worker = new ScrollingReIndexingWorker(repositoryName, nxql);
+
+        }
+
         wm.schedule(worker);
     }
 
-    /* ========== 'FORK' for zero down time Es re-indexing ========== */
 
     @Override
     public boolean reIndexAllDocumentsWithZeroDownTime(String repository) throws ReIndexingStatusException, ReIndexingStateException, ReIndexingException {

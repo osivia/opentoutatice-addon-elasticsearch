@@ -18,6 +18,7 @@ import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.constant.ReIndexingConstants;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
@@ -38,8 +39,6 @@ import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchAdminImpl;
 public class ReIndexingRunnerManager {
 
     private static final Log log = LogFactory.getLog(ReIndexingRunnerManager.class);
-
-    public static final String REINDEXING_QUEUE_ID = "zeroDownTimeEsReIndexing";
 
     private static final String DOC_TYPE = "doc";
 
@@ -197,7 +196,7 @@ public class ReIndexingRunnerManager {
     public boolean isReIndexingInProgress(String repositoryName) throws InterruptedException {
         // Check at queue level for the moment
         // but could look at work level (getWorkManager().getWorkState(workId))
-        boolean inProgress = !this.getWorkManager().awaitCompletion(REINDEXING_QUEUE_ID, 100, TimeUnit.MILLISECONDS);
+        boolean inProgress = !this.getWorkManager().awaitCompletion(ReIndexingConstants.REINDEXING_MANEGR_QUEUE_ID, 100, TimeUnit.MILLISECONDS);
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));

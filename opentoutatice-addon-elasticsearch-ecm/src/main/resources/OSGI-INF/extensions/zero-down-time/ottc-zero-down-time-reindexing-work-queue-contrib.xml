@@ -4,14 +4,27 @@
 
 	<extension point="queues"
 		target="org.nuxeo.ecm.core.work.service">
-		
-		<queue id="zeroDownTimeEsReIndexing">
-			<name>Zero Down Time ElasticSearch Re-Indexing</name>
-			<maxThreads>${elasticsearch.zero.down.time.reindexing.maxThreads:=1}</maxThreads>
+	
+		<!-- To manage one re-indexing work at time -->
+		<queue id="zeroDownTimeEsReIndexingManager">
+			<name>Zero Down Time ElasticSearch Re-Indexing Manager</name>
+			<maxThreads>1</maxThreads>
 			<!-- queue capacity -->
-			<capacity>${elasticsearch.zero.down.time.reindexing.capacity:=1}</capacity>
+			<capacity>1</capacity>
+			<category>zeroDownTimeEsReIndexingManager</category>
+			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=60}
+			</clearCompletedAfterSeconds>
+		</queue>
+
+		<!-- For re-indexing use only -->
+		<queue id="zeroDownTimeEsReIndexing">
+			<name>Zero Down Time ElasticSearch Re-Indexing queue</name>
+			<maxThreads>${elasticsearch.zero.down.time.reindexing.maxThreads:=4}
+			</maxThreads>
+			<!-- queue capacity: -1 by default -->
 			<category>zeroDownTimeEsReIndexing</category>
-			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=60}</clearCompletedAfterSeconds>
+			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=60}
+			</clearCompletedAfterSeconds>
 		</queue>
 	</extension>
 

@@ -27,6 +27,18 @@
 				value="[%t] %d{HH:mm:ss,SSS} [%t] %-5p [%C{1}] %m %n" />
 		</layout>
 	</appender>
+	
+	<appender name="ES-QUERY" class="org.apache.log4j.FileAppender">
+		<errorHandler
+			class="org.apache.log4j.helpers.OnlyOnceErrorHandler" />
+		<param name="File"
+			value="target/es-queries-monitoring.log" />
+		<param name="Append" value="false" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern"
+				value="[%t] %d{HH:mm:ss,SSS} [%t] %-5p [%C{1}] %m %n" />
+		</layout>
+	</appender>
 
 	<category name="org">
 		<priority value="WARN" />
@@ -39,7 +51,7 @@
 	<category name="org.opentoutatice.elasticsearch"
 		additivity="true">
 		<appender-ref ref="ES" />
-		<priority value="DEBUG" />
+		<priority value="INFO" />
 	</category>
 	
 	<category name="org.nuxeo.ecm.core.work.AbstractWork" additivity="true">
@@ -48,12 +60,26 @@
 	</category>
 
 
-	<category name="fr.toutatice.ecm.elasticsearch">
-		<priority value="INFO" />
+	<category name="fr.toutatice.ecm.elasticsearch" additivity="true">
+		<appender-ref ref="FILE" />
+		<priority value="DEBUG" />
 	</category>
 
 	<category name="org.nuxeo.elasticsearch">
 		<priority value="INFO" />
+	</category>
+	
+	<!-- Queries monitoring -->
+	<!-- Es part -->
+	<category name="org.opentoutatice.elasticsearch.core.service.OttcElasticSearchServiceImpl" additivity="false">
+		<appender-ref ref="ES-QUERY" />
+		<priority value="DEBUG" />
+	</category>
+	<!-- Automation -->
+	<!-- Total & json response -->
+	<category name="fr.toutatice.ecm.elasticsearch" additivity="false">
+		<appender-ref ref="ES-QUERY" />
+		<priority value="DEBUG" />
 	</category>
 
 	<!-- <category name="org.nuxeo.ecm.core.storage.sql.SessionImpl"> <priority 

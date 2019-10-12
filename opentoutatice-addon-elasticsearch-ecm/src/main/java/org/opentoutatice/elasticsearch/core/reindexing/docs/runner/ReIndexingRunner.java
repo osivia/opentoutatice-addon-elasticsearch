@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.elasticsearch.ElasticSearchConstants;
 import org.nuxeo.runtime.api.Framework;
+import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.constant.ReIndexingConstants;
@@ -194,7 +195,7 @@ public class ReIndexingRunner {
 
             // Launch asynchronous indexing
             // FIXME: are async exceptions throwned in calling thread??
-            this.getEsIndexing().runReindexingWorker(repository, REINDEX_REPOSITORY_QUERY);
+            ((OttcElasticSearchComponent) this.getEsIndexing()).runReindexingWorker(repository, REINDEX_REPOSITORY_QUERY, true);
 
             if (log.isInfoEnabled()) {
                 log.info("Re-indexing launched.");
@@ -220,15 +221,13 @@ public class ReIndexingRunner {
 
     protected void waitReIndexing() throws InterruptedException {
         // await timeout in ms
-        long timeOut = 100;
-
-        long loopWaitTime = Long.valueOf(Framework.getProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "30")).longValue();
-        TimeUnit unit = TimeUnit.SECONDS;
+        final long timeOut = 100;
+        final long loopWaitTime = Long.valueOf(Framework.getProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME, "30")).longValue();
 
         long startTime = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             log.info(String.format("Starting waiting for re-indexing every [%s %s]", String.valueOf(loopWaitTime),
-                    StringUtils.lowerCase(String.valueOf(unit.toString()))));
+                    StringUtils.lowerCase(String.valueOf(TimeUnit.SECONDS.toString()))));
         }
 
         WorkManager workManager = Framework.getService(WorkManager.class);
@@ -248,7 +247,7 @@ public class ReIndexingRunner {
             if (log.isInfoEnabled()) {
                 log.info(waitIndicatorForLogs);
             }
-        } while (!(awaitCompletion = workManager.awaitCompletion(ElasticSearchConstants.INDEXING_QUEUE_ID, timeOut, unit)));
+        } while (!(awaitCompletion = workManager.awaitCompletion(ElasticSearchConstants.INDEXING_QUEUE_ID, timeOut, TimeUnit.MILLISECONDS)));
 
         Validate.isTrue(awaitCompletion);
 
@@ -258,8 +257,7 @@ public class ReIndexingRunner {
         if (log.isInfoEnabled()) {
             float duration = (float) (System.currentTimeMillis() - startTime) / 1000;
 
-            log.info(String.format("End waiting: re-indexing done in [%s] %s", decimalFormat.format(duration),
-                    StringUtils.lowerCase(String.valueOf(unit.toString()))));
+            log.info(String.format("End waiting: re-indexing done in [%s] s", decimalFormat.format(duration)));
         }
     }
 

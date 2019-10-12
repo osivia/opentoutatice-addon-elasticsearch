@@ -68,7 +68,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasM
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.TransientIndexUse;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
 import org.opentoutatice.elasticsearch.reindexing.docs.config.ZeroDownTimeConfigFeature;
 import org.opentoutatice.elasticsearch.reindexing.docs.feature.EmbeddedAutomationServerFeatureWithOsvClient;
 
@@ -94,7 +94,7 @@ public class ZeroDownTimeReIndexingTest {
     protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingTest.class);
 
     static final String[][] users = {{"VirtualAdministrator", "secret"}, {"Administrator", "Administrator"}};
-    static final int NB_DOCS = 5;
+    static final int NB_DOCS = 50;
 
     @Inject
     protected ElasticSearchAdmin esAdmin;
@@ -120,7 +120,8 @@ public class ZeroDownTimeReIndexingTest {
 
     /**
      * Create docs.
-     * @throws Exception 
+     * 
+     * @throws Exception
      *
      * @throws IndexExistenceException
      */
@@ -155,14 +156,14 @@ public class ZeroDownTimeReIndexingTest {
                 // Commit to fire indexing
             }
             this.session.save();
-            
+
             // For test:Are versions indexed?:
-            for(int nbVersion = 0; nbVersion < 3; nbVersion++) {
+            for (int nbVersion = 0; nbVersion < 3; nbVersion++) {
                 this.session.checkIn(docToVersion.getRef(), VersioningOption.MAJOR, StringUtils.EMPTY);
                 this.session.checkOut(docToVersion.getRef());
             }
             this.session.save();
-            
+
         } catch (Exception e) {
             TransactionHelper.setTransactionRollbackOnly();
         } finally {
@@ -178,21 +179,22 @@ public class ZeroDownTimeReIndexingTest {
             Thread.sleep(500);
         }
         this.esAdmin.refreshRepositoryIndex(this.session.getRepositoryName());
-        
+
         // Test: are versions indexed?
         NxQueryBuilder qBuilder = new NxQueryBuilder(this.session);
         qBuilder.nxql("select * from Document");
         DocumentModelList allDocs = this.esService.query(qBuilder);
         log.debug("Docs in index from Core: ");
-        for(DocumentModel doc : allDocs) {
-            
-            log.debug(String.format("%s | %s | %s | %s", doc.getName(), doc.getVersionLabel(), doc.isVersion(), ReIndexingProcessStatusBuilder.dateFormat.format(((GregorianCalendar) doc.getPropertyValue("dc:created")).getTime())));
+        for (DocumentModel doc : allDocs) {
+
+            log.debug(String.format("%s | %s | %s | %s", doc.getName(), doc.getVersionLabel(), doc.isVersion(),
+                    ReIndexingProcessStatusBuilder.dateFormat.format(((GregorianCalendar) doc.getPropertyValue("dc:created")).getTime())));
         }
-//        Documents allDocsFromAutomation = this.esQueryFromAutomation("select * from Document");
-//        log.debug("Docs in index from Automation: ");
-//        for(Document doc : allDocsFromAutomation) {
-//            log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
-//        }
+        // Documents allDocsFromAutomation = this.esQueryFromAutomation("select * from Document");
+        // log.debug("Docs in index from Automation: ");
+        // for(Document doc : allDocsFromAutomation) {
+        // log.debug(String.format("%s | %s | %s ", doc.getName(), doc.getVersionLabel(), doc.isVersion()));
+        // }
 
         log.debug("Repo populated.");
 
@@ -245,7 +247,7 @@ public class ZeroDownTimeReIndexingTest {
 
         // Write test -----------
         String indexOrAlias = ((OttcElasticSearchComponent) this.esAdmin).getIndexNameForRepository(repoName);
-        Assert.assertEquals(TransientIndexUse.Write.getAlias(), indexOrAlias);
+        Assert.assertEquals(TransitoryIndexUse.Write.getAlias(), indexOrAlias);
 
         boolean tx = false;
         DocumentModel createdWs = null;
@@ -259,11 +261,11 @@ public class ZeroDownTimeReIndexingTest {
             createdWs = this.session.createDocument(wsToCreate);
             this.session.createDocument(wsToCreate);
             log.debug(String.format("[========== Writing test launched for [%s] ==========]", createdWs.getId()));
-            
+
             // To fire indexing (sync for ws)
             ElasticSearchInlineListener.useSyncIndexing.set(true);
             this.session.save();
-            
+
             // Delete yet existing Note
             this.session.removeDocument(new PathRef("/ws_container/Note_1"));
             this.session.save();
@@ -288,10 +290,10 @@ public class ZeroDownTimeReIndexingTest {
             log.debug(sIdx);
         }
 
-        List<String> readIndices = IndexNAliasManager.get().getIndicesOfAlias(TransientIndexUse.Read.getAlias());
+        List<String> readIndices = IndexNAliasManager.get().getIndicesOfAlias(TransitoryIndexUse.Read.getAlias());
         // There exist some empty or null values in list (?...)
         String[] indicesOfReadAlias = new String[readIndices.size()];
-        log.debug(String.format("Indices of [%s] alias: ", TransientIndexUse.Read.getAlias()));
+        log.debug(String.format("Indices of [%s] alias: ", TransitoryIndexUse.Read.getAlias()));
         int pos = 0;
         for (String idxOf : readIndices) {
             if (StringUtils.isNotBlank(idxOf)) {
@@ -340,33 +342,41 @@ public class ZeroDownTimeReIndexingTest {
 
         // Check duplicates before end of suspend time
         Long suspendTime = Long.valueOf(Framework.getProperty(ReIndexingConstants.REINDEXING_WAIT_LOOP_TIME));
-        Thread.sleep((suspendTime.longValue() - 1)*1000);
+        Thread.sleep((suspendTime.longValue() - 1) * 1000);
 
         // Query must have duplicates
-        try (CoreSession session_ = CoreInstance.openCoreSessionSystem(repoName)) {
-            NxQueryBuilder qBuilder = new NxQueryBuilder(session_);
-            qBuilder.nxql(ALL_DOCS_QUERY);
-
-            SearchResponse response = ((OttcElasticSearchComponent) this.esService).getEsService().search(qBuilder);
-            StringTerms duplicateAggs = response.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
-            // Build duplicate list
-            List<String> duplicateIds = new LinkedList<String>();
-
-            for (Bucket bucket : duplicateAggs.getBuckets()) {
-                if (bucket.getDocCount() > 1) {
-                    duplicateIds.add(bucket.getKey());
-                }
-            }
-
-            Assert.assertEquals(Boolean.TRUE, duplicateIds.size() > 0);
-        }
-
+//        try (CoreSession session_ = CoreInstance.openCoreSessionSystem(repoName)) {
+//            NxQueryBuilder qBuilder = new NxQueryBuilder(session_);
+//            qBuilder.nxql(ALL_DOCS_QUERY);
+//
+//            SearchResponse response = ((OttcElasticSearchComponent) this.esService).getEsService().search(qBuilder);
+//            StringTerms duplicateAggs = response.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
+//            // Build duplicate list
+//            List<String> duplicateIds = new LinkedList<String>();
+//
+//            for (Bucket bucket : duplicateAggs.getBuckets()) {
+//                if (bucket.getDocCount() > 1) {
+//                    duplicateIds.add(bucket.getKey());
+//                }
+//            }
+//
+//            Assert.assertEquals(Boolean.TRUE, duplicateIds.size() > 0);
+//        }
+        
+        log.debug("------------------------------------------------------------------------------");
+        long startTime = System.currentTimeMillis();
+        
         Documents filteredDocs = this.esQueryFromAutomation("select * from Document");
+        
+        long duration = System.currentTimeMillis() - startTime;
+        log.debug(String.format("====== Query from automation done: [%s] ms", String.valueOf(duration)));
         log.debug(String.format("Nb docs on one index: [%s] | Nb docs on twice: [%s]", allDocsInfirstIndex.size(), filteredDocs.size()));
+        log.debug("------------------------------------------------------------------------------");
+        
         Assert.assertEquals(allDocsInfirstIndex.size(), filteredDocs.size());
 
 
-        waitReIndexing(repoName);
+        //waitReIndexing(repoName);
         Assert.assertEquals(Boolean.FALSE, ReIndexingRunnerManager.get().isReIndexingInProgress(repoName));
 
         // For global tests
@@ -395,7 +405,7 @@ public class ZeroDownTimeReIndexingTest {
         // Asserts:
         this.checkFinalEsState(repoName, intermediateEsState, intermediateDocs);
     }
-    
+
     @Test
     public void testF_ZeroDownTimeReIndexingYetRunningFromAutomation() throws Exception {
         // Launch zero down time re-indexing
@@ -413,6 +423,62 @@ public class ZeroDownTimeReIndexingTest {
                 .get("className");
 
         Assert.assertEquals(ReIndexingStatusException.class.getCanonicalName(), excAsJsonNode.getTextValue());
+    }
+
+    @Test
+    public void testG_copyDuringReIndexing() throws Exception {
+        launchReIndexingFromAutomation(this.automationSession, users);
+        
+        DocumentModel rootDocument = null;
+        DocumentModel createdWsContainer = null;
+
+        if (TransactionHelper.isTransactionActive()) {
+            TransactionHelper.commitOrRollbackTransaction();
+        }
+        TransactionHelper.startTransaction();
+
+        try {
+            ElasticSearchInlineListener.useSyncIndexing.set(Boolean.TRUE);
+
+            // Prepare
+            final int nbChildren = 1;
+            final int depth = 5;
+
+            rootDocument = this.session.getRootDocument();
+
+            DocumentModel wsContainerToCreate = this.session.createDocumentModel(rootDocument.getPathAsString(), "ws_container", "WorkspaceRoot");
+            createdWsContainer = this.session.createDocument(wsContainerToCreate);
+
+            for (int nbChild = 0; nbChild < nbChildren; nbChild++) {
+                DocumentModel wsToCeate = this.session.createDocumentModel(createdWsContainer.getPathAsString(), "ws_".concat(String.valueOf(nbChild)),
+                        "Workspace");
+                DocumentModel createdWs = this.session.createDocument(wsToCeate);
+
+                DocumentModel parent = createdWs;
+                for (int level = 0; level < depth; level++) {
+                    DocumentModel childToCreate = this.session.createDocumentModel(parent.getPathAsString(),
+                            parent.getName().concat("-").concat(String.valueOf(level)), "Folder");
+                    parent = this.session.createDocument(childToCreate);
+                }
+                this.session.save();
+            }
+
+            this.session.save();
+
+        } finally {
+            TransactionHelper.commitOrRollbackTransaction();
+            TransactionHelper.startTransaction();
+        }
+
+        // Copy
+        ElasticSearchInlineListener.useSyncIndexing.set(Boolean.TRUE);
+        DocumentModel copiedFolderish = this.session.copy(createdWsContainer.getRef(), rootDocument.getRef(), "COPIED_ws_container");
+        this.session.save();
+        log.debug("============== COPIED ================");
+        TransactionHelper.commitOrRollbackTransaction();
+
+        Assert.assertNotNull(copiedFolderish);
+
     }
 
     /**

@@ -127,6 +127,12 @@ public class QueryES {
 
     @OperationMethod
     public JsonAdapter runNxqlSearch() throws OperationException {
+        // For performance logs
+        long startTime = System.currentTimeMillis();
+        if(log.isDebugEnabled()) {
+            log.debug(String.format("NXQL Query: [%s]", this.getNxQueryBuilder().getNxql()));
+        }
+        
         // Response
         TTCSearchResponse response = null;
 
@@ -162,7 +168,14 @@ public class QueryES {
         }
 
         // Response builder
-        return new DefaultJsonAdapter(response);
+        JsonAdapter responseAsJson = new DefaultJsonAdapter(response);
+
+        if(log.isDebugEnabled()) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.debug(String.format("#runNxqlSearch: [TA_%s_TA] ms ", String.valueOf(duration)));
+        }
+        
+        return responseAsJson;
     }
 
 

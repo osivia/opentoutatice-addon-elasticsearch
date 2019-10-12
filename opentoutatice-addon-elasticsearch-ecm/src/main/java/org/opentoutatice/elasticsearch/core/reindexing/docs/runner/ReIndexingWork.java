@@ -9,6 +9,7 @@ import org.jsoup.helper.Validate;
 import org.nuxeo.ecm.core.work.AbstractWork;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.constant.ReIndexingConstants;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatus;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatusBuilder;
@@ -51,7 +52,7 @@ public class ReIndexingWork extends AbstractWork {
 
     @Override
     public String getCategory() {
-        return ReIndexingRunnerManager.REINDEXING_QUEUE_ID;
+        return ReIndexingConstants.REINDEXING_MANEGR_QUEUE_ID;
     }
 
     @Override

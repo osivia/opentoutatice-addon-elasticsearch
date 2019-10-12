@@ -150,23 +150,12 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
         return new EsResultSetImpl(response, queryBuilder.getSelectFieldsAndTypes());
     }
 
-    // Backup of method
-    // protected SearchResponse search(NxQueryBuilder query) {
-    // Context stopWatch = searchTimer.time();
-    // try {
-    // SearchRequestBuilder request = buildEsSearchRequest(query);
-    // logSearchRequest(request, query);
-    // SearchResponse response = request.execute().actionGet();
-    // logSearchResponse(response);
-    // return response;
-    // } finally {
-    // stopWatch.stop();
-    // }
-    // }
-
     // Re-indexing FORK ===========================
     // protected-> public for tests
     public SearchResponse search(NxQueryBuilder query) {
+        // For logs
+        long startTime = System.currentTimeMillis();
+        
         Context stopWatch = this.searchTimer.time();
         try {
             SearchRequestBuilder request = this.buildEsSearchRequest(query);
@@ -186,6 +175,12 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
 
             this.logSearchRequest(request, query);
             SearchResponse response = request.execute().actionGet();
+            
+            if(log.isDebugEnabled()) {
+                long duration = System.currentTimeMillis() - startTime;
+                log.debug(String.format("#Es search: [TE_%s_TE] ms", String.valueOf(duration)));
+            }
+            
             this.logSearchResponse(response);
             return response;
         } finally {

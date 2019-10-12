@@ -44,8 +44,8 @@ import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfi
 import org.opentoutatice.elasticsearch.config.exception.AliasConfigurationException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.TransientIndexUse;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.test.EsNodeTestInitializer;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -507,7 +507,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     public String[] getReadIndicesForReIndexingRepository(String repositoryName) {
         String[] res = null;
 
-        List<String> transientReadIndices = IndexNAliasManager.get().getIndicesOfAlias(TransientIndexUse.Read.getAlias());
+        List<String> transientReadIndices = IndexNAliasManager.get().getIndicesOfAlias(TransitoryIndexUse.Read.getAlias());
         if (transientReadIndices != null) {
             res = new String[0];
             res = transientReadIndices.toArray(res);
@@ -522,7 +522,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
         String writeIndexOrAlias = null;
         try {
             if (ReIndexingRunnerManager.get().isReIndexingInProgress(repositoryName)) {
-                writeIndexOrAlias = TransientIndexUse.Write.getAlias();
+                writeIndexOrAlias = TransitoryIndexUse.Write.getAlias();
             } else {
                 writeIndexOrAlias = this.getConfiguredIndexOrAliasNameForRepository(repositoryName);
             }

@@ -17,7 +17,7 @@ import org.elasticsearch.common.collect.UnmodifiableIterator;
 import org.elasticsearch.common.hppc.cursors.ObjectObjectCursor;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.TransientIndexUse;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
 
 /**
  * @author david
@@ -112,7 +112,7 @@ public class EsStateChecker {
 
         if (IndexNAliasManager.get().mayTransientAliasesExist()) {
             throw new ReIndexingStateException(String.format("One or both of transient aliases [%s, %s] still exist. Fix Elastisearch state",
-                    TransientIndexUse.Read.getAlias(), TransientIndexUse.Write.getAlias()));
+                    TransitoryIndexUse.Read.getAlias(), TransitoryIndexUse.Write.getAlias()));
         } else {
             verified = true;
         }

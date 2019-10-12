@@ -25,7 +25,7 @@ import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfi
 import org.opentoutatice.elasticsearch.core.reindexing.docs.exception.IndexException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.TransientIndexUse;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
 
 /**
  *
@@ -112,17 +112,17 @@ public class IndexNAliasManager {
         return indices;
     }
 
-    public synchronized String getTransientAlias(String repositoryName, TransientIndexUse use) {
+    public synchronized String getTransientAlias(String repositoryName, TransitoryIndexUse use) {
         String alias = null;
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("Getting %s alias for repository [%s] ", use.getAlias(), repositoryName));
         }
 
-        if (TransientIndexUse.Read.equals(use)) {
-            alias = TransientIndexUse.Read.getAlias();
+        if (TransitoryIndexUse.Read.equals(use)) {
+            alias = TransitoryIndexUse.Read.getAlias();
         } else {
-            alias = TransientIndexUse.Write.getAlias();
+            alias = TransitoryIndexUse.Write.getAlias();
         }
 
         if (log.isTraceEnabled()) {
@@ -133,11 +133,11 @@ public class IndexNAliasManager {
     }
 
     public Boolean mayTransientAliasesExist() {
-        return this.aliasExists(TransientIndexUse.Read.getAlias()) || this.aliasExists(TransientIndexUse.Write.getAlias());
+        return this.aliasExists(TransitoryIndexUse.Read.getAlias()) || this.aliasExists(TransitoryIndexUse.Write.getAlias());
     }
 
     public Boolean transientAliasesExist() {
-        return this.aliasExists(TransientIndexUse.Read.getAlias()) && this.aliasExists(TransientIndexUse.Write.getAlias());
+        return this.aliasExists(TransitoryIndexUse.Read.getAlias()) && this.aliasExists(TransitoryIndexUse.Write.getAlias());
     }
 
     /**
@@ -189,21 +189,21 @@ public class IndexNAliasManager {
      */
     public void createTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
         if (log.isDebugEnabled()) {
-            log.debug(String.format("About to create transient aliases: [%s on (%s, %s) | %s on %s]...", TransientIndexUse.Read.getAlias(),
-                    initialIndex.toString(), newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+            log.debug(String.format("About to create transient aliases: [%s on (%s, %s) | %s on %s]...", TransitoryIndexUse.Read.getAlias(),
+                    initialIndex.toString(), newIndex.toString(), TransitoryIndexUse.Write.getAlias(), newIndex.toString()));
         }
 
         try {
             // FIXME: check atomicity!!!!!!
-            this.getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
-                    .addAlias(newIndex.toString(), TransientIndexUse.Read.getAlias()).addAlias(newIndex.toString(), TransientIndexUse.Write.getAlias()).get();
+            this.getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), TransitoryIndexUse.Read.getAlias())
+                    .addAlias(newIndex.toString(), TransitoryIndexUse.Read.getAlias()).addAlias(newIndex.toString(), TransitoryIndexUse.Write.getAlias()).get();
         } catch (ElasticsearchException e) {
             throw new ReIndexingException(e);
         }
 
         if (log.isInfoEnabled()) {
-            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] created.", TransientIndexUse.Read.getAlias(), initialIndex.toString(),
-                    newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] created.", TransitoryIndexUse.Read.getAlias(), initialIndex.toString(),
+                    newIndex.toString(), TransitoryIndexUse.Write.getAlias(), newIndex.toString()));
         }
     }
 
@@ -280,22 +280,22 @@ public class IndexNAliasManager {
      */
     public void deleteTransientAliases(IndexName initialIndex, IndexName newIndex) throws ReIndexingException {
         if (log.isDebugEnabled()) {
-            log.debug(String.format("About to delete transient aliases: [%s on (%s, %s) | %s on %s] ...", TransientIndexUse.Read.getAlias(),
-                    initialIndex.toString(), newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+            log.debug(String.format("About to delete transient aliases: [%s on (%s, %s) | %s on %s] ...", TransitoryIndexUse.Read.getAlias(),
+                    initialIndex.toString(), newIndex.toString(), TransitoryIndexUse.Write.getAlias(), newIndex.toString()));
         }
 
         try {
             // FIXME: check atomicity!!!!!!
-            this.getAdminClient().indices().prepareAliases().removeAlias(initialIndex.toString(), TransientIndexUse.Read.getAlias())
-                    .removeAlias(newIndex.toString(), TransientIndexUse.Read.getAlias()).removeAlias(newIndex.toString(), TransientIndexUse.Write.getAlias())
+            this.getAdminClient().indices().prepareAliases().removeAlias(initialIndex.toString(), TransitoryIndexUse.Read.getAlias())
+                    .removeAlias(newIndex.toString(), TransitoryIndexUse.Read.getAlias()).removeAlias(newIndex.toString(), TransitoryIndexUse.Write.getAlias())
                     .get();
         } catch (ElasticsearchException e) {
             throw new ReIndexingException(e);
         }
 
         if (log.isInfoEnabled()) {
-            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] deleted.", TransientIndexUse.Read.getAlias(), initialIndex.toString(),
-                    newIndex.toString(), TransientIndexUse.Write.getAlias(), newIndex.toString()));
+            log.info(String.format("Transient aliases: [%s on (%s, %s) | %s on %s] deleted.", TransitoryIndexUse.Read.getAlias(), initialIndex.toString(),
+                    newIndex.toString(), TransitoryIndexUse.Write.getAlias(), newIndex.toString()));
         }
     }
 
