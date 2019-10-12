@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>opentoutatice-ecm.elasticsearch</groupId>
 		<artifactId>opentoutatice-elasticsearch-parent</artifactId>
-		<version>4.7-es-alias-SNAPSHOT</version>
+		<version>4.7-es-alias-RC07</version>
 	</parent>
 
 	<artifactId>opentoutatice-addon-elasticsearch-ecm</artifactId>
