@@ -184,20 +184,14 @@ public class ReIndexingRunnerManager {
         ReIndexingWork reIndexingWork = new ReIndexingWork(aliasCfg, this.getEsAdmin(), this.getEsIndexing(), initialEsState);
         this.setCurrentWorkId(reIndexingWork.getId());
         this.getWorkManager().schedule(reIndexingWork);
-
-        if (log.isInfoEnabled()) {
-            logLaunchingInfos(reIndexingWork.getId(), aliasCfg.getRepositoryName(), initialEsState);
-        }
     }
-
-    /**
-     * Runtime checker to allow, or not, use of transient aliases.
-     *
-     * @param repositoryName
-     * @return
-     * @throws InterruptedException
-     */
+    
+    // FIXME: to keep signature with repo
     public boolean isReIndexingInProgress(String repositoryName) throws InterruptedException {
+        return isReIndexingInProgress();
+    }
+    
+    public boolean isReIndexingInProgress() throws InterruptedException {
         State workState = this.getWorkManager().getWorkState(getCurrentWorkId());
         boolean inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
         
@@ -206,24 +200,6 @@ public class ReIndexingRunnerManager {
         }
 
         return inProgress;
-    }
-
-    // Logs =================================
-
-    private void logLaunchingInfos(String workId, String repositoryName, EsState initialEsState) {
-        StringBuffer sb = new StringBuffer(
-                String.format("=============== ES Reindexing Process [LAUNCHED] for [%s] repository ===============", repositoryName));
-        sb.append(System.lineSeparator());
-        sb.append(String.format("State: %s", initialEsState != null ? initialEsState.toString() : "---")).append(System.lineSeparator());
-
-        // For initial logs
-        long initialNbDocsInBdd = ReIndexingProcessStatusBuilder.get().getNbDocsInBdd(repositoryName);
-        // To be access for end status logs in work
-        ReIndexingRunnerManager.get().setInitialNbDocsInBddFor(workId, initialNbDocsInBdd);
-
-        sb.append(String.format("Number of documents in BDD to index: [%s] ", String.valueOf(initialNbDocsInBdd))).append(System.lineSeparator());
-
-        log.info(sb.toString());
     }
 
     public void cleanLogsInfos() {

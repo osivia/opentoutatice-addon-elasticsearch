@@ -60,10 +60,10 @@
 	</category>
 
 
-	<category name="fr.toutatice.ecm.elasticsearch" additivity="true">
+	<!-- <category name="fr.toutatice.ecm.elasticsearch" additivity="true">
 		<appender-ref ref="FILE" />
 		<priority value="DEBUG" />
-	</category>
+	</category> -->
 
 	<category name="org.nuxeo.elasticsearch">
 		<priority value="INFO" />
@@ -71,15 +71,15 @@
 	
 	<!-- Queries monitoring -->
 	<!-- Es part -->
-	<category name="org.opentoutatice.elasticsearch.core.service.OttcElasticSearchServiceImpl" additivity="false">
+	<!-- <category name="org.opentoutatice.elasticsearch.core.service.OttcElasticSearchServiceImpl" additivity="false">
 		<appender-ref ref="ES-QUERY" />
 		<priority value="DEBUG" />
-	</category>
+	</category> -->
 	<!-- Automation -->
 	<!-- Total & json response -->
 	<category name="fr.toutatice.ecm.elasticsearch" additivity="false">
 		<appender-ref ref="ES-QUERY" />
-		<priority value="TRACE" />
+		<priority value="DEBUG" />
 	</category>
 
 	<!-- <category name="org.nuxeo.ecm.core.storage.sql.SessionImpl"> <priority 

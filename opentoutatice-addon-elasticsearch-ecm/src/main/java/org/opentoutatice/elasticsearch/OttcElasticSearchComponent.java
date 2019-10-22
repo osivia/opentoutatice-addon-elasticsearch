@@ -54,6 +54,7 @@ import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchService;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.works.ScrollingReIndexingWorker;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchAdminImpl;
@@ -308,9 +309,19 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
         return this.esa.useExternalVersion();
     }
 
+    // Zero Down Time Fork =============
     @Override
     public boolean isIndexingInProgress() {
-        return (this.runIndexingWorkerCount.get() > 0) || (this.getPendingWorkerCount() > 0) || (this.getRunningWorkerCount() > 0);
+        boolean is = (this.runIndexingWorkerCount.get() > 0) || (this.getPendingWorkerCount() > 0) || (this.getRunningWorkerCount() > 0);
+        try {
+            is = is || ReIndexingRunnerManager.get().isReIndexingInProgress();
+        } catch (InterruptedException e) {
+            // Do not block
+            if (log.isErrorEnabled()) {
+                log.error("Can not check Zero Down Time Re-Indexing existance: ", e);
+            }
+        }
+        return is;
     }
 
     @Override

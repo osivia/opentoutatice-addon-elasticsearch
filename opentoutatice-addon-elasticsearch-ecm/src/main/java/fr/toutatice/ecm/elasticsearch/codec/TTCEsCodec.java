@@ -59,7 +59,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
     @SuppressWarnings("unchecked")
     public void write(JsonGenerator jg, TTCSearchResponse value) throws IOException {
         // For logs
-        long startTime = System.currentTimeMillis();
+//        long startTime = System.currentTimeMillis();
 
         SearchHits upperhits = value.getSearchResponse().getHits();
         String schemasRegex = value.getSchemasRegex();
@@ -94,10 +94,10 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         jg.writeEndObject();
         jg.flush();
         
-        if(log.isDebugEnabled()) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.debug(String.format("Json written: [TJ_%s_TJ] ms", String.valueOf(duration)));
-        }
+//        if(log.isDebugEnabled()) {
+//            long duration = System.currentTimeMillis() - startTime;
+//            log.debug(String.format("Json written: [TJ_%s_TJ] ms", String.valueOf(duration)));
+//        }
     }
 
     protected boolean hasToFilterDuplicate(SearchResponse searchResponse) {
@@ -118,16 +118,16 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
     protected void writeEntries(JsonGenerator jg, String schemasRegex, SearchHit[] searchhits)
             throws IOException, JsonGenerationException, JsonProcessingException {
         // For logs
-        long startTime = System.currentTimeMillis();
+//        long startTime = System.currentTimeMillis();
         
         for (SearchHit hit : searchhits) {
             this.writeEntry(jg, schemasRegex, hit.getSource());
         }
         
-        if(log.isDebugEnabled()) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.debug(String.format("#writeEntries: [%s] ms", String.valueOf(duration)));
-        }
+//        if(log.isDebugEnabled()) {
+//            long duration = System.currentTimeMillis() - startTime;
+//            log.debug(String.format("#writeEntries: [%s] ms", String.valueOf(duration)));
+//        }
     }
 
     protected void writeDuplicateFilteredEntries(JsonGenerator jg, String schemasRegex, SearchResponse searchResponse)
@@ -148,21 +148,16 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         }
 
         if (log.isTraceEnabled()) {
-            StringBuffer sb = new StringBuffer();
-            Iterator<String> duplicatesIt = duplicateIds.iterator();
-            while (duplicatesIt.hasNext()) {
-                String dupId = duplicatesIt.next();
-                sb.append(dupId);
-                if (duplicatesIt.hasNext()) {
-                    sb.append(", ");
-                }
-            }
-            log.trace(String.format("List of duplicates: [%s]", sb.toString()));
+            log.trace(String.format("List of duplicates: [%s]", listToString(duplicateIds)));
         }
 
         if (duplicateIds.size() == 0) {
             this.writeEntries(jg, schemasRegex, searchHits);
         } else {
+            if(log.isDebugEnabled()) {
+                log.debug(String.format("[%s] duplicates ids found: filtering...", duplicateIds.size()));
+            }
+            
             // Write filtering duplicate:
             // index from which duplicates must be kept (index pointed by transient write alias)
             // TODO: response can be managed few later time after re-indexing and write alias can not exist anymore
@@ -193,6 +188,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         }
 
     }
+
 
     /**
      * @param jg
@@ -233,4 +229,21 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         jg.flush();
     }
 
+    /**
+     * @param duplicateIds
+     * @return
+     */
+    protected String listToString(List<String> duplicateIds) {
+        StringBuffer sb = new StringBuffer();
+        Iterator<String> duplicatesIt = duplicateIds.iterator();
+        while (duplicatesIt.hasNext()) {
+            String dupId = duplicatesIt.next();
+            sb.append(dupId);
+            if (duplicatesIt.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
+    
 }
