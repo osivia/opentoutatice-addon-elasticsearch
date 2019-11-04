@@ -20,7 +20,7 @@ public class EmbeddedAutomationServerFeatureWithOsvClient extends EmbeddedAutoma
         // // feature in a test suite to deploy different set of operations
         // client.setSharedRegistryExpirationDelay(0);
 
-        HttpAutomationClient client = new HttpAutomationClient("http://localhost:18080/automation", null);
+        HttpAutomationClient client = new HttpAutomationClient("http://localhost:18080/automation");
 
         return client;
     }
