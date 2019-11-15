@@ -12,7 +12,8 @@
 			<!-- queue capacity -->
 			<capacity>1</capacity>
 			<category>zeroDownTimeEsReIndexingManager</category>
-			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=60}
+			<!-- 0 value allows to clean queue right after its call -->
+			<clearCompletedAfterSeconds>${elasticsearch.zero.down.time.reindexing.clearCompletedAfterSeconds:=0}
 			</clearCompletedAfterSeconds>
 		</queue>
 

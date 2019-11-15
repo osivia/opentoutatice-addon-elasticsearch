@@ -4,16 +4,21 @@
 package org.tst.opentoutatice.elasticsearch.reindexing.docs;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -27,6 +32,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.nuxeo.ecm.automation.client.OperationRequest;
 import org.nuxeo.ecm.automation.client.RemoteException;
 import org.nuxeo.ecm.automation.client.Session;
 import org.nuxeo.ecm.automation.client.model.Document;
@@ -40,7 +46,7 @@ import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
-import org.nuxeo.ecm.platform.query.api.Bucket;
+import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
@@ -57,6 +63,7 @@ import org.nuxeo.runtime.test.runner.LocalDeploy;
 import org.nuxeo.runtime.transaction.TransactionHelper;
 import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.automation.CleanESIndices;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.automation.ReIndexZeroDownTimeES;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.constant.ReIndexingConstants;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
@@ -83,7 +90,7 @@ import fr.toutatice.ecm.elasticsearch.automation.QueryES;
 @RunWith(FeaturesRunner.class)
 @Features({ZeroDownTimeConfigFeature.class, RepositoryElasticSearchFeature.class, EmbeddedAutomationServerFeatureWithOsvClient.class})
 @BlacklistComponent("org.nuxeo.elasticsearch.ElasticSearchComponent")
-@Deploy({"org.nuxeo.ecm.automation.test", "org.nuxeo.elasticsearch.core.test",})
+@Deploy({"org.nuxeo.ecm.automation.test", "org.nuxeo.elasticsearch.core.test", "org.nuxeo.ecm.core.event"})
 @LocalDeploy({"fr.toutatice.ecm.platform.elasticsearch", "fr.toutatice.ecm.platform.elasticsearch:elasticsearch-config-test.xml",
         "fr.toutatice.ecm.platform.elasticsearch:usermanger-test.xml", "fr.toutatice.ecm.platform.elasticsearch:log4j.xml"})
 @Jetty(port = 18080)
@@ -111,6 +118,9 @@ public class ZeroDownTimeReIndexingTest {
     @Inject
     protected Session automationSession;
 
+    @Inject
+    protected WorkManager wm;
+
     // One index & alias at tests begining
     protected static int nbAliases = 1;
     protected static int nbIndices = 1;
@@ -120,7 +130,7 @@ public class ZeroDownTimeReIndexingTest {
 
     /**
      * Create docs.
-     * 
+     *
      * @throws Exception
      *
      * @throws IndexExistenceException
@@ -362,17 +372,17 @@ public class ZeroDownTimeReIndexingTest {
 
             Assert.assertEquals(Boolean.TRUE, duplicateIds.size() > 0);
         }
-        
+
         log.debug("------------------------------------------------------------------------------");
         long startTime = System.currentTimeMillis();
-        
+
         Documents filteredDocs = this.esQueryFromAutomation("select * from Document");
-        
+
         long duration = System.currentTimeMillis() - startTime;
         log.debug(String.format("====== Query from automation done: [%s] ms", String.valueOf(duration)));
         log.debug(String.format("Nb docs on one index: [%s] | Nb docs on twice: [%s]", allDocsInfirstIndex.size(), filteredDocs.size()));
         log.debug("------------------------------------------------------------------------------");
-        
+
         Assert.assertEquals(allDocsInfirstIndex.size(), filteredDocs.size());
 
 
@@ -428,7 +438,7 @@ public class ZeroDownTimeReIndexingTest {
     @Test
     public void testG_copyDuringReIndexing() throws Exception {
         launchReIndexingFromAutomation(this.automationSession, users);
-        
+
         DocumentModel rootDocument = null;
         DocumentModel createdWsContainer = null;
 
@@ -481,6 +491,33 @@ public class ZeroDownTimeReIndexingTest {
 
     }
 
+    @Test
+    public void testH_cleanIndices() throws Exception {
+        // Re-index third before clean
+        this.zeroDownTimeReIndexingFromAutomation();
+        this.zeroDownTimeReIndexingFromAutomation();
+        this.zeroDownTimeReIndexingFromAutomation();
+
+        String returnedStatus = callOp(this.automationSession, users, CleanESIndices.ID, null);
+        log.info(returnedStatus);
+        Assert.assertTrue(StringUtils.contains(returnedStatus, "[2] orphan indices deleted"));
+
+        // Nothing to clean now
+        returnedStatus = callOp(this.automationSession, users, CleanESIndices.ID, null);
+        log.info(returnedStatus);
+        Assert.assertTrue(StringUtils.contains(returnedStatus, "Found no orphan indices to clean"));
+    }
+
+    @Test
+    public void testH_cleanIndicesWhileReIndexing() throws Exception {
+        // No wait afeter re-indexing launched
+        launchReIndexingFromAutomation(this.automationSession, users);
+
+        String returnedStatus = callOp(this.automationSession, users, CleanESIndices.ID, null);
+        log.info(returnedStatus);
+        Assert.assertTrue(StringUtils.contains(returnedStatus, "One Zero Down Time Re-Indexing process is in progress"));
+    }
+
     /**
      * @throws InterruptedException
      * @throws ExecutionException
@@ -499,6 +536,7 @@ public class ZeroDownTimeReIndexingTest {
 
         // Waiting for re-indexing
         waitReIndexing(repoName);
+        Assert.assertFalse(ReIndexingRunnerManager.get().isReIndexingInProgress());
 
         // Refresh index
         this.esAdmin.refreshRepositoryIndex(this.session.getRepositoryName());
@@ -511,12 +549,33 @@ public class ZeroDownTimeReIndexingTest {
      * @throws Exception
      */
     public static String launchReIndexingFromAutomation(Session automationSession, String[][] users) throws Exception {
+        Map<String, String> param = new HashMap<String, String>();
+        param.put("repository", "test");
+        return callOp(automationSession, users, ReIndexZeroDownTimeES.ID, param);
+    }
+
+    /**
+     * @param automationSession
+     * @param users
+     * @return
+     * @throws Exception
+     * @throws IOException
+     */
+    protected static String callOp(Session automationSession, String[][] users, String opId, Map<String, String> params) throws Exception, IOException {
         StringBuilder launchedStatus = new StringBuilder();
 
         Session session_ = null;
         try {
             session_ = automationSession.getClient().getSession(users[0][0], users[0][1]);
-            FileBlob launchedStatusFile = (FileBlob) session_.newRequest(ReIndexZeroDownTimeES.ID).set("repository", "test").execute();
+            OperationRequest operationRequest = session_.newRequest(opId);
+
+            if (MapUtils.isNotEmpty(params)) {
+                for (Entry<String, String> entry : params.entrySet()) {
+                    operationRequest.set(entry.getKey(), entry.getValue());
+                }
+            }
+
+            FileBlob launchedStatusFile = (FileBlob) operationRequest.execute();
 
 
             try (BufferedReader br = Files.newBufferedReader(Paths.get(launchedStatusFile.getFile().getPath()))) {

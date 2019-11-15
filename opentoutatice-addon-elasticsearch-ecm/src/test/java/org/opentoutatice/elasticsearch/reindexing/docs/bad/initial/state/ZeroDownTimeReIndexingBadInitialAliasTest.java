@@ -35,7 +35,6 @@ import org.nuxeo.runtime.test.runner.Jetty;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.automation.ReIndexZeroDownTimeES;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
 import org.opentoutatice.elasticsearch.reindexing.docs.bad.initial.state.config.ZeroDownTimeBadInitialAliasConfigFeature;
 import org.opentoutatice.elasticsearch.reindexing.docs.feature.EmbeddedAutomationServerFeatureWithOsvClient;
 
@@ -96,26 +95,26 @@ public class ZeroDownTimeReIndexingBadInitialAliasTest {
                 StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "[2] indices defined for alias [nxutest-alias]"));
     }
 
-//    @Test
-//    public void testC_ZeroDownTimeReIndexingBadFormerAliasFromAutomation() throws Exception {
-//        // Launch zero down time re-indexing
-//        RemoteException exc = null;
-//        try {
-//            this.launchReIndexingFromAutomation();
-//        } catch (RemoteException e) {
-//            exc = e;
-//        }
-//
-//        Assert.assertNotNull(exc);
-//
-//        RemoteThrowable remoteCause = (org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause();
-//
-//        JsonNode excAsJsonNode = remoteCause.getOtherNodes().get("className");
-//        Assert.assertEquals(ReIndexingStateException.class.getCanonicalName(), excAsJsonNode.getTextValue());
-//
-//        Assert.assertEquals(Boolean.TRUE,
-//                StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "One or both of transient aliases"));
-//    }
+    // @Test
+    // public void testC_ZeroDownTimeReIndexingBadFormerAliasFromAutomation() throws Exception {
+    // // Launch zero down time re-indexing
+    // RemoteException exc = null;
+    // try {
+    // this.launchReIndexingFromAutomation();
+    // } catch (RemoteException e) {
+    // exc = e;
+    // }
+    //
+    // Assert.assertNotNull(exc);
+    //
+    // RemoteThrowable remoteCause = (org.nuxeo.ecm.automation.client.jaxrs.spi.JsonMarshalling.RemoteThrowable) exc.getRemoteCause();
+    //
+    // JsonNode excAsJsonNode = remoteCause.getOtherNodes().get("className");
+    // Assert.assertEquals(ReIndexingStateException.class.getCanonicalName(), excAsJsonNode.getTextValue());
+    //
+    // Assert.assertEquals(Boolean.TRUE,
+    // StringUtils.contains(((RemoteThrowable) remoteCause.getCause()).getCause().getMessage(), "One or both of transient aliases"));
+    // }
 
 
     public String launchReIndexingFromAutomation() throws Exception {

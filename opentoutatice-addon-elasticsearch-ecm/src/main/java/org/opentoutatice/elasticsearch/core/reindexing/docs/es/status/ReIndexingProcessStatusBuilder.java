@@ -27,7 +27,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRu
  *
  */
 public class ReIndexingProcessStatusBuilder {
-    
+
     private static final Log log = LogFactory.getLog(ReIndexingProcessStatusBuilder.class);
 
     // FIXME: are versions indexed?
@@ -35,7 +35,7 @@ public class ReIndexingProcessStatusBuilder {
     public static final String TOTAL_DOCS_IN_BDD_QUERY = "select ecm:uuid from Document";
     public static final String NB_CREATED_DOCS_DURING_REINDEXING = "select ecm:uuid from Document where dc:created >= TIMESTAMP '%s'";
     public static final String NB_MODIFIED_DOCS_DURING_REINDEXING = "select ecm:uuid from Document where dc:modified >= TIMESTAMP '%s'";
-    
+
     public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 
     private static ReIndexingProcessStatusBuilder instance;
@@ -52,36 +52,36 @@ public class ReIndexingProcessStatusBuilder {
 
     public ReIndexingProcessStatus build(String workId, String repository) {
         ReIndexingProcessStatus status = new ReIndexingProcessStatus();
-        
+
         // Status
         status.setStatus(ReIndexingRunnerManager.get().getRunnerStepFor(workId).getStepState().getStepStatus());
-        
+
         // Duration
         status.setStartTime(new Date(ReIndexingRunnerManager.get().getStartTimeFor(workId)));
         status.setEndTime(ReIndexingRunnerManager.get().getEndTimeFor(workId));
         status.setDuration(this.getDuration(status));
-        
+
         // State
         try {
             status.setEsState(EsStateChecker.get().getEsState());
         } catch (InterruptedException | ExecutionException e) {
             // Nothing: do not block for logs
         }
-        
+
         // Number of documents in DBB
         status.setInitialNbDocsInBdd(ReIndexingRunnerManager.get().getInitialNbDocsInBddFor(workId));
         status.setNbDocsInBdd(this.getNbDocsInBdd(repository));
-        
+
         // Number of documents in new index
         status.setNewIndex(ReIndexingRunnerManager.get().getNewIndexFor(workId));
-        status.setNbDocsInNewIndex(getNbDocsInNewIndex(status));
+        status.setNbDocsInNewIndex(this.getNbDocsInNewIndex(status));
         // Average speed
-        status.setAverageReIndexingSpeed(getAverageSpeed(status));
-        
+        status.setAverageReIndexingSpeed(this.getAverageSpeed(status));
+
         // Contributions during re-indexing
-        status.setNbCreatedDocsDuringReIndexing(getNbCreatedDocsDuringReIndexing(status, repository));
-        status.setNbModifiedDocsDuringReIndexing(getNbModifiedDocsDuringReIndexing(status, repository));
-        status.setNbDeletedDocsDuringReIndexing(getNbDeletedDocsDuringReIndexing(status));
+        status.setNbCreatedDocsDuringReIndexing(this.getNbCreatedDocsDuringReIndexing(status, repository));
+        status.setNbModifiedDocsDuringReIndexing(this.getNbModifiedDocsDuringReIndexing(status, repository));
+        status.setNbDeletedDocsDuringReIndexing(this.getNbDeletedDocsDuringReIndexing(status));
         // Number of contributed documents not indexed
         status.setNbContributedDocsNotIndexed(this.getNbContributedDocsNotIndexed(status));
 
@@ -96,21 +96,21 @@ public class ReIndexingProcessStatusBuilder {
     }
 
     public long getNbDocsInBdd(String repository) {
-        return queryNFetch(TOTAL_DOCS_IN_BDD_QUERY, repository);
+        return this.queryNFetch(TOTAL_DOCS_IN_BDD_QUERY, repository);
     }
 
     protected long getNbDocsInNewIndex(ReIndexingProcessStatus status) {
         long nb = 0;
-        
+
         // New Index exists
         IndexName newIndex = status.getNewIndex();
-        if(newIndex != null) {
+        if (newIndex != null) {
             try {
                 OttcElasticSearchAdmin esAdmin = (OttcElasticSearchAdmin) Framework.getService(ElasticSearchAdmin.class);
-    
+
                 CountResponse response = esAdmin.getClient().prepareCount(newIndex.toString())
                         .setQuery(NxqlQueryConverter.toESQueryBuilder(TOTAL_DOCS_IN_BDD_QUERY)).get();
-    
+
                 nb = response.getCount();
             } catch (Exception e) {
                 // Nothing: do not block for logs
@@ -123,26 +123,26 @@ public class ReIndexingProcessStatusBuilder {
     protected float getAverageSpeed(ReIndexingProcessStatus status) {
         return status.getDuration() > 0 ? status.getNbDocsInNewIndex() / status.getDuration() : 0;
     }
-    
+
     protected long getNbCreatedDocsDuringReIndexing(ReIndexingProcessStatus status, String repository) {
-        return queryNFetch(String.format(NB_CREATED_DOCS_DURING_REINDEXING, dateFormat.format(status.getStartTime())), repository);
+        return this.queryNFetch(String.format(NB_CREATED_DOCS_DURING_REINDEXING, dateFormat.format(status.getStartTime())), repository);
     }
-    
+
     protected long getNbModifiedDocsDuringReIndexing(ReIndexingProcessStatus status, String repository) {
-        return queryNFetch(String.format(NB_MODIFIED_DOCS_DURING_REINDEXING, dateFormat.format(status.getStartTime())), repository);
+        return this.queryNFetch(String.format(NB_MODIFIED_DOCS_DURING_REINDEXING, dateFormat.format(status.getStartTime())), repository);
     }
-    
+
     protected long getNbDeletedDocsDuringReIndexing(ReIndexingProcessStatus status) {
-        return status.getInitialNbDocsInBdd() + status.getNbCreatedDocsDuringReIndexing() - status.getNbDocsInBdd();
+        return (status.getInitialNbDocsInBdd() + status.getNbCreatedDocsDuringReIndexing()) - status.getNbDocsInBdd();
     }
-    
+
     // FIXME: TODO with nb docs created, modified, after ... in bdd or with former alias ??? / TODO: deleted docs
     protected long getNbContributedDocsNotIndexed(ReIndexingProcessStatus status) {
         // Nb docs created or modfied: query
         // deleted docs: difference
         return status.getNbDocsInNewIndex() > 0 ? status.getNbDocsInBdd() - status.getNbDocsInNewIndex() : 0;
     }
-    
+
     /**
      * @param repository
      * @return
@@ -153,7 +153,7 @@ public class ReIndexingProcessStatusBuilder {
         CoreSession session = null;
         IterableQueryResult rows = null;
         try {
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug(String.format("Querying: [%s]", query));
             }
             session = CoreInstance.openCoreSessionSystem(repository);

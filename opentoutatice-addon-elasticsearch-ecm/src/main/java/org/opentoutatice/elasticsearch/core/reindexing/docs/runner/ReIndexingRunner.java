@@ -12,7 +12,6 @@ import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.core.work.api.WorkManager;
-import org.nuxeo.elasticsearch.ElasticSearchConstants;
 import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
@@ -49,15 +48,15 @@ public class ReIndexingRunner {
     private OttcElasticSearchAdminImpl esAdmin;
 
     private OttcElasticSearchIndexing esIndexing;
-    
+
     private EsState initialEsState;
 
     private static final String REINDEX_REPOSITORY_QUERY = "select ecm:uuid from Document";
 
     private static final DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
-    public ReIndexingRunner(String id, OttcElasticSearchIndexOrAliasConfig nxAliasCfg, OttcElasticSearchAdminImpl esAdmin,
-            OttcElasticSearchIndexing esIndexing, EsState initialEsState) {
+    public ReIndexingRunner(String id, OttcElasticSearchIndexOrAliasConfig nxAliasCfg, OttcElasticSearchAdminImpl esAdmin, OttcElasticSearchIndexing esIndexing,
+            EsState initialEsState) {
         super();
         this.workId = id;
         this.setReIndexingConfig(new ReIndexingConfig(nxAliasCfg));
@@ -70,7 +69,7 @@ public class ReIndexingRunner {
         final String repository = this.getRepository();
 
         try {
-            ReIndexingRunnerManager.get().setStartTimeFor(getWorkId());
+            ReIndexingRunnerManager.get().setStartTimeFor(this.getWorkId());
             this.setRunnerStep(ReIndexingRunnerStep.initialization);
 
             final OttcElasticSearchIndexOrAliasConfig nxAliasCfg = this.getNxAliasCfg(repository);
@@ -82,6 +81,9 @@ public class ReIndexingRunner {
             try {
                 this.setRunnerStep(ReIndexingRunnerStep.initialization
                         .stepState(ReIndexingRunnerStepState.started.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
+
+                // Check interrupt status
+                this.checkInterrupt();
 
                 newNxAliasCfg = this.createNewEsIndex(newIndex, nxAliasCfg);
                 this.getEsAdmin().initIndex(newNxAliasCfg, false);
@@ -96,12 +98,16 @@ public class ReIndexingRunner {
                 this.setRunnerStep(
                         ReIndexingRunnerStep.initialization.stepState(ReIndexingRunnerStepState.done.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
             } catch (Exception e) {
-                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(), e);
+                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(),
+                        e);
             }
 
             try {
                 this.setRunnerStep(
                         ReIndexingRunnerStep.indexing.stepState(ReIndexingRunnerStepState.started.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
+
+                // Check interrupt status
+                this.checkInterrupt();
 
                 this.reIndex(repository, newIndex);
 
@@ -113,33 +119,41 @@ public class ReIndexingRunner {
                 this.setRunnerStep(
                         ReIndexingRunnerStep.indexing.stepState(ReIndexingRunnerStepState.done.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
             } catch (Exception e) {
-                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(), e);
+                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(),
+                        e);
             }
 
             try {
                 this.setRunnerStep(
                         ReIndexingRunnerStep.switching.stepState(ReIndexingRunnerStepState.started.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
 
+                // Check interrupt status
+                this.checkInterrupt();
+
                 this.updateEsAlias(nxAliasCfg.getAliasName(), initialIndex, newIndex);
 
                 this.updateEsFormerAlias(nxAliasCfg.getAliasName(), initialIndex);
                 this.deleteTransientAliases(initialIndex, newIndex);
 
-                ReIndexingRunnerManager.get().setNewIndexFor(getWorkId(), newIndex);
+                ReIndexingRunnerManager.get().setNewIndexFor(this.getWorkId(), newIndex);
 
                 // For test only
                 if (Framework.isTestModeSet()) {
                     this.mayFireExceptionInTestMode(this.getRunnerStep());
                 }
 
+                // Check interrupt status
+                this.checkInterrupt();
+
                 this.setRunnerStep(
                         ReIndexingRunnerStep.switching.stepState(ReIndexingRunnerStepState.done.stepStatus(ReIndexingRunnerStepStateStatus.successfull)));
             } catch (Exception e) {
-                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(), e);
+                this.manageReIndexingError(this.getWorkId(), nxAliasCfg.getAliasName(), initialIndex, newIndex, this.getRunnerStep(), this.getInitialEsState(),
+                        e);
             }
 
         } finally {
-            ReIndexingRunnerManager.get().setEndTimeFor(getWorkId());
+            ReIndexingRunnerManager.get().setEndTimeFor(this.getWorkId());
         }
 
     }
@@ -148,8 +162,8 @@ public class ReIndexingRunner {
      * @param e
      * @throws ReIndexingException
      */
-    private void manageReIndexingError(String workId, String currentAlias, IndexName initialIndex, IndexName newIndex, ReIndexingRunnerStep step, EsState initialEsState, Exception e)
-            throws ReIndexingException {
+    private void manageReIndexingError(String workId, String currentAlias, IndexName initialIndex, IndexName newIndex, ReIndexingRunnerStep step,
+            EsState initialEsState, Exception e) throws ReIndexingException {
         // Exception to be thrown
         ReIndexingException reIndexingException = new ReIndexingException(String.format("[Re-indexing process INTERRUPTED during [%s] step]: ", step.name()),
                 e);
@@ -168,6 +182,17 @@ public class ReIndexingRunner {
         }
 
         throw reIndexingException;
+    }
+
+    /**
+     * Checks if current Threaad is interrupted.
+     *
+     * @throws InterruptedException
+     */
+    private void checkInterrupt() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new InterruptedException(String.format("Zero Down Time work [%s] INTERUPTED.", this.getWorkId()));
+        }
     }
 
     // Initialization phase ============================
@@ -232,7 +257,7 @@ public class ReIndexingRunner {
 
         WorkManager workManager = Framework.getService(WorkManager.class);
 
-        if(log.isInfoEnabled()) {
+        if (log.isInfoEnabled()) {
             log.info("...");
         }
         boolean awaitCompletion = false;
@@ -296,7 +321,7 @@ public class ReIndexingRunner {
     }
 
     public String getWorkId() {
-        return workId;
+        return this.workId;
     }
 
     public void setWorkId(String workId) {
@@ -339,11 +364,11 @@ public class ReIndexingRunner {
         this.esIndexing = esIndexing;
         return this;
     }
-    
+
     public EsState getInitialEsState() {
-        return initialEsState;
+        return this.initialEsState;
     }
-    
+
     private void setInitialEsState(EsState initialEsState) {
         this.initialEsState = initialEsState;
     }

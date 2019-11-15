@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -33,10 +35,8 @@
 			<artifactId>nuxeo-automation-features</artifactId>
 		</dependency>
 
-		<!-- <dependency>
-			<groupId>org.nuxeo.ecm.automation</groupId>
-			<artifactId>nuxeo-automation-client</artifactId>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.nuxeo.ecm.automation</groupId> <artifactId>nuxeo-automation-client</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>toutatice-portail.cms</groupId>
 			<artifactId>toutatice-portail-cms-nuxeo-automation-client</artifactId>
@@ -44,16 +44,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.osivia.portal.core</groupId>
-        	<artifactId>osivia-portal-custom-lib-utils</artifactId>
-        	<scope>test</scope>
-    	</dependency>
+			<artifactId>osivia-portal-custom-lib-utils</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
-	    	<groupId>org.osivia.portal</groupId>
-    		<artifactId>osivia-portal-api</artifactId>
-	        <scope>test</scope>
-	    </dependency>
-    
-		
+			<groupId>org.osivia.portal</groupId>
+			<artifactId>osivia-portal-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
 		<dependency>
 			<groupId>org.nuxeo.ecm.platform</groupId>
 			<artifactId>nuxeo-platform-audit-core</artifactId>
@@ -76,20 +76,20 @@
 
 		<!-- Tests -->
 		<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.nuxeo.elasticsearch</groupId>
-				<artifactId>nuxeo-elasticsearch-core</artifactId>
-				<classifier>tests</classifier>
-			</dependency>
-			<dependency>
-				<groupId>org.nuxeo.ecm.automation</groupId>
-				<artifactId>nuxeo-automation-test</artifactId>
-				<scope>test</scope>
-			</dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.nuxeo.elasticsearch</groupId>
+			<artifactId>nuxeo-elasticsearch-core</artifactId>
+			<classifier>tests</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.nuxeo.ecm.automation</groupId>
+			<artifactId>nuxeo-automation-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.nuxeo.ecm.platform</groupId>
 			<artifactId>nuxeo-platform-audit-core</artifactId>
@@ -108,7 +108,7 @@
 				<configuration>
 					<encoding>UTF-8</encoding>
 					<source>1.8</source>
-					<target>1.8</target> 
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>

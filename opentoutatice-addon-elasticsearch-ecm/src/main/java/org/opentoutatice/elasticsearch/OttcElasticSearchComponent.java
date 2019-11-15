@@ -498,7 +498,7 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
 
     @Override
     public void runReindexingWorker(String repositoryName, String nxql) {
-        runReindexingWorker(repositoryName, nxql, false);
+        this.runReindexingWorker(repositoryName, nxql, false);
     }
 
     public void runReindexingWorker(String repositoryName, String nxql, boolean zeroDownTime) {

@@ -13,6 +13,8 @@
 
 		<operation
 			class="org.opentoutatice.elasticsearch.core.reindexing.docs.automation.ReIndexZeroDownTimeES" />
+		<operation
+			class="org.opentoutatice.elasticsearch.core.reindexing.docs.automation.CleanESIndices" />
 
 	</extension>
 
@@ -21,7 +23,10 @@
 		point="bindings">
 
 		<!-- don't allow ReIndexES of arbitrary URLs on the server -->
-		<binding name="Document.ReIndexZeroDownTimeES">
+		<binding name="Documents.ReIndexZeroDownTimeES">
+			<administrator>true</administrator>
+		</binding>
+		<binding name="Documents.CleanESIndices">
 			<administrator>true</administrator>
 		</binding>
 

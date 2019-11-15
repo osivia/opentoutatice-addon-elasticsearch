@@ -14,6 +14,8 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatus;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatusBuilder;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.cfg.ReIndexingConfig;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.service.OttcElasticSearchAdminImpl;
 
 /**
@@ -59,17 +61,26 @@ public class ReIndexingWork extends AbstractWork {
     @Override
     public void work() throws Exception {
         if (log.isInfoEnabled()) {
-            logLaunchingInfos(this.getId(), getAliasCfg().getRepositoryName(), getInitialEsState());
+            this.logLaunchingInfos(this.getId(), this.getAliasCfg().getRepositoryName(), this.getInitialEsState());
         }
         try {
             // Start re-indexing runner
-            new ReIndexingRunner(this.getId(), this.getAliasCfg(), this.getEsAdmin(), this.getEsIndexing(), this.getInitialEsState()).run();
-        } finally {
-            if (log.isInfoEnabled()) {
-                logReIndexingEndStatus(this.getId());
+            ReIndexingRunner runner = new ReIndexingRunner(this.getId(), this.getAliasCfg(), this.getEsAdmin(), this.getEsIndexing(), this.getInitialEsState());
+            runner.run();
+        } catch (ReIndexingException e) {
+            this.logEndProcessStatus();
+
+            // Prepare Exception for Work & WorkManager managment
+            Exception excToThrow = e;
+            if ((e.getCause() != null) && (e.getCause().getCause() instanceof InterruptedException)) {
+                excToThrow = new InterruptedException();
+                excToThrow.initCause(e);
             }
-            cleanLogsInfos();
+
+            throw excToThrow;
         }
+
+        this.logEndProcessStatus();
     }
 
     public OttcElasticSearchIndexOrAliasConfig getAliasCfg() {
@@ -97,15 +108,22 @@ public class ReIndexingWork extends AbstractWork {
     }
 
     public EsState getInitialEsState() {
-        return initialEsState;
+        return this.initialEsState;
     }
 
     private void setInitialEsState(EsState initialEsState) {
         this.initialEsState = initialEsState;
     }
 
+    protected void logEndProcessStatus() {
+        if (log.isInfoEnabled()) {
+            this.logReIndexingEndStatus(this.getId());
+        }
+        this.cleanLogsInfos();
+    }
+
     protected void logReIndexingEndStatus(String workId) {
-        ReIndexingProcessStatus processStatus = ReIndexingProcessStatusBuilder.get().build(workId, getAliasCfg().getRepositoryName());
+        ReIndexingProcessStatus processStatus = ReIndexingProcessStatusBuilder.get().build(workId, this.getAliasCfg().getRepositoryName());
         log.info(processStatus.toString());
     }
 

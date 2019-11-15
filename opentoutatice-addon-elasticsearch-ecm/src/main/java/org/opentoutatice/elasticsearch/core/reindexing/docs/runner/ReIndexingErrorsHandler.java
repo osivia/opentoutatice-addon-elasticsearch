@@ -3,7 +3,6 @@
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.runner;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +24,7 @@ import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.Re
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.RecoveringReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexingRunnerStep;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.test.constant.ReIndexingTestConstants;
+import org.opentoutatice.elasticsearch.utils.MessageUtils;
 
 /**
  * @author david
@@ -61,7 +61,7 @@ public class ReIndexingErrorsHandler {
                         this.mayFireExceptionInTestMode(ReIndexingRunnerStep.initialization);
                     }
 
-                    restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
+                    this.restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
 
                     // Delete new index
                     if (IndexNAliasManager.get().indexExists(((IndexName) params[1]).toString())) {
@@ -77,7 +77,7 @@ public class ReIndexingErrorsHandler {
                         this.mayFireExceptionInTestMode(ReIndexingRunnerStep.indexing);
                     }
 
-                    restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
+                    this.restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
                     break;
 
                 case switching:
@@ -88,7 +88,7 @@ public class ReIndexingErrorsHandler {
                         this.mayFireExceptionInTestMode(ReIndexingRunnerStep.switching);
                     }
 
-                    restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
+                    this.restoreInitialEsState(initialEsState, (IndexName) params[0], (IndexName) params[1]);
                     break;
 
                 default:
@@ -104,56 +104,57 @@ public class ReIndexingErrorsHandler {
 
     }
 
-    protected void restoreInitialEsState(EsState initialEsState, IndexName initialIndex, IndexName newIndex) throws ReIndexingException, InterruptedException, ExecutionException {
-        //try {
-            // Delete transient aliases
-            if (IndexNAliasManager.get().transientAliasesExist()) {
-                IndexNAliasManager.get().deleteTransientAliases(initialIndex, newIndex);
+    protected void restoreInitialEsState(EsState initialEsState, IndexName initialIndex, IndexName newIndex)
+            throws ReIndexingException, InterruptedException, ExecutionException {
+        // try {
+        // Delete transient aliases
+        if (IndexNAliasManager.get().transientAliasesExist()) {
+            IndexNAliasManager.get().deleteTransientAliases(initialIndex, newIndex);
+        }
+
+        // Current aliases
+        Map<String, List<String>> currentAliases = EsStateChecker.get().getEsState().getAliases();
+        // Initial aliases (we must have something to restore)
+        Map<String, List<String>> initialAliases = initialEsState.getAliases();
+        Validate.isTrue(initialAliases.keySet() != null ? initialAliases.keySet().size() >= 1 : false);
+
+        IndicesAdminClient esClient = IndexNAliasManager.get().getAdminClient().indices();
+
+        // Remove current Es state
+        for (Entry<String, List<String>> currentAlias : currentAliases.entrySet()) {
+
+            String currentAliasName = currentAlias.getKey();
+            Validate.isTrue(StringUtils.endsWith(currentAliasName, OttcElasticSearchIndexOrAliasConfig.NX_ALIAS_SUFFIX));
+
+            List<String> currentIndicesOfAlias = IndexNAliasManager.get().getIndicesOfAlias(currentAliasName);
+
+            if (log.isInfoEnabled()) {
+                log.info(String.format("Removing alias [%s] on indices: [%s]", currentAliasName, MessageUtils.listToString(currentIndicesOfAlias)));
             }
 
-            // Current aliases
-            Map<String, List<String>> currentAliases = EsStateChecker.get().getEsState().getAliases();
-            // Initial aliases (we must have something to restore)
-            Map<String, List<String>> initialAliases = initialEsState.getAliases();
-            Validate.isTrue(initialAliases.keySet() != null ? initialAliases.keySet().size() >= 1 : false);
+            String[] currentIndices = new String[currentIndicesOfAlias.size()];
+            currentIndices = currentIndicesOfAlias.toArray(currentIndices);
+            esClient.prepareAliases().removeAlias(currentIndices, currentAliasName).get();
+        }
 
-            IndicesAdminClient esClient = IndexNAliasManager.get().getAdminClient().indices();
+        // Restoring initial state
+        for (Entry<String, List<String>> initialAlias : initialAliases.entrySet()) {
 
-            // Remove current Es state
-            for (Entry<String, List<String>> currentAlias : currentAliases.entrySet()) {
+            String initialAliasName = initialAlias.getKey();
+            Validate.isTrue(StringUtils.endsWith(initialAliasName, OttcElasticSearchIndexOrAliasConfig.NX_ALIAS_SUFFIX));
 
-                String currentAliasName = currentAlias.getKey();
-                Validate.isTrue(StringUtils.endsWith(currentAliasName, OttcElasticSearchIndexOrAliasConfig.NX_ALIAS_SUFFIX));
+            List<String> initialIndicesOfAlias = initialAlias.getValue();
 
-                List<String> currentIndicesOfAlias = IndexNAliasManager.get().getIndicesOfAlias(currentAliasName);
-
-                if (log.isInfoEnabled()) {
-                    log.info(String.format("Removing alias [%s] on indices: [%s]", currentAliasName, listToString(currentIndicesOfAlias)));
-                }
-
-                String[] currentIndices = new String[currentIndicesOfAlias.size()];
-                currentIndices = currentIndicesOfAlias.toArray(currentIndices);
-                esClient.prepareAliases().removeAlias(currentIndices, currentAliasName).get();
+            if (log.isInfoEnabled()) {
+                log.info(String.format("Restoring initial alias [%s] on indices: [%s]", initialAliasName, MessageUtils.listToString(initialIndicesOfAlias)));
             }
-
-            // Restoring initial state
-            for (Entry<String, List<String>> initialAlias : initialAliases.entrySet()) {
-
-                String initialAliasName = initialAlias.getKey();
-                Validate.isTrue(StringUtils.endsWith(initialAliasName, OttcElasticSearchIndexOrAliasConfig.NX_ALIAS_SUFFIX));
-
-                List<String> initialIndicesOfAlias = initialAlias.getValue();
-
-                if (log.isInfoEnabled()) {
-                    log.info(String.format("Restoring initial alias [%s] on indices: [%s]", initialAliasName, listToString(initialIndicesOfAlias)));
-                }
-                String[] initialIndices = new String[initialAlias.getValue().size()];
-                initialIndices = initialAlias.getValue().toArray(initialIndices);
-                esClient.prepareAliases().addAlias(initialIndices, initialAliasName).get();
-            }
-//        } catch (Exception e) {
-//            throw new RecoveringReIndexingException(e);
-//        }
+            String[] initialIndices = new String[initialAlias.getValue().size()];
+            initialIndices = initialAlias.getValue().toArray(initialIndices);
+            esClient.prepareAliases().addAlias(initialIndices, initialAliasName).get();
+        }
+        // } catch (Exception e) {
+        // throw new RecoveringReIndexingException(e);
+        // }
     }
 
     // Only for tests
@@ -162,23 +163,6 @@ public class ReIndexingErrorsHandler {
                 && StringUtils.equals(step.name(), Framework.getProperty(ReIndexingTestConstants.FIRE_TEST_ERRORS_ON_STEP_RECOVERY_PROP))) {
             throw new Exception(String.format("[RECOVERY ERROR TEST] during: %s", step.name()));
         }
-    }
-
-    protected String listToString(List<String> list) {
-        StringBuffer sb = new StringBuffer();
-
-        if (list != null) {
-            Iterator<String> listIt = list.iterator();
-            while (listIt.hasNext()) {
-                String elem = listIt.next();
-                sb.append(elem);
-                if (listIt.hasNext()) {
-                    sb.append(", ");
-                }
-            }
-        }
-
-        return sb.toString();
     }
 
 }

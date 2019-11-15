@@ -156,7 +156,7 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
         Context stopWatch = this.searchTimer.time();
         try {
             SearchRequestBuilder request = this.buildEsSearchRequest(query);
-            
+
             // For logs performance
             long startTime = System.currentTimeMillis();
 
@@ -172,24 +172,24 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
                     }
                 }
             }
-            
-            if(log.isDebugEnabled()) {
+
+            if (log.isDebugEnabled()) {
                 long duration = System.currentTimeMillis() - startTime;
                 log.debug(String.format("#Add aggregate: [TE_%s_TE] ms", String.valueOf(duration)));
             }
 
             this.logSearchRequest(request, query);
-            
+
             // For logs performance
             long startTime_ = System.currentTimeMillis();
-            
+
             SearchResponse response = request.execute().actionGet();
-            
-            if(log.isDebugEnabled()) {
+
+            if (log.isDebugEnabled()) {
                 long duration = System.currentTimeMillis() - startTime_;
                 log.debug(String.format("#Es search: [TE_%s_TE] ms", String.valueOf(duration)));
             }
-            
+
             this.logSearchResponse(response);
             return response;
         } finally {
