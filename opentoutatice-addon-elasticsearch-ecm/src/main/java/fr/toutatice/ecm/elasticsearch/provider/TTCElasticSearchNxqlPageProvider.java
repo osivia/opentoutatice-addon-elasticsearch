@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package fr.toutatice.ecm.elasticsearch.provider;
 
@@ -39,51 +39,52 @@ public class TTCElasticSearchNxqlPageProvider extends ElasticSearchNxqlPageProvi
     @Override
     public List<DocumentModel> getCurrentPage() {
         // use a cache
-        if (currentPageDocuments != null) {
-            return currentPageDocuments;
+        if (this.currentPageDocuments != null) {
+            return this.currentPageDocuments;
         }
-        error = null;
-        errorMessage = null;
+        this.error = null;
+        this.errorMessage = null;
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Perform query for provider '%s': with pageSize=%d, offset=%d", getName(), getMinMaxPageSize(), getCurrentPageOffset()));
+            log.debug(String.format("Perform query for provider '%s': with pageSize=%d, offset=%d", this.getName(), this.getMinMaxPageSize(),
+                    this.getCurrentPageOffset()));
         }
-        currentPageDocuments = new ArrayList<DocumentModel>();
-        CoreSession coreSession = getCoreSession();
-        if (query == null) {
-            buildQuery(coreSession);
+        this.currentPageDocuments = new ArrayList<DocumentModel>();
+        CoreSession coreSession = this.getCoreSession();
+        if (this.query == null) {
+            this.buildQuery(coreSession);
         }
-        if (query == null) {
-            throw new ClientRuntimeException(String.format("Cannot perform null query: check provider '%s'", getName()));
+        if (this.query == null) {
+            throw new ClientRuntimeException(String.format("Cannot perform null query: check provider '%s'", this.getName()));
         }
         // Build and execute the ES query
         ElasticSearchService ess = Framework.getLocalService(ElasticSearchService.class);
         try {
-            NxQueryBuilder nxQuery = new TTCNxQueryBuilder(getCoreSession()).setAutomationCall(false).nxql(query).offset((int) getCurrentPageOffset())
-                    .limit(getLimit()).addAggregates(buildAggregates());
+            NxQueryBuilder nxQuery = new TTCNxQueryBuilder(this.getCoreSession()).setAutomationCall(false).nxql(this.query)
+                    .offset((int) this.getCurrentPageOffset()).limit(this.getLimit()).addAggregates(this.buildAggregates());
 
-            if (searchOnAllRepositories()) {
+            if (this.searchOnAllRepositories()) {
                 nxQuery.searchOnAllRepositories();
             }
             EsResult ret = ess.queryAndAggregate(nxQuery);
             DocumentModelList dmList = ret.getDocuments();
-            currentAggregates = new HashMap<>(ret.getAggregates().size());
+            this.currentAggregates = new HashMap<>(ret.getAggregates().size());
             for (Aggregate<Bucket> agg : ret.getAggregates()) {
-                currentAggregates.put(agg.getId(), agg);
+                this.currentAggregates.put(agg.getId(), agg);
             }
-            setResultsCount(dmList.totalSize());
-            currentPageDocuments = dmList;
+            this.setResultsCount(dmList.totalSize());
+            this.currentPageDocuments = dmList;
         } catch (ClientException | QueryParseException e) {
-            error = e;
-            errorMessage = e.getMessage();
+            this.error = e;
+            this.errorMessage = e.getMessage();
             log.warn(e.getMessage(), e);
         }
-        return currentPageDocuments;
+        return this.currentPageDocuments;
     }
 
     private List<AggregateEsBase<? extends Bucket>> buildAggregates() {
-        ArrayList<AggregateEsBase<? extends Bucket>> ret = new ArrayList<>(getAggregateDefinitions().size());
+        ArrayList<AggregateEsBase<? extends Bucket>> ret = new ArrayList<>(this.getAggregateDefinitions().size());
         for (AggregateDefinition def : super.getAggregateDefinitions()) {
-            ret.add(AggregateFactory.create(def, getSearchDocumentModel()));
+            ret.add(AggregateFactory.create(def, this.getSearchDocumentModel()));
         }
         return ret;
     }

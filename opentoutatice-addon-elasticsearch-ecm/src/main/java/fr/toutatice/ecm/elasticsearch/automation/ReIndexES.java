@@ -13,8 +13,8 @@
  *
  *
  * Contributors:
- *   mberhaut1
- *    
+ * mberhaut1
+ *
  */
 package fr.toutatice.ecm.elasticsearch.automation;
 
@@ -45,101 +45,101 @@ import org.nuxeo.elasticsearch.commands.IndexingCommand;
 import org.nuxeo.elasticsearch.commands.IndexingCommand.Type;
 import org.nuxeo.runtime.api.Framework;
 
-@Operation(id = ReIndexES.ID, category = Constants.CAT_DOCUMENT, label = "Re-index documents via ElasticSerach", description = "Re-build the ElasticSerach indice of either the whole repositry, a document (and its sub-hierarchy), documents selected based on a Nxql query")
+@Operation(id = ReIndexES.ID, category = Constants.CAT_DOCUMENT, label = "Re-index documents via ElasticSerach",
+        description = "Re-build the ElasticSerach indice of either the whole repositry, a document (and its sub-hierarchy), documents selected based on a Nxql query")
 public class ReIndexES {
 
-	private static final Log log = LogFactory.getLog(QueryES.class);
-	public static final String ID = "Document.ReIndexES";
+    private static final Log log = LogFactory.getLog(QueryES.class);
+    public static final String ID = "Document.ReIndexES";
 
     private static final String JSON_DELETE_CMD = "{\"id\":\"IndexingCommand-reindex\",\"type\":\"DELETE\",\"docId\":\"%s\",\"repo\":\"%s\",\"recurse\":true,\"sync\":true}";
 
-	public static final String ENUM_REINDEX_TYPE_ALL = "ALL";
-	public static final String ENUM_REINDEX_TYPE_ROOT = "ROOT";
-	public static final String ENUM_REINDEX_TYPE_QUERY = "QUERY";
-	public static final String ELASTICSEARCH_AUDIT_EVENT_NAME = "opentoutatice.addon.elasticsearch.audit.event";
-	public static final String ELASTICSEARCH_AUDIT_EVENT_CATEGORY = "opentoutatice.addon.elasticsearch.audit.category";
+    public static final String ENUM_REINDEX_TYPE_ALL = "ALL";
+    public static final String ENUM_REINDEX_TYPE_ROOT = "ROOT";
+    public static final String ENUM_REINDEX_TYPE_QUERY = "QUERY";
+    public static final String ELASTICSEARCH_AUDIT_EVENT_NAME = "opentoutatice.addon.elasticsearch.audit.event";
+    public static final String ELASTICSEARCH_AUDIT_EVENT_CATEGORY = "opentoutatice.addon.elasticsearch.audit.category";
 
-	@Context
-	CoreSession session;
+    @Context
+    CoreSession session;
 
-	@Context
+    @Context
     protected ElasticSearchAdmin esa;
 
-	@Context
+    @Context
     protected ElasticSearchIndexing esi;
 
-	@Param(name = "type", required = true, values = {ENUM_REINDEX_TYPE_ALL, ENUM_REINDEX_TYPE_ROOT, ENUM_REINDEX_TYPE_QUERY})
-	protected String type;
+    @Param(name = "type", required = true, values = {ENUM_REINDEX_TYPE_ALL, ENUM_REINDEX_TYPE_ROOT, ENUM_REINDEX_TYPE_QUERY})
+    protected String type;
 
-	@Param(name = "repositoryName", required = true)
-	protected String repositoryName;
+    @Param(name = "repositoryName", required = true)
+    protected String repositoryName;
 
-	@Param(name = "query", required = false)
-	protected String query;
+    @Param(name = "query", required = false)
+    protected String query;
 
-	@Param(name = "rootID", required = false)
-	protected String rootID;
+    @Param(name = "rootID", required = false)
+    protected String rootID;
 
-	@OperationMethod
-	public void run() throws OperationException {
-			
-		// Re-index according to the requested type
-		if (ENUM_REINDEX_TYPE_ALL.equals(type)) {
-			logAudit(session, String.format("Re-index all the repository '%s'", repositoryName));
-			startReindexAll();
-		} else if (ENUM_REINDEX_TYPE_ROOT.equals(type)) {
-			if (StringUtils.isNotBlank(rootID)) {
-				logAudit(session, String.format("Re-index the document (and sub-hierarchy) with id '%s'", rootID));
-				startReindexFrom();
-			} else {
-				log.warn("Re-indexation of a root document is requested with not root specified");
-			}
-		} else {
-			if (StringUtils.isNotBlank(query)) {
-				logAudit(session, String.format("Re-index the documents selected from the query '%s'", query));
-				startReindexNxql();
-			} else {
-				log.warn("Re-indexation of documents is requested with not query specified");
-			}
-		}
-		
-	}
-	
+    @OperationMethod
+    public void run() throws OperationException {
+
+        // Re-index according to the requested type
+        if (ENUM_REINDEX_TYPE_ALL.equals(this.type)) {
+            this.logAudit(this.session, String.format("Re-index all the repository '%s'", this.repositoryName));
+            this.startReindexAll();
+        } else if (ENUM_REINDEX_TYPE_ROOT.equals(this.type)) {
+            if (StringUtils.isNotBlank(this.rootID)) {
+                this.logAudit(this.session, String.format("Re-index the document (and sub-hierarchy) with id '%s'", this.rootID));
+                this.startReindexFrom();
+            } else {
+                log.warn("Re-indexation of a root document is requested with not root specified");
+            }
+        } else {
+            if (StringUtils.isNotBlank(this.query)) {
+                this.logAudit(this.session, String.format("Re-index the documents selected from the query '%s'", this.query));
+                this.startReindexNxql();
+            } else {
+                log.warn("Re-indexation of documents is requested with not query specified");
+            }
+        }
+
+    }
+
     private void startReindexAll() {
-        log.warn("Re-indexing the entire repository: " + repositoryName);
-        esa.dropAndInitRepositoryIndex(repositoryName);
-        esi.runReindexingWorker(repositoryName, "SELECT ecm:uuid FROM Document");
+        log.warn("Re-indexing the entire repository: " + this.repositoryName);
+        this.esa.dropAndInitRepositoryIndex(this.repositoryName);
+        this.esi.runReindexingWorker(this.repositoryName, "SELECT ecm:uuid FROM Document");
     }
 
     private void startReindexNxql() {
-        log.warn(String.format("Re-indexing from a NXQL query: %s on repository: %s", query, repositoryName));
-        esi.runReindexingWorker(repositoryName, query);
+        log.warn(String.format("Re-indexing from a NXQL query: %s on repository: %s", this.query, this.repositoryName));
+        this.esi.runReindexingWorker(this.repositoryName, this.query);
     }
 
     private void startReindexFrom() {
-        try (CoreSession session = CoreInstance.openCoreSessionSystem(repositoryName)) {
-            String jsonCmd = String.format(JSON_DELETE_CMD, rootID, repositoryName);
+        try (CoreSession session = CoreInstance.openCoreSessionSystem(this.repositoryName)) {
+            String jsonCmd = String.format(JSON_DELETE_CMD, this.rootID, this.repositoryName);
             IndexingCommand rmCmd = IndexingCommand.fromJSON(jsonCmd);
-            esi.indexNonRecursive(rmCmd);
+            this.esi.indexNonRecursive(rmCmd);
 
-            DocumentRef ref = new IdRef(rootID);
+            DocumentRef ref = new IdRef(this.rootID);
             if (session.exists(ref)) {
                 DocumentModel doc = session.getDocument(ref);
-                log.warn(String.format("Re-indexing document: %s and its children on repository: %s", doc,
-                        repositoryName));
+                log.warn(String.format("Re-indexing document: %s and its children on repository: %s", doc, this.repositoryName));
                 IndexingCommand cmd = new IndexingCommand(doc, Type.INSERT, false, true);
-                esi.runIndexingWorker(Arrays.asList(cmd));
+                this.esi.runIndexingWorker(Arrays.asList(cmd));
             }
         }
     }
-    
+
     private void logAudit(CoreSession session, String comment) {
-    	EventContext ctx = new EventContextImpl(session, session.getPrincipal());
-    	Logs auditProducer = Framework.getService(Logs.class);
-    	ctx.setProperty("category", ELASTICSEARCH_AUDIT_EVENT_CATEGORY);
-    	ctx.setProperty("comment", comment);
-    	Event entry = new EventImpl(ELASTICSEARCH_AUDIT_EVENT_NAME, ctx);
-    	auditProducer.logEvent(entry);
+        EventContext ctx = new EventContextImpl(session, session.getPrincipal());
+        Logs auditProducer = Framework.getService(Logs.class);
+        ctx.setProperty("category", ELASTICSEARCH_AUDIT_EVENT_CATEGORY);
+        ctx.setProperty("comment", comment);
+        Event entry = new EventImpl(ELASTICSEARCH_AUDIT_EVENT_NAME, ctx);
+        auditProducer.logEvent(entry);
     }
 
 }

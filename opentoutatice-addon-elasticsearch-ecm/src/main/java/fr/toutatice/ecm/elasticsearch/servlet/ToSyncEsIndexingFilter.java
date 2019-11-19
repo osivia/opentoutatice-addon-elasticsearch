@@ -1,18 +1,18 @@
 /*
  * (C) Copyright 2016 Nuxeo SA (http://nuxeo.com/) and others.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * Contributors:
  * "Guillaume Renard"
  */
@@ -53,18 +53,18 @@ public class ToSyncEsIndexingFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         // Case of not HttpServeltRequest
-        if (request instanceof HttpServletRequest == false) {
+        if ((request instanceof HttpServletRequest) == false) {
             chain.doFilter(request, response);
             return;
         }
 
         // Get ElasticSearch indexing mode (synchronous) according to configuration
         final boolean syncEsFromConfig = Boolean.valueOf(Framework.getProperty(ES_INDEXING_SYNC_FORCE, "true"));
-        
+
         // Get ElasticSearch indexing mode (synchronous) according to header flag
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         final boolean asyncEsFromHeader = Boolean.valueOf(httpRequest.getHeader(ES_INDEXING_ASYNC_FORCE_FLAG));
-        
+
         // Set indexing status: if forced from configuration, check header
         boolean syncEs = syncEsFromConfig && asyncEsFromHeader ? asyncEsFromHeader : syncEsFromConfig;
 

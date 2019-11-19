@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package fr.toutatice.ecm.elasticsearch.servlet;
 
@@ -28,8 +28,8 @@ public class VcsToEsQueryFilter implements Filter {
     private static final String APP_HEADER = "X-Application-Name";
 
     private static final String APP_HEADER_VALUE = "OSIVIA Portal";
-    
-	/** Querying using always ES. */
+
+    /** Querying using always ES. */
     public static final String QUERYING_ES_FORCE = "ottc.querying.es.force";
     /** Exception of QUERYING_FORCE_ES: if set to true, force given request in VCS. */
     public static final String QUERYING_VCS_FORCE_FLAG = "nx_querying_vcs_force";
@@ -48,7 +48,7 @@ public class VcsToEsQueryFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         // Case of not HttpServeltRequest
-        if (request instanceof HttpServletRequest == false) {
+        if ((request instanceof HttpServletRequest) == false) {
             chain.doFilter(request, response);
             return;
         }
@@ -59,16 +59,16 @@ public class VcsToEsQueryFilter implements Filter {
         final boolean queryingEsFromConfig = Boolean.valueOf(Framework.getProperty(QUERYING_ES_FORCE, "true"));
         // Get ElasticSearch querying mode from header
         final boolean queryingVcs = Boolean.valueOf(httpReq.getHeader(QUERYING_VCS_FORCE_FLAG));
-        
-        
+
+
         // #1495 - Querying ES if request is from osivia portal only
         boolean authorizedApp = false;
-        
+
         String applicationName = httpReq.getHeader(APP_HEADER);
-        if(StringUtils.isNotBlank(applicationName) && APP_HEADER_VALUE.equals(applicationName)) {
-        	authorizedApp = true;
+        if (StringUtils.isNotBlank(applicationName) && APP_HEADER_VALUE.equals(applicationName)) {
+            authorizedApp = true;
         }
-        
+
 
         if (authorizedApp && queryingEsFromConfig && !queryingVcs) {
             // Check operation
