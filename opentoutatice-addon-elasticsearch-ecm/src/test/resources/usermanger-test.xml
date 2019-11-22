@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component name="tests.extensions.sarp-industries"
+	version="1.0.0">
+
+	<require>org.nuxeo.runtime.started</require>
+
+	<!-- <extension
+		target="org.nuxeo.ecm.platform.content.template.service.ContentTemplateService"
+		point="factoryBinding">
+		<factoryBinding name="TestContainerFactory"
+			factoryName="SimpleTemplateFactory" targetType="xxx">
+			<acl>
+				<ace principal="robots" permission="ReadWrite" granted="true" />
+				<ace principal="Everyone" permission="Everything"
+					granted="false" />
+			</acl>
+		</factoryBinding>
+	</extension> -->
+	
+	<extension point="userManager"
+		target="org.nuxeo.ecm.platform.usermanager.UserService">
+		<userManager>
+			<users>
+				<virtualUser id="VirtualAdministrator"
+					searchable="true">
+					<password>secret</password>
+					<property name="firstName">Virtual</property>
+					<property name="lastName">Administrator</property>
+					<group>administrators</group>
+				</virtualUser>
+			</users>
+		</userManager>
+	</extension>
+</component>
+		

@@ -11,26 +11,22 @@
 	<version>4.7-SNAPSHOT</version>
 
 	<properties>
-		<nuxeo.version>6.0-HF45</nuxeo.version>
-		<nuxeo.cap.version>6.0</nuxeo.cap.version>
-		<elasticsearch.version>1.1.2</elasticsearch.version>
-		<nuxeo.opentoutatice.version>4.7.16</nuxeo.opentoutatice.version>
+		<nuxeo.version>6.1.1</nuxeo.version>
+		<nuxeo.opentoutatice.version>4.7.25</nuxeo.opentoutatice.version>
+		<elasticsearch.transport.client.version>1.1.2</elasticsearch.transport.client.version>
+		<elasticsearch.rest.client.version>6.6.2</elasticsearch.rest.client.version>
+		<osv.toutatice.automation.client.version>4.7.19</osv.toutatice.automation.client.version>
+		<jcabi.version>0.22.6</jcabi.version>
+		<aspectj.version>1.9.2</aspectj.version>
+		<junit.version>4.12</junit.version>
 	</properties>
 
 	<modules>
 		<module>opentoutatice-addon-elasticsearch-ecm</module>
-		<!-- <module>opentoutatice-addon-elasticsearch-marketplace</module> -->
 	</modules>
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>org.nuxeo.ecm.distribution</groupId>
-				<artifactId>nuxeo-distribution-cap</artifactId>
-				<version>${nuxeo.version}</version>
-				<type>pom</type>
-			</dependency>
-
 			<dependency>
 				<groupId>org.nuxeo.ecm.automation</groupId>
 				<artifactId>nuxeo-automation-core</artifactId>
@@ -45,11 +41,6 @@
 				<groupId>org.nuxeo.elasticsearch</groupId>
 				<artifactId>nuxeo-elasticsearch-web</artifactId>
 				<version>${nuxeo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.elasticsearch</groupId>
-				<artifactId>elasticsearch</artifactId>
-				<version>${elasticsearch.version}</version>
 			</dependency>
 
 			<dependency>
@@ -69,15 +60,71 @@
 				<artifactId>opentoutatice-ecm-platform-core</artifactId>
 				<version>${nuxeo.opentoutatice.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.elasticsearch</groupId>
+				<artifactId>elasticsearch</artifactId>
+				<version>${elasticsearch.transport.client.version}</version>
+			</dependency>
+
+			<!-- <dependency> <groupId>com.jcabi</groupId> <artifactId>jcabi-aspects</artifactId> 
+				<version>${jcabi.version}</version> </dependency> -->
+			<dependency>
+				<groupId>org.aspectj</groupId>
+				<artifactId>aspectjrt</artifactId>
+				<version>${aspectj.version}</version>
+			</dependency>
+
+			<!-- Tests -->
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.elasticsearch</groupId>
+				<artifactId>nuxeo-elasticsearch-core</artifactId>
+				<version>${nuxeo.version}</version>
+				<classifier>tests</classifier>
+			</dependency>
+			<dependency>
+				<groupId>org.nuxeo.ecm.automation</groupId>
+				<artifactId>nuxeo-automation-test</artifactId>
+				<version>${nuxeo.version}</version>
+				<scope>test</scope>
+			</dependency>
+
+			<!-- Osivia Toutatice automation client -->
+			<dependency>
+				<groupId>toutatice-portail.cms</groupId>
+				<artifactId>toutatice-portail-cms-nuxeo-automation-client</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.osivia.portal.core</groupId>
+				<artifactId>osivia-portal-custom-lib-utils</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.osivia.portal</groupId>
+				<artifactId>osivia-portal-api</artifactId>
+				<version>${osv.toutatice.automation.client.version}</version>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<!-- Repository for jcabi FIXME: SNAPSHOT version of 2016 ... -->
+	<pluginRepositories>
+		<pluginRepository>
+			<id>oss.sonatype.org</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -88,17 +135,42 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-		</plugins>
-		<pluginManagement>
-			<plugins>
+            <!-- Disable strict javadoc checking since java8 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <additionalOptions>
+                        <additionalOption>-Xdoclint:none</additionalOption>
+                    </additionalOptions>
+                </configuration>
+            </plugin>  			
 				<plugin>
-					<groupId>org.nuxeo.build</groupId>
-					<artifactId>ant-assembly-maven-plugin</artifactId>
-					<version>2.0.1</version>
-					<extensions>true</extensions>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<archive>
+						<manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+						<manifestEntries>
+							<Bundle-Version>${eclipseVersion}-t${buildNumber}</Bundle-Version>
+							<Bundle-ManifestVersion>2</Bundle-ManifestVersion>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<!-- <plugin> <groupId>com.jcabi</groupId> <artifactId>jcabi-maven-plugin</artifactId> 
+				<version>0.10</version> <configuration> <source>1.7</source> <target>1.7</target> 
+				</configuration> <executions> <execution> <goals> <goal>ajc</goal> </goals> 
+				</execution> </executions> <dependencies> <dependency> <groupId>org.aspectj</groupId> 
+				<artifactId>aspectjrt</artifactId> <version>1.8.3</version> </dependency> 
+				<dependency> <groupId>org.aspectj</groupId> <artifactId>aspectjtools</artifactId> 
+				<version>1.8.3</version> </dependency> </dependencies> </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
 				</plugin>
 			</plugins>
-		</pluginManagement>
 	</build>
 
 	<scm>
@@ -120,4 +192,3 @@
     </distributionManagement>
 
 </project>
-
