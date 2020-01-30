@@ -211,9 +211,17 @@ public class QueryES {
      * @return schemas
      */
     // TODO: to remove when client ES query will send schema in header
-    public String getSchemasFromHeader(OperationContext ctx) {
-        HttpServletRequest httpRequest = (HttpServletRequest) ctx.get("request");
-        String schemas = httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+  public String getSchemasFromHeader(OperationContext ctx) {
+        
+        String schemas;
+
+        
+        if( "transaction".equals( ctx.get("contextType")))   {
+            schemas = (String) ctx.get(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+        }   else    {
+             HttpServletRequest httpRequest = (HttpServletRequest) ctx.get("request");
+            schemas = httpRequest.getHeader(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
+        }
         return !StringUtils.equals("*", schemas) ? schemas : null;
     }
 
