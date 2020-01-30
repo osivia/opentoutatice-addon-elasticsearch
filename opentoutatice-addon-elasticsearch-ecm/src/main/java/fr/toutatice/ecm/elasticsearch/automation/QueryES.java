@@ -214,7 +214,6 @@ public class QueryES {
   public String getSchemasFromHeader(OperationContext ctx) {
         
         String schemas;
-
         
         if( "transaction".equals( ctx.get("contextType")))   {
             schemas = (String) ctx.get(JsonDocumentWriter.DOCUMENT_PROPERTIES_HEADER);
