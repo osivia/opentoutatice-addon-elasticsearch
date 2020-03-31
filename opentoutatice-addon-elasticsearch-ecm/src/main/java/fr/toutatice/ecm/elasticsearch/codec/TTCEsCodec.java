@@ -22,7 +22,10 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,10 +33,12 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
+import org.elasticsearch.search.highlight.HighlightField;
 import org.nuxeo.ecm.automation.io.services.codec.ObjectCodec;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
@@ -45,6 +50,8 @@ import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
     private static final Log log = LogFactory.getLog(TTCEsCodec.class);
+    
+    private static final Pattern SYSTEM_PROPS_PATTERN = Pattern.compile("ecm:.+");
 
     public TTCEsCodec() {
         super(TTCSearchResponse.class);
@@ -62,7 +69,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         // long startTime = System.currentTimeMillis();
 
         SearchHits upperhits = value.getSearchResponse().getHits();
-        String schemasRegex = value.getSchemasRegex();
+        Pattern schemasRegex = Pattern.compile(value.getSchemasRegex());
 
         SearchHit[] searchhits = upperhits.getHits();
 
@@ -115,13 +122,13 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    protected void writeEntries(JsonGenerator jg, String schemasRegex, SearchHit[] searchhits)
+    protected void writeEntries(JsonGenerator jg, Pattern schemasRegex, SearchHit[] searchhits)
             throws IOException, JsonGenerationException, JsonProcessingException {
         // For logs
         // long startTime = System.currentTimeMillis();
 
         for (SearchHit hit : searchhits) {
-            this.writeEntry(jg, schemasRegex, hit.getSource());
+            this.writeEntry(jg, schemasRegex, hit);
         }
 
         // if(log.isDebugEnabled()) {
@@ -130,7 +137,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         // }
     }
 
-    protected void writeDuplicateFilteredEntries(JsonGenerator jg, String schemasRegex, SearchResponse searchResponse)
+    protected void writeDuplicateFilteredEntries(JsonGenerator jg, Pattern schemasRegex, SearchResponse searchResponse)
             throws JsonGenerationException, JsonProcessingException, IOException {
         // For logs
         long startTime = System.currentTimeMillis();
@@ -174,10 +181,10 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
                         if (log.isTraceEnabled()) {
                             log.trace(String.format("Keeping duplicate [%s] from index [%s]", uuid, hit.getIndex()));
                         }
-                        this.writeEntry(jg, schemasRegex, source);
+                        this.writeEntry(jg, schemasRegex, hit);
                     }
                 } else {
-                    this.writeEntry(jg, schemasRegex, source);
+                    this.writeEntry(jg, schemasRegex, hit);
                 }
             }
         }
@@ -198,8 +205,11 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    private void writeEntry(JsonGenerator jg, String schemasRegex, Map<String, Object> source)
+    private void writeEntry(JsonGenerator jg, Pattern schemasRegex, SearchHit hit)
             throws IOException, JsonGenerationException, JsonProcessingException {
+    	// Fields from source
+    	Map<String, Object> source = hit.getSource();
+    	
         jg.writeStartObject();
 
         // convert ES JSON mapping into Nuxeo automation mapping
@@ -220,11 +230,38 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
         jg.writeObjectFieldStart("properties");
         for (String key : source.keySet()) {
-            if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
+            if (!SYSTEM_PROPS_PATTERN.matcher(key).matches() && schemasRegex.matcher(key).matches()) {
                 jg.writeObjectField(key, source.get(key));
             }
         }
         jg.writeEndObject();
+        
+        // Highlight fields when queried from fulltext search
+        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+        if(MapUtils.isNotEmpty(highlightFields)) {
+        	jg.writeObjectFieldStart("highlight");
+        	
+        	for(Entry<String, HighlightField> field : highlightFields.entrySet()) {
+        		if(field.getValue() != null) {
+        			jg.writeFieldName(field.getKey());
+        			
+        			Text[] fragments = field.getValue().getFragments();
+        			if(fragments != null) {
+        				jg.writeStartArray();
+	        			for(Text fragment : fragments) {
+	        				jg.writeString(fragment.toString());
+	        			}
+	        			jg.writeEndArray();
+        			} else {
+        				jg.writeNull();
+        			}
+        			
+        		}
+        	}
+        	
+        	jg.writeEndObject();
+        }
+        
         jg.writeEndObject();
         jg.flush();
     }

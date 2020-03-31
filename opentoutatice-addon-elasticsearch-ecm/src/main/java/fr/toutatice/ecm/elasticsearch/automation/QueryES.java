@@ -65,9 +65,7 @@ public class QueryES {
 
     public static final String ID = "Document.QueryES";
 
-    protected static final long DEFAULT_MAX_SIZE_RESULTS = Long.valueOf(Framework.getProperty("ottc.es.query.default.limit", "1000"));
-
-    protected static final int OLD_DEFAULT_MAX_SIZE_RESULTS = 10000;
+    protected static final Integer DEFAULT_MAX_SIZE_RESULTS = Integer.valueOf(Framework.getProperty("ottc.es.query.default.limit", "1000")) + 1;
 
     public static enum QueryLanguage {
         NXQL, ES;
@@ -142,7 +140,7 @@ public class QueryES {
 
         // Bound results
         long hits = esResponse.getHits().getHits().length;
-        if (hits > DEFAULT_MAX_SIZE_RESULTS) {
+        if (hits >= DEFAULT_MAX_SIZE_RESULTS) {
             // Monitoring
             if (log.isInfoEnabled()) {
                 // Current principal name
@@ -190,10 +188,14 @@ public class QueryES {
         }
 
         if ((null != currentPageIndex) && (null != this.pageSize)) {
-            builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
-            builder.limit(this.pageSize);
+        	if(this.pageSize.intValue() != -1) {
+	            builder.offset((0 <= currentPageIndex ? currentPageIndex : 0) * this.pageSize);
+	            builder.limit(this.pageSize);
+        	} else {
+        		builder.limit(DEFAULT_MAX_SIZE_RESULTS);
+        	}
         } else {
-            builder.limit(OLD_DEFAULT_MAX_SIZE_RESULTS);
+            builder.limit(DEFAULT_MAX_SIZE_RESULTS);
         }
 
         this.elasticSearchService.query(builder);

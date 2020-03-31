@@ -38,8 +38,23 @@ Les requêtes de plus de 1000 résultats peuvent être tracées dans le fichier 
 #### TODO
 ##### Paginer une requête non bornée
 Actuellement, si une requête est explicitement non paginée (-1), on interroge malgré to Es sans pagination (limite à 2147483647).
-Dans ce cas, il faudra paginer la requête, i.e. remplacer -1 par 1000.
+Dans ce cas, il faudra paginer la requête, i.e. remplacer -1 par 1001.
 ##### Optimiser l'utilisation des patterns regex
 
 - `TTCEsCodec`: l.93
 - `TTCSearchResponse`: l.77
+
+#### Recherche Fulltext
+#### Highlight
+##### Paramètres nuxeo.conf: valeurs par défaut
+`ottc.fulltext.query.highlight.pre.tag=<span class="highlight">`
+
+`ottc.fulltext.query.highlight.pre.tag=</span>`
+
+`ottc.fulltext.query.highlight.fragments.size=100`
+
+`ottc.fulltext.query.highlight.fragments.number=5`
+
+
+
+
