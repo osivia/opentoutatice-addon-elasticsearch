@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -46,6 +47,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
     private static final Log log = LogFactory.getLog(TTCEsCodec.class);
 
+    private static final Pattern SYSTEM_PROPS_PATTERN = Pattern.compile("ecm:.+");
     public TTCEsCodec() {
         super(TTCSearchResponse.class);
     }
@@ -62,7 +64,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 //        long startTime = System.currentTimeMillis();
 
         SearchHits upperhits = value.getSearchResponse().getHits();
-        String schemasRegex = value.getSchemasRegex();
+        Pattern schemasRegex = Pattern.compile(value.getSchemasRegex());
 
         SearchHit[] searchhits = upperhits.getHits();
 
@@ -115,7 +117,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    protected void writeEntries(JsonGenerator jg, String schemasRegex, SearchHit[] searchhits)
+    protected void writeEntries(JsonGenerator jg, Pattern schemasRegex, SearchHit[] searchhits)
             throws IOException, JsonGenerationException, JsonProcessingException {
         // For logs
 //        long startTime = System.currentTimeMillis();
@@ -130,7 +132,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 //        }
     }
 
-    protected void writeDuplicateFilteredEntries(JsonGenerator jg, String schemasRegex, SearchResponse searchResponse)
+    protected void writeDuplicateFilteredEntries(JsonGenerator jg, Pattern schemasRegex, SearchResponse searchResponse)
             throws JsonGenerationException, JsonProcessingException, IOException {
         // For logs
         long startTime = System.currentTimeMillis();
@@ -198,7 +200,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    private void writeEntry(JsonGenerator jg, String schemasRegex, Map<String, Object> source)
+    private void writeEntry(JsonGenerator jg, Pattern schemasRegex, Map<String, Object> source)
             throws IOException, JsonGenerationException, JsonProcessingException {
         jg.writeStartObject();
 
@@ -220,7 +222,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
         jg.writeObjectFieldStart("properties");
         for (String key : source.keySet()) {
-            if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
+            if (!SYSTEM_PROPS_PATTERN.matcher(key).matches() && schemasRegex.matcher(key).matches()) {
                 jg.writeObjectField(key, source.get(key));
             }
         }
