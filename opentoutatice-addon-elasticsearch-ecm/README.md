@@ -47,7 +47,7 @@ Dans ce cas, il faudra paginer la requête, i.e. remplacer -1 par 1000.
 ## Recherche Fulltext
 
 ### Prérequis
-Installer sur chaque noeud du cluster Es le plugin ICU (tokenizer):
+Installer sur au moins un noeud du cluster Es le plugin ICU (tokenizer):
 
 `cd /usr/share/elasticsearch`
 
