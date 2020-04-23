@@ -82,6 +82,8 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     private String[] includeSourceFields;
 
     private String[] excludeSourceFields;
+    
+    private String[] fullTextFields;
 
     private boolean embedded = true;
 
@@ -257,6 +259,8 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
                 }
                 set.addAll(Arrays.asList(conf.getExcludes()));
                 this.excludeSourceFields = set.toArray(new String[set.size()]);
+                
+                this.fullTextFields = ((OttcElasticSearchIndexOrAliasConfig) conf).getFullTextFields();
             }
 
         }
@@ -586,8 +590,12 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     String[] getExcludeSourceFields() {
         return this.excludeSourceFields;
     }
+    
+    public String[] getFullTextFields() {
+		return fullTextFields;
+	}
 
-    Map<String, String> getRepositoryMap() {
+	Map<String, String> getRepositoryMap() {
         return this.repoNames;
     }
 

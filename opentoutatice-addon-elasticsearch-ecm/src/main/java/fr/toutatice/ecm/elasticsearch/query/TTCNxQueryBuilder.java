@@ -20,12 +20,17 @@ package fr.toutatice.ecm.elasticsearch.query;
 
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.index.query.FilteredQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -34,6 +39,7 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
+import org.opentoutatice.elasticsearch.fulltext.constants.FullTextConstants;
 
 import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
@@ -53,6 +59,9 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     private boolean automationCall = true;
 
     protected CoreSession session;
+    
+    protected boolean isFullTextQuery;
+    protected String[] fullTextFields;
 
     /**
      * Constructor.
@@ -115,7 +124,23 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
         return this;
     }
 
-    @Override
+    public boolean isFullTextQuery() {
+		return isFullTextQuery;
+	}
+
+	public void setFullTextQuery(boolean isFullTextQuery) {
+		this.isFullTextQuery = isFullTextQuery;
+	}
+
+	public String[] getFullTextFields() {
+		return fullTextFields;
+	}
+
+	public void setFullTextFields(String[] fullTextFields) {
+		this.fullTextFields = fullTextFields;
+	}
+
+	@Override
     public boolean isFetchFromElasticsearch() {
         boolean is = true;
         if (!this.automationCall) {
@@ -128,12 +153,22 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     public QueryBuilder makeQuery() {
         QueryBuilder esQueryBuilder = super.makeQuery();
 
-        // Adapt order by when dc:title (for the moment)
-        if (StringUtils.contains(this.getNxql().toLowerCase(), "order by")) {
-            this.adaptSortInfos(this.getNxql());
+        if(this.getNxql() != null) {
+	        if (StringUtils.contains(this.getNxql().toLowerCase(), "order by")) {
+	            this.adaptSortInfos(this.getNxql());
+	        }
         }
 
         return esQueryBuilder;
+    }
+    
+    @Override 
+    public void updateRequest(SearchRequestBuilder request) {
+        super.updateRequest(request);
+        
+        if(isFullTextQuery()) {
+        	addHighlight(request);
+        }
     }
 
     /**
@@ -153,5 +188,33 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
             }
         }
     }
+    
+	protected SearchRequestBuilder addHighlight(SearchRequestBuilder request) {
+		SearchRequestBuilder req = request;
+
+		String[] fields = getFullTextFields();
+		if (fields != null) {
+			// Configure highlight
+			request.setHighlighterPreTags(FullTextConstants.PRE_TAG).setHighlighterPostTags(FullTextConstants.POST_TAG);
+			Integer fgtsSize = FullTextConstants.FGTS_SIZE != null ? FullTextConstants.FGTS_SIZE : null;
+			Integer fgtsNb = FullTextConstants.FGTS_NB != null ? FullTextConstants.FGTS_NB : null;
+
+			for (String field : fields) {
+				if (fgtsSize != null && fgtsNb != null) {
+					request.addHighlightedField(
+							StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)), fgtsSize,
+							fgtsNb);
+				} else if (fgtsSize != null && fgtsNb == null) {
+					request.addHighlightedField(
+							StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)), fgtsSize);
+				} else {
+					request.addHighlightedField(
+							StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)));
+				}
+			}
+		}
+
+		return req;
+	}
 
 }

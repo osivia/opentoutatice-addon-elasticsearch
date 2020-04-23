@@ -5,6 +5,7 @@ import java.io.Serializable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.nuxeo.common.xmap.annotation.XNodeList;
 import org.nuxeo.common.xmap.annotation.XObject;
 import org.nuxeo.elasticsearch.config.ElasticSearchIndexConfig;
 
@@ -139,8 +140,18 @@ public class OttcElasticSearchIndexOrAliasConfig extends ElasticSearchIndexConfi
             + "      }\n" //
             + "   }\n" //
             + "}";
+    
+    @XNodeList(value = "fullTextFields/field", type = String[].class, componentType = String.class)
+    protected String[] fullTextFields;
 
-    /**
+    public String[] getFullTextFields() {
+    	if(this.fullTextFields == null) {
+    		return new String[] {"dc:title.fulltext^2", "dc:description^1.5", "note:note", "ecm:binarytext"};
+    	}
+		return fullTextFields;
+	}
+
+	/**
      * Alias name.
      * Replaces former indexName.
      *

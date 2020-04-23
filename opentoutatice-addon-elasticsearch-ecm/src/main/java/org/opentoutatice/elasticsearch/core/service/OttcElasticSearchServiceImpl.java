@@ -6,7 +6,6 @@ package org.opentoutatice.elasticsearch.core.service;
 import static org.nuxeo.elasticsearch.ElasticSearchConstants.DOC_TYPE;
 
 import java.util.List;
-import java.util.regex.Matcher;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -35,7 +34,6 @@ import org.nuxeo.runtime.metrics.MetricsService;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchService;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
-import org.opentoutatice.elasticsearch.fulltext.constants.FullTextConstants;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -158,8 +156,6 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
         Context stopWatch = this.searchTimer.time();
         try {
             SearchRequestBuilder request = this.buildEsSearchRequest(query);
-            // Highlight
-            request = addHighlight(request, query);
 
             // For logs performance
             long startTime = System.currentTimeMillis();
@@ -200,32 +196,6 @@ public class OttcElasticSearchServiceImpl implements OttcElasticSearchService {
             stopWatch.stop();
         }
     }
-
-    protected SearchRequestBuilder addHighlight(SearchRequestBuilder request, NxQueryBuilder query) {
-    	SearchRequestBuilder req = request;
-    	if(query.getNxql() != null) {
-    		Matcher matcher = FullTextConstants.FULLTEXT_QUERY_FIELDS.matcher(query.getNxql());
-    		if(matcher.matches()) {
-    			String[] fields = StringUtils.split(matcher.group(1), FullTextConstants.COMMA);
-    			if(fields != null) {
-    				// Configure highlight
-    				request.setHighlighterPreTags(FullTextConstants.PRE_TAG).setHighlighterPostTags(FullTextConstants.POST_TAG);
-    				Integer fgtsSize = FullTextConstants.FGTS_SIZE != null ? FullTextConstants.FGTS_SIZE : null;
-    				Integer fgtsNb = FullTextConstants.FGTS_NB != null ? FullTextConstants.FGTS_NB : null;
-    				for (String field : fields) {
-    					if(fgtsSize != null && fgtsNb != null) {
-    						request.addHighlightedField(StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)), fgtsSize, fgtsNb);
-    					} else if (fgtsSize != null && fgtsNb == null) {
-    						request.addHighlightedField(StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)), fgtsSize);
-    					} else {
-    						request.addHighlightedField(StringUtils.trim(StringUtils.substringBefore(field, FullTextConstants.UPPER)));
-    					}
-					}
-    			}
-    		}
-    	}
-		return req;
-	}
 
 	protected SearchRequestBuilder buildEsSearchRequest(NxQueryBuilder query) {
         SearchRequestBuilder request = this.esa.getClient().prepareSearch(this.esa.getSearchIndexes(query.getSearchRepositories())).setTypes(DOC_TYPE)

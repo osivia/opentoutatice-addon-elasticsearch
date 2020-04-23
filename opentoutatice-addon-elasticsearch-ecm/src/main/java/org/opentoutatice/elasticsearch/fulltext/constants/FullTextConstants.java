@@ -13,7 +13,8 @@ import org.nuxeo.runtime.api.Framework;
  */
 public interface FullTextConstants {
 	
-	Pattern FULLTEXT_QUERY_FIELDS = Pattern.compile(".+/\\*\\+ES: INDEX\\((.+)\\) \\*/.+");
+	Pattern FULLTEXT_QUERY_INDICATOR = Pattern.compile(".+/\\*\\+ES: .*FULLTEXT\\((.+)\\) \\*/.*");
+	Pattern FULLTEXT_QUERY_FIELDS = Pattern.compile(".+ +(WHERE|where) +/\\*\\+ES:( +FIELDS\\((.+)\\))? +FULLTEXT\\((.+)\\) +\\*/ +(and|AND|or|OR)? +(.*)");
     String COMMA = ",";
     String UPPER = "^";
     String PRE_TAG = Framework.getProperty("ottc.fulltext.query.highlight.pre.tag", "<span class=\"highlight\">");
