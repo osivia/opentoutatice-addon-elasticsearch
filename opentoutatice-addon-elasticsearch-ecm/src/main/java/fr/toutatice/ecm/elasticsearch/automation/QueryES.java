@@ -33,7 +33,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.search.ShardSearchFailure;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
@@ -272,8 +271,9 @@ public class QueryES {
 
 			MultiMatchQueryBuilder multiMatchQuery = QueryBuilders.multiMatchQuery(terms, fields)
 					.operator(MatchQueryBuilder.Operator.OR)
-					.fuzziness(Fuzziness.AUTO)
-					.boost(3F);
+					.fuzziness(FullTextConstants.FUZZINESS)
+					.maxExpansions(FullTextConstants.FUZZINESS_MAX_EXPANSIONS)
+					.prefixLength(FullTextConstants.FUZZINESS_PREFIX_LENGTH);
 			esQueryBuilder.must(multiMatchQuery);
 
 			QueryBuilder filterBuilder = null;
