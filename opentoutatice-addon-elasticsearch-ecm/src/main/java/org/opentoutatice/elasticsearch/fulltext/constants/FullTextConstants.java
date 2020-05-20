@@ -20,14 +20,14 @@ public interface FullTextConstants {
     String UPPER = "^";
     
     // Highlight
-    String PRE_TAG = Framework.getProperty("ottc.fulltext.query.highlight.pre.tag", "<span class=\"highlight\">");
-    String POST_TAG = Framework.getProperty("ottc.fulltext.query.highlight.post.tag", "</span>");
-    // Es default value: 100
+    String PRE_TAG = Framework.getProperty("ottc.fulltext.query.highlight.pre.tag", "<hltg class=\"highlight\">");
+    String POST_TAG = Framework.getProperty("ottc.fulltext.query.highlight.post.tag", "</hltg>");
+    // (Es default value: 100)
     String FGTS_SIZE_STR = Framework.getProperty("ottc.fulltext.query.highlight.fragments.size");
-    Integer FGTS_SIZE = StringUtils.isNotBlank(FGTS_SIZE_STR) ? Integer.valueOf(FGTS_SIZE_STR) : null;
-    // Es default value: 5
+    Integer FGTS_SIZE = StringUtils.isNotBlank(FGTS_SIZE_STR) ? Integer.valueOf(FGTS_SIZE_STR) : 150;
+    // (Es default value: 5)
     String FGTS_NB_STR = Framework.getProperty("ottc.fulltext.query.highlight.fragments.number");
-    Integer FGTS_NB = StringUtils.isNotBlank(FGTS_NB_STR) ? Integer.valueOf(FGTS_NB_STR) : null;
+    Integer FGTS_NB = StringUtils.isNotBlank(FGTS_NB_STR) ? Integer.valueOf(FGTS_NB_STR) : 3;
     
     // Fuzzyness
     String FUZZINESS_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness");
@@ -36,9 +36,5 @@ public interface FullTextConstants {
     Integer FUZZINESS_MAX_EXPANSIONS = StringUtils.isNotBlank(FUZZINESS_MAX_EXPANSIONS_STR) ? Integer.valueOf(FUZZINESS_MAX_EXPANSIONS_STR) : 10;
     String FUZZINESS_PREFIX_LENGTH_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness.prefix.length");
     Integer FUZZINESS_PREFIX_LENGTH = StringUtils.isNotBlank(FUZZINESS_PREFIX_LENGTH_STR) ? Integer.valueOf(FUZZINESS_PREFIX_LENGTH_STR) : 3;
-    
-    
-    
-    
     
 }
