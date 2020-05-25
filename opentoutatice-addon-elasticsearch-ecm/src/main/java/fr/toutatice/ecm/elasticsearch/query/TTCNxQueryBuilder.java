@@ -18,6 +18,7 @@
  */
 package fr.toutatice.ecm.elasticsearch.query;
 
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
@@ -31,101 +32,138 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.term.TermSuggestionBuilder;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
+import org.nuxeo.elasticsearch.query.NxqlQueryConverter;
 import org.opentoutatice.elasticsearch.fulltext.constants.FullTextConstants;
 
 import fr.toutatice.ecm.elasticsearch.fetcher.TTCEsFetcher;
 
 public class TTCNxQueryBuilder extends NxQueryBuilder {
 
-    private static final Log log = LogFactory.getLog(TTCNxQueryBuilder.class);
+	private static final Log log = LogFactory.getLog(TTCNxQueryBuilder.class);
 
-    private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
+	private static final String RCD_VARIABLES_PREFIX = "rcd:globalVariablesValues.";
 
-    private static final String DC_TITLE = "dc:title";
+	private static final String DC_TITLE = "dc:title";
 
-    private static final String LOWERCASE_SUFFIX = ".lowercase";
+	private static final String LOWERCASE_SUFFIX = ".lowercase";
 
-    private Fetcher fetcher;
+	public static final String ORDER_BY = "order by";
 
-    /** Indicates if this builder is used from automation or from Nuxeo core. */
-    private boolean automationCall = true;
+	private Fetcher fetcher;
 
-    protected CoreSession session;
-    
-    protected boolean isFullTextQuery;
-    protected String[] fullTextFields;
+	/** Indicates if this builder is used from automation or from Nuxeo core. */
+	private boolean automationCall = true;
 
-    /**
-     * Constructor.
-     *
-     * @param coreSession
-     */
-    public TTCNxQueryBuilder(CoreSession coreSession) {
-        super(coreSession);
-        this.session = coreSession;
-    }
+	protected CoreSession session;
 
-    /**
-     * Gets Fetcher according to client calling (automation or Nuxeo core).
-     */
-    @Override
-    public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
-        if (this.automationCall) {
-            this.fetcher = new TTCEsFetcher(this.getSession(), response, repoNames);
-        } else {
-            this.fetcher = super.getFetcher(response, repoNames);
-        }
-        return this.fetcher;
-    }
+	protected boolean isFullTextQuery;
+	protected String originalNxqlfullTextClause;
+	protected String fullTextTerms;
+	protected String[] fullTextFields;
 
-    @Override
-    public SortBuilder[] getSortBuilders() {
-        SortBuilder[] ret;
-        if (this.getSortInfos().isEmpty()) {
-            return new SortBuilder[0];
-        }
-        ret = new SortBuilder[this.getSortInfos().size()];
-        int i = 0;
-        for (SortInfo sortInfo : this.getSortInfos()) {
-            ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn()).order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
-        }
-        return ret;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param coreSession
+	 */
+	public TTCNxQueryBuilder(CoreSession coreSession) {
+		super(coreSession);
+		this.session = coreSession;
+	}
 
-    public SearchResponse getSearchResponse() {
-        if (this.fetcher != null) {
-            return ((TTCEsFetcher) this.fetcher).getResponse();
-        }
-        return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
-    }
+	/**
+	 * Gets Fetcher according to client calling (automation or Nuxeo core).
+	 */
+	@Override
+	public Fetcher getFetcher(SearchResponse response, Map<String, String> repoNames) {
+		if (this.automationCall) {
+			this.fetcher = new TTCEsFetcher(this.getSession(), response, repoNames);
+		} else {
+			this.fetcher = super.getFetcher(response, repoNames);
+		}
+		return this.fetcher;
+	}
 
-    /**
-     * @return the automationCall
-     */
-    public boolean isAutomationCall() {
-        return this.automationCall;
-    }
+	@Override
+	public SortBuilder[] getSortBuilders() {
+		SortBuilder[] ret;
+		if (this.getSortInfos().isEmpty()) {
+			return new SortBuilder[0];
+		}
+		ret = new SortBuilder[this.getSortInfos().size()];
+		int i = 0;
+		for (SortInfo sortInfo : this.getSortInfos()) {
+			ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn())
+					.order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
+		}
+		return ret;
+	}
 
-    /**
-     * @param automationCall
-     *            the automationCall to set
-     * @return NxQueryBuilder
-     */
-    public NxQueryBuilder setAutomationCall(boolean automationCall) {
-        this.automationCall = automationCall;
-        return this;
-    }
+	public SortBuilder[] getSortBuilders(List<SortInfo> sortInfos) {
+		SortBuilder[] ret;
+		if (sortInfos.isEmpty()) {
+			return new SortBuilder[0];
+		}
+		ret = new SortBuilder[sortInfos.size()];
+		int i = 0;
+		for (SortInfo sortInfo : sortInfos) {
+			ret[i++] = new FieldSortBuilder(sortInfo.getSortColumn())
+					.order(sortInfo.getSortAscending() ? SortOrder.ASC : SortOrder.DESC).ignoreUnmapped(true);
+		}
+		return ret;
+	}
 
-    public boolean isFullTextQuery() {
+	public SearchResponse getSearchResponse() {
+		if (this.fetcher != null) {
+			return ((TTCEsFetcher) this.fetcher).getResponse();
+		}
+		return new SearchResponse(InternalSearchResponse.empty(), StringUtils.EMPTY, 0, 0, 0, null);
+	}
+
+	/**
+	 * @return the automationCall
+	 */
+	public boolean isAutomationCall() {
+		return this.automationCall;
+	}
+
+	/**
+	 * @param automationCall the automationCall to set
+	 * @return NxQueryBuilder
+	 */
+	public NxQueryBuilder setAutomationCall(boolean automationCall) {
+		this.automationCall = automationCall;
+		return this;
+	}
+
+	public boolean isFullTextQuery() {
 		return isFullTextQuery;
 	}
 
 	public void setFullTextQuery(boolean isFullTextQuery) {
 		this.isFullTextQuery = isFullTextQuery;
+	}
+
+	public String getOriginalNxqlfullTextClause() {
+		return originalNxqlfullTextClause;
+	}
+
+	public void setOriginalNxqlfullTextClause(String originalNxqlfullTextQuery) {
+		this.originalNxqlfullTextClause = originalNxqlfullTextQuery;
+	}
+
+	public String getFullTextTerms() {
+		return fullTextTerms;
+	}
+
+	public void setFullTextTerms(String fullTextTerms) {
+		this.fullTextTerms = fullTextTerms;
 	}
 
 	public String[] getFullTextFields() {
@@ -137,56 +175,68 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 	}
 
 	@Override
-    public boolean isFetchFromElasticsearch() {
-        boolean is = true;
-        if (!this.automationCall) {
-            is = super.isFetchFromElasticsearch();
-        }
-        return is;
-    }
+	public boolean isFetchFromElasticsearch() {
+		boolean is = true;
+		if (!this.automationCall) {
+			is = super.isFetchFromElasticsearch();
+		}
+		return is;
+	}
 
-    @Override
-    public QueryBuilder makeQuery() {
-        QueryBuilder esQueryBuilder = super.makeQuery();
+	@Override
+	public QueryBuilder makeQuery() {
+		QueryBuilder esQueryBuilder = super.makeQuery();
 
-        if(this.getNxql() != null) {
-	        if (StringUtils.contains(this.getNxql().toLowerCase(), "order by")) {
-	            this.adaptSortInfos(this.getNxql());
-	        }
-        }
+		if (this.getNxql() != null) {
+			if (StringUtils.contains(this.getNxql().toLowerCase(), ORDER_BY)) {
+				this.adaptSortInfos(this.getNxql());
+			}
+		}
 
-        return esQueryBuilder;
-    }
-    
-    @Override 
-    public void updateRequest(SearchRequestBuilder request) {
-        super.updateRequest(request);
-        
-        if(isFullTextQuery()) {
-        	addHighlight(request);
-        }
-    }
+		return esQueryBuilder;
+	}
 
-    /**
-     * Adapt field order when defined as lower case meta-field in ES mapping.
-     *
-     * @param nxql
-     * @return
-     */
-    private void adaptSortInfos(String nxql) {
-        ListIterator<SortInfo> listIterator = super.getSortInfos().listIterator();
+	@Override
+	public void updateRequest(SearchRequestBuilder request) {
+		super.updateRequest(request);
 
-        while (listIterator.hasNext()) {
-            SortInfo sortInfo = listIterator.next();
-            String sortColumn = sortInfo.getSortColumn();
-            if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn) || StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
-                sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
-            }
-        }
-    }
-    
+		if (isFullTextQuery()) {
+			// Sort
+			if (StringUtils.contains(this.getOriginalNxqlfullTextClause().toLowerCase(), ORDER_BY)) {
+				for (SortBuilder sort : this
+						.getSortBuilders(NxqlQueryConverter.getSortInfo(this.getOriginalNxqlfullTextClause()))) {
+					request.addSort(sort);
+				}
+			}
+
+			// Highlight
+			addHighlight(request);
+
+			// Suggest
+			//addSuggest(request);
+		}
+	}
+
+	/**
+	 * Adapt field order when defined as lower case meta-field in ES mapping.
+	 *
+	 * @param nxql
+	 * @return
+	 */
+	private void adaptSortInfos(String nxql) {
+		ListIterator<SortInfo> listIterator = super.getSortInfos().listIterator();
+
+		while (listIterator.hasNext()) {
+			SortInfo sortInfo = listIterator.next();
+			String sortColumn = sortInfo.getSortColumn();
+			if (StringUtils.equalsIgnoreCase(DC_TITLE, sortColumn)
+					|| StringUtils.startsWith(sortColumn, RCD_VARIABLES_PREFIX)) {
+				sortInfo.setSortColumn(sortColumn.concat(LOWERCASE_SUFFIX));
+			}
+		}
+	}
+
 	protected SearchRequestBuilder addHighlight(SearchRequestBuilder request) {
-		SearchRequestBuilder req = request;
 
 		String[] fields = getFullTextFields();
 		if (fields != null) {
@@ -210,7 +260,16 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 			}
 		}
 
-		return req;
+		return request;
+	}
+
+	protected SearchRequestBuilder addSuggest(SearchRequestBuilder request) {
+
+		TermSuggestionBuilder termSuggestion = SuggestBuilder.termSuggestion("title").field("dc:title.fulltext")
+				.maxEdits(1).text(getFullTextTerms());
+		request.addSuggestion(termSuggestion);
+
+		return request;
 	}
 
 }
