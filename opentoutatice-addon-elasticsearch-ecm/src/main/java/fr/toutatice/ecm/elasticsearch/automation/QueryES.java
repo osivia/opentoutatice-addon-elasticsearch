@@ -33,6 +33,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
@@ -268,6 +269,7 @@ public class QueryES {
 
 		String terms = matcher.group(4);
 		if (terms != null) {
+			builder.setFullTextTerms(terms);
 
 			MultiMatchQueryBuilder multiMatchQuery = QueryBuilders.multiMatchQuery(terms, fields)
 					.operator(MatchQueryBuilder.Operator.OR)
@@ -279,6 +281,8 @@ public class QueryES {
 			QueryBuilder filterBuilder = null;
 			String clause = matcher.group(6);
 			if (clause != null) {
+				builder.setOriginalNxqlfullTextClause(clause);
+				
 				filterBuilder = NxqlQueryConverter.toESQueryBuilder(clause);
 				esQueryBuilder.must(filterBuilder);
 			}
