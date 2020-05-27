@@ -19,7 +19,9 @@ public interface FullTextConstants {
     String COMMA = ",";
     String UPPER = "^";
     
-    // Highlight
+    String EXACT_FIELD_TITLE = "dc:title.lit_fulltext";
+    
+    // Highlight config
     String PRE_TAG = Framework.getProperty("ottc.fulltext.query.highlight.pre.tag", "<hltg class=\"highlight\">");
     String POST_TAG = Framework.getProperty("ottc.fulltext.query.highlight.post.tag", "</hltg>");
     // (Es default value: 100)
@@ -29,7 +31,7 @@ public interface FullTextConstants {
     String FGTS_NB_STR = Framework.getProperty("ottc.fulltext.query.highlight.fragments.number");
     Integer FGTS_NB = StringUtils.isNotBlank(FGTS_NB_STR) ? Integer.valueOf(FGTS_NB_STR) : 3;
     
-    // Fuzzyness
+    // Fuzzyness config
     String FUZZINESS_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness");
     Integer FUZZINESS = StringUtils.isNotBlank(FUZZINESS_STR) ? Integer.valueOf(FUZZINESS_STR) : 1;
     String FUZZINESS_MAX_EXPANSIONS_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness.max.expansions");
