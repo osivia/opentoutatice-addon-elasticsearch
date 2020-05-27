@@ -33,12 +33,13 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.search.ShardSearchFailure;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
@@ -256,7 +257,7 @@ public class QueryES {
 	
 	protected QueryBuilder getFullTextEsQueryBuilder(Matcher matcher, TTCNxQueryBuilder builder) throws OperationException {
 		// Result
-		BoolQueryBuilder esQueryBuilder = QueryBuilders.boolQuery();
+		BoolQueryBuilder esBoolQueryBuilder = QueryBuilders.boolQuery();
 		
 		String[] fields = ((OttcElasticSearchComponent) this.elasticSearchAdmin).getElasticSearchAdmin().getFullTextFields();
 		// To get groups
@@ -270,13 +271,25 @@ public class QueryES {
 		String terms = matcher.group(4);
 		if (terms != null) {
 			builder.setFullTextTerms(terms);
-
+			
 			MultiMatchQueryBuilder multiMatchQuery = QueryBuilders.multiMatchQuery(terms, fields)
-					.operator(MatchQueryBuilder.Operator.OR)
-					.fuzziness(FullTextConstants.FUZZINESS)
-					.maxExpansions(FullTextConstants.FUZZINESS_MAX_EXPANSIONS)
-					.prefixLength(FullTextConstants.FUZZINESS_PREFIX_LENGTH);
-			esQueryBuilder.must(multiMatchQuery);
+					.operator(MatchQueryBuilder.Operator.OR);
+			
+			FunctionScoreQueryBuilder functionScoreQuery = QueryBuilders.functionScoreQuery(multiMatchQuery);
+			functionScoreQuery.add(ScoreFunctionBuilders.factorFunction(100));
+			
+			MultiMatchQueryBuilder multiMatchFuzzyQuery = QueryBuilders.multiMatchQuery(terms, fields)
+				.operator(MatchQueryBuilder.Operator.OR)
+				.fuzziness(FullTextConstants.FUZZINESS + 1)
+				.maxExpansions(FullTextConstants.FUZZINESS_MAX_EXPANSIONS)
+				.prefixLength(FullTextConstants.FUZZINESS_PREFIX_LENGTH);
+			
+			
+			FunctionScoreQueryBuilder functionScoreQueryFuzzy = QueryBuilders.functionScoreQuery(multiMatchFuzzyQuery);
+			functionScoreQueryFuzzy.add(ScoreFunctionBuilders.factorFunction(0.01F));
+			
+			esBoolQueryBuilder.must(QueryBuilders.boolQuery().should(multiMatchQuery).should(functionScoreQueryFuzzy));
+			
 
 			QueryBuilder filterBuilder = null;
 			String clause = matcher.group(6);
@@ -284,14 +297,14 @@ public class QueryES {
 				builder.setOriginalNxqlfullTextClause(clause);
 				
 				filterBuilder = NxqlQueryConverter.toESQueryBuilder(clause);
-				esQueryBuilder.must(filterBuilder);
+				esBoolQueryBuilder.must(filterBuilder);
 			}
 
 		} else {
 			throw new OperationException(String.format("Missing Full Text terms in query: %s", query));
 		}
 
-		return esQueryBuilder;
+		return esBoolQueryBuilder;
 	}
 
 	protected List<String> formatSchemas(String nxProperties) {

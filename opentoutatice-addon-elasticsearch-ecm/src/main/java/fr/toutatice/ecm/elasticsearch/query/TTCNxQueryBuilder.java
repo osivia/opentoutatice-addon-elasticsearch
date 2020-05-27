@@ -214,7 +214,7 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 			// Highlight
         	addHighlight(request);
 			// Suggest
-			//addSuggest(request);
+			addSuggest(request);
         }
     }
 
@@ -238,10 +238,10 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     }
     
 	protected SearchRequestBuilder addHighlight(SearchRequestBuilder request) {
-		SearchRequestBuilder req = request;
 
 		String[] fields = getFullTextFields();
 		if (fields != null) {
+			
 			// Configure highlight
 			request.setHighlighterPreTags(FullTextConstants.PRE_TAG).setHighlighterPostTags(FullTextConstants.POST_TAG);
 			Integer fgtsSize = FullTextConstants.FGTS_SIZE != null ? FullTextConstants.FGTS_SIZE : null;
@@ -267,8 +267,8 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 
 	protected SearchRequestBuilder addSuggest(SearchRequestBuilder request) {
 
-		TermSuggestionBuilder termSuggestion = SuggestBuilder.termSuggestion("title").field("dc:title.fulltext")
-				.maxEdits(1).text(getFullTextTerms());
+		TermSuggestionBuilder termSuggestion = SuggestBuilder.termSuggestion("title").field("dc:title.lit_fulltext")
+				.text(getFullTextTerms());
 		request.addSuggestion(termSuggestion);
 
 		return request;
