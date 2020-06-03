@@ -272,10 +272,6 @@ public class QueryES {
 		if (terms != null) {
 			builder.setFullTextTerms(terms);
 			
-			MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(FullTextConstants.EXACT_FIELD_TITLE, terms)
-					.operator(MatchQueryBuilder.Operator.OR)
-					.boost(2F);
-			
 			MultiMatchQueryBuilder multiMatchQuery = QueryBuilders.multiMatchQuery(terms, fields)
 					.operator(MatchQueryBuilder.Operator.OR);
 			
@@ -289,7 +285,7 @@ public class QueryES {
 			functionScoreQueryFuzzy.add(ScoreFunctionBuilders.factorFunction(0.01F));
 			
 			esBoolQueryBuilder.must(QueryBuilders.boolQuery()
-					.should(matchQuery).should(multiMatchQuery).should(functionScoreQueryFuzzy));
+					.should(multiMatchQuery).should(functionScoreQueryFuzzy));
 			
 
 			QueryBuilder filterBuilder = null;

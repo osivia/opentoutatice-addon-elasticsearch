@@ -213,8 +213,6 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 
 			// Highlight
         	addHighlight(request);
-			// Suggest
-			addSuggest(request);
         }
     }
 
@@ -261,15 +259,6 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
 				}
 			}
 		}
-
-		return request;
-	}
-
-	protected SearchRequestBuilder addSuggest(SearchRequestBuilder request) {
-
-		TermSuggestionBuilder termSuggestion = SuggestBuilder.termSuggestion("title").field("dc:title.lit_fulltext")
-				.text(getFullTextTerms());
-		request.addSuggestion(termSuggestion);
 
 		return request;
 	}
