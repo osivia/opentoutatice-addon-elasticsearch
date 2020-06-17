@@ -14,6 +14,8 @@ import org.nuxeo.runtime.api.Framework;
  */
 public interface FullTextConstants {
 	
+	String LIT_FULLTEXT_ANALYZER = "lit_fulltext";
+	
 	Pattern FULLTEXT_QUERY_INDICATOR = Pattern.compile(".+/\\*\\+ES: .*FULLTEXT\\((.+)\\) \\*/.*");
 	Pattern FULLTEXT_QUERY_FIELDS = Pattern.compile(".+ +(WHERE|where) +/\\*\\+ES:( +FIELDS\\((.+)\\))? +FULLTEXT\\((.+)\\) +\\*/ +(and|AND|or|OR)? +(.*)");
     String COMMA = ",";
@@ -33,7 +35,7 @@ public interface FullTextConstants {
     
     // Fuzzyness config
     String FUZZINESS_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness");
-    Integer FUZZINESS = StringUtils.isNotBlank(FUZZINESS_STR) ? Integer.valueOf(FUZZINESS_STR) : 1;
+    Integer FUZZINESS = StringUtils.isNotBlank(FUZZINESS_STR) ? Integer.valueOf(FUZZINESS_STR) : 2;
     String FUZZINESS_MAX_EXPANSIONS_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness.max.expansions");
     Integer FUZZINESS_MAX_EXPANSIONS = StringUtils.isNotBlank(FUZZINESS_MAX_EXPANSIONS_STR) ? Integer.valueOf(FUZZINESS_MAX_EXPANSIONS_STR) : 10;
     String FUZZINESS_PREFIX_LENGTH_STR = Framework.getProperty("ottc.fulltext.query.fuzzyness.prefix.length");

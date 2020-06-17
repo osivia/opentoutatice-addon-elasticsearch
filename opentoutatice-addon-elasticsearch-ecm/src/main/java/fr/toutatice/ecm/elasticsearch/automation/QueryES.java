@@ -273,13 +273,14 @@ public class QueryES {
 			builder.setFullTextTerms(terms);
 			
 			MultiMatchQueryBuilder multiMatchQuery = QueryBuilders.multiMatchQuery(terms, fields)
-					.operator(MatchQueryBuilder.Operator.OR);
+					.operator(MatchQueryBuilder.Operator.OR).analyzer(FullTextConstants.LIT_FULLTEXT_ANALYZER);
 			
 			MultiMatchQueryBuilder multiMatchFuzzyQuery = QueryBuilders.multiMatchQuery(terms, fields)
 				.operator(MatchQueryBuilder.Operator.OR)
 				.fuzziness(FullTextConstants.FUZZINESS)
 				.maxExpansions(FullTextConstants.FUZZINESS_MAX_EXPANSIONS)
-				.prefixLength(FullTextConstants.FUZZINESS_PREFIX_LENGTH);
+				.prefixLength(FullTextConstants.FUZZINESS_PREFIX_LENGTH)
+				.analyzer(FullTextConstants.LIT_FULLTEXT_ANALYZER);
 			
 			FunctionScoreQueryBuilder functionScoreQueryFuzzy = QueryBuilders.functionScoreQuery(multiMatchFuzzyQuery);
 			functionScoreQueryFuzzy.add(ScoreFunctionBuilders.factorFunction(0.01F));
