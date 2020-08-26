@@ -28,12 +28,11 @@ import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.search.suggest.SuggestBuilder;
-import org.elasticsearch.search.suggest.term.TermSuggestionBuilder;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.SortInfo;
 import org.nuxeo.elasticsearch.fetcher.Fetcher;
@@ -187,6 +186,11 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     @Override
     public QueryBuilder makeQuery() {
         QueryBuilder esQueryBuilder = super.makeQuery();
+        
+        // Set analyze_wilcards to true by default when query_string
+        if(esQueryBuilder != null && esQueryBuilder instanceof QueryStringQueryBuilder) {
+            ((QueryStringQueryBuilder) esQueryBuilder).analyzeWildcard(true);
+        }
 
         if(this.getNxql() != null) {
 			if (StringUtils.contains(this.getNxql().toLowerCase(), ORDER_BY)) {
