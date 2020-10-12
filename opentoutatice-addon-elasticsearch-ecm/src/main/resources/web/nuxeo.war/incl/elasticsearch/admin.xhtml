@@ -1,0 +1,88 @@
+<div xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:c="http://java.sun.com/jstl/core"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  class="hostInfos">
+
+<c:if test="#{webActions.checkFilter('only_for_manager')}">
+
+  <h3>Indexing operations</h3>
+
+  <div class="detail">Indexing operations are done asynchronously.
+    When they are terminated the status "No indexing in progress"
+    is displayed in the Info tab.
+  </div>
+  
+  <ui:param name="reposWithMode" value="#{esAdmin.repositoryNamesWithAliasMode}" />
+
+  <h:form id="esAdmin">
+
+    <div class="detail">Choose a repository where the indexing operation will apply.</div>
+    <div class="bubbleBox">
+      Repository:
+      <h:selectOneMenu name="j_repo" value="#{esAdmin.repositoryName}">
+        <f:selectItems value="#{esAdmin.repositoryNamesWithAliasMode}" var="repoMode" itemLabel="#{repoMode.key}" itemLabelEscaped="true" itemValue="#{repoMode.value}"/>
+      </h:selectOneMenu>
+    </div>
+
+    <h4>Re-indexing the entire repository</h4>
+
+    <div class="detail">Warning depending on your repository size it can be a long operation.<br/>
+      If in Alias mode (ZDT), Elasticsearch index is switch on new index and you will <b>not</b> experience incomplete search results
+      during the re-indexing
+      If not in Alias mode (ZDT), the Elasticsearch index is first deleted and you will experience incomplete search results
+      during the re-indexing. 
+    </div>
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.startReindexAll}" value="#{nxu:test(aliasMode, 'Re-index repository with ZDT', 'Re-index repository')}"/>
+    </div>
+
+    <h4>Re-indexing documents that match a NXQL query</h4>
+
+    <div class="detail">Only documents that match the query are indexed, there is no recursive
+      indexation of children nor deletion of spurious documents from the index.
+    </div>
+    <div class="bubbleBox">
+      NXQL query:
+      <h:inputText name="j_nxql" value="#{esAdmin.nxql}"/>
+      <h:commandButton action="#{esAdmin.startReindexNxql}" value="Re-index"/>
+    </div>
+
+    <h4>Re-indexing a document and its children</h4>
+
+    <div class="detail">This will re-index a document and its children recursively.
+      Before indexing, the document and its children are removed from Elasticsearch,
+      this operation can be used to remove spurious documents from the index.
+      You may experience incomplete search results during the re-indexing.
+    </div>
+    <div class="bubbleBox">
+      Document id:
+      <h:inputText name="j_docid" value="#{esAdmin.rootId}"/>
+      <h:commandButton action="#{esAdmin.startReindexFrom}" value="Re-index"/>
+    </div>
+
+    <h3>Other operations</h3>
+
+    <h4>Flush all Elasticsearch indexes</h4>
+
+    <div class="detail">Use this to make sure Elasticsearch flush its indexes to disk.</div>
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.flush}" value="Flush"/>
+    </div>
+
+    <h4>Optimize all Elasticsearch indexes</h4>
+
+    <div class="detail">The optimize process basically optimizes the index for faster search operations (and relates to
+      the number of segments a Lucene index holds within each shard). The optimize operation allows to reduce the number
+      of segments by merging them. Ask for a full optimization to a single segment. Note that this can potentially be a
+      very heavy operation.
+    </div>
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.optimize}" value="Optimize"/>
+    </div>
+
+  </h:form>
+
+</c:if>
+
+</div>
