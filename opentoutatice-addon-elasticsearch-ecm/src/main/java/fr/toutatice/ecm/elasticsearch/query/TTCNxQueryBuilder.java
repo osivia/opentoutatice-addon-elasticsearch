@@ -129,10 +129,11 @@ public class TTCNxQueryBuilder extends NxQueryBuilder {
     public QueryBuilder makeQuery() {
         QueryBuilder esQueryBuilder = super.makeQuery();
         
+        // TODO: uncomment when ok
         // Set analyze_wilcards to true by default when query_string
-        if(esQueryBuilder != null && esQueryBuilder instanceof QueryStringQueryBuilder) {
-            ((QueryStringQueryBuilder) esQueryBuilder).analyzeWildcard(true);
-        }
+//        if(esQueryBuilder != null && esQueryBuilder instanceof QueryStringQueryBuilder) {
+//            ((QueryStringQueryBuilder) esQueryBuilder).analyzeWildcard(true);
+//        }
 
         // Adapt order by when dc:title (for the moment)
         if (StringUtils.contains(this.getNxql().toLowerCase(), "order by")) {
