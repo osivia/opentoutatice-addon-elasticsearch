@@ -1,0 +1,30 @@
+.detail-zoom {
+    font-size: inherit;
+    padding-bottom: 10px !important;
+}
+
+.detail-zoom > ul {
+	list-style: disc !important;
+	padding-left: 15px !important;
+}
+
+.collapsible {
+	font-weight: normal !important;
+	background-color: #f1f1f1;
+}
+
+.collapsible > img {
+	padding-right: 10px
+}
+
+.collapsible-content {
+  	padding-bottom: 10px;
+  	background-color: #ffffff;
+  	padding-bottom: 10px !important;
+	padding-left: 15px !important;
+} 
+
+.collapsible-content > ul {
+	list-style: disc !important;
+	padding-left: 15px !important;
+}

@@ -3,7 +3,7 @@
   xmlns:c="http://java.sun.com/jstl/core"
   xmlns:ui="http://java.sun.com/jsf/facelets"
   class="hostInfos">
-
+  
 <c:if test="#{webActions.checkFilter('only_for_manager')}">
 
   <h3>Indexing operations</h3>
@@ -27,25 +27,63 @@
 
     <h4>Re-indexing the entire repository</h4>
 
-    <div class="detail">Warning depending on your repository size it can be a long operation.<br/>
-      If in Alias mode (ZDT), Elasticsearch index is switch on new index and you will <b>not</b> experience incomplete search results
-      during the re-indexing
-      If not in Alias mode (ZDT), the Elasticsearch index is first deleted and you will experience incomplete search results
-      during the re-indexing. 
-    </div>
+    <button type="button" class="collapsible"><img src="/nuxeo/icons/warning.png"/>Quand ré-indexer entièrement le dépôt?</button>
+	<div class="collapsible-content">
+	
+		<p>On ré-indexe entièrement le dépôt lorsqu'un changement de configuration Elasticsearch a été effectué (modification du fichier xxx-elasticsearch-config.nxftl)</p>
+		<ul>
+			<li>si le changement est effectué au niveau de la partie 'settings', la ré-indexation est obligatoire</li>
+			<li>si le changement est effectué au niveau de la partie 'mapping', la ré-indexation n'est obligatoire que si le changement de mapping affecte les valeurs des données déjà indexées 
+		        (exemple: changement d'analyseur à l'indexation d'un champ, changement du type d'un champ, ...)</li>
+		</ul>
+		<br/>
+		<p><i>Note: </i></p>
+		<p>Ré-indexer entièrement le dépôt revient à créer un nouvel index et à le peupler</p>
+		<p>Si le dépôt est configuré en mode alias, l'ancien index est conservé permettant un maintien des recherches Elasticsearch pendant la ré-indexation (Zero Down Time). 
+		Sinon, l'ancien index est supprimé et les recherches seront partielles durant la ré-indexation</p>
+	</div> 
+     
     <div class="bubbleBox">
-      <h:commandButton action="#{esAdmin.startReindexAll}" value="#{nxu:test(aliasMode, 'Re-index repository with ZDT', 'Re-index repository')}"/>
+      <h:commandButton action="#{esAdmin.startReindexAll}" value="Re-index repository"/>
     </div>
-
+    
     <h4>Re-indexing documents that match a NXQL query</h4>
 
     <div class="detail">Only documents that match the query are indexed, there is no recursive
       indexation of children nor deletion of spurious documents from the index.
     </div>
+    
+    <button type="button" class="collapsible"><img src="/nuxeo/icons/warning.png"/>Quand ré-indexer avec la requête: 'select * from Document' ?</button>
+	<div class="collapsible-content">
+		<p>On ré-indexe avec la requête 'select * from Document' lorsque:</p>
+		<ul>
+			<li>les données Elasticsearch sont désynchronisées avec les données PostgreSQL</li>
+			<li>on a effectué un changement de configuration Elasticsearch (modification du fichier xxx-elasticsearch-config.nxftl) au niveau de la partie 'mapping' 
+			uniquement par ajout de nouveaux champs</li>
+		</ul>
+		<br/>
+		<p><i>Note:</i></p>
+		<p>Ré-indexer avec la requête 'select * from Document' revient à re-peupler l'index courant. Les recherches Elastisearch sont utilisables pendant la ré-indexation mais ne seront pas à jour.</p>
+	</div> 
+    
     <div class="bubbleBox">
       NXQL query:
       <h:inputText name="j_nxql" value="#{esAdmin.nxql}"/>
       <h:commandButton action="#{esAdmin.startReindexNxql}" value="Re-index"/>
+    </div>
+    
+    <h4>Clean unused indexes</h4>
+
+    <div class="detail-zoom">
+    Supprime les indexes non utilisés.<br/>
+	<ul>
+		<li>si le mode alias est activé, supprime les indexes qui ne sont pas l'index courant ou l'ancien index</li>
+		<li>si le mode alias n'est pas activé, aucune action n'est effectué car Elasticsearch ne possède que l'index courant</li>
+	</ul> 
+    </div>
+    
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices"/>
     </div>
 
     <h4>Re-indexing a document and its children</h4>
@@ -82,6 +120,8 @@
     </div>
 
   </h:form>
+  
+  <script type="text/javascript" src="#{baseURL}scripts/ottc_collapsible.js"></script>
 
 </c:if>
 

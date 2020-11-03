@@ -10,12 +10,17 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Install;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.international.StatusMessage;
+import org.nuxeo.ecm.automation.jsf.OperationActionBean;
 import org.nuxeo.elasticsearch.web.admin.ElasticSearchManager;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchAdmin;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.automation.CleanESIndices;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
@@ -30,6 +35,15 @@ import fr.toutatice.ecm.platform.core.constants.ExtendedSeamPrecedence;
 @Scope(EVENT)
 @Install(precedence = ExtendedSeamPrecedence.TOUTATICE)
 public class OttcElasticSearchManager extends ElasticSearchManager {
+    
+    @In(create = true, required = true)
+    protected OperationActionBean operationActionBean;
+    
+    @In(create = true)
+    protected transient FacesMessages facesMessages;
+    
+    @In(create = true)
+    protected Map<String, String> messages;
     
     private static final Log log = LogFactory.getLog(OttcElasticSearchManager.class);
     
@@ -47,8 +61,22 @@ public class OttcElasticSearchManager extends ElasticSearchManager {
                 ((OttcElasticSearchIndexing) super.esi).reIndexAllDocumentsWithZeroDownTime(getRepositoryName());
             } catch (ReIndexingStatusException | ReIndexingStateException | ReIndexingException e) {
                log.fatal("Error during ZDT full re-indexing: process aborted");
-               //TODO: to show in info UI?
+               this.facesMessages.add(StatusMessage.Severity.ERROR, "Erreur durant le processus de ré-indexation: le processus a été arrêté");
             }
+        }
+    }
+    
+    public void cleanIndices() {
+        if(isAliasModeEnabled(getRepositoryName())) {
+            try {
+                this.operationActionBean.doOperation(CleanESIndices.ID);
+            } catch (Exception e) {
+                log.fatal("Error during indexes cleaning: process aborted");
+                this.facesMessages.add(StatusMessage.Severity.ERROR, "Erreur durant le nettoyage des index: le processus a été arrêté");
+            }
+            this.facesMessages.add(StatusMessage.Severity.INFO, "Nettoyage des index terminé");
+        } else {
+            this.facesMessages.add(StatusMessage.Severity.INFO, "Le dépôt n'est pas configuré en mode alias: aucune action effectuée");
         }
     }
     
