@@ -1,3 +1,13 @@
+#esAdmin input[type="submit"]:disabled {
+    display: inherit !important;
+    color: gray;
+    cursor: not-allowed;
+}
+
+#esAdmin input[type="submit"]:hover:disabled {
+    box-shadow: none !important;
+}
+
 .detail-zoom {
     font-size: inherit;
     padding-bottom: 10px !important;

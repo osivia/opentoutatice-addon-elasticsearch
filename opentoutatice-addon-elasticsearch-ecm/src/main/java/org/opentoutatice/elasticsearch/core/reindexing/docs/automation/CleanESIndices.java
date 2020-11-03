@@ -3,11 +3,13 @@
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.automation;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
@@ -48,25 +50,7 @@ public class CleanESIndices {
 
             if (!reIndexingInProgress) {
                 // Get orphan indices (i.e. not associated to any alias)
-                EsState esState = EsStateChecker.get().getEsState();
-
-                if (log.isInfoEnabled()) {
-                    log.info(esState.toString());
-                    log.info("Cleaning orphan indices ...");
-                }
-
-                // Indices mapped to aliases
-                Map<String, List<String>> aliases = esState.getAliases();
-
-                List<String> linkedIndices = new ArrayList<String>();
-                for (Entry<String, List<String>> alias : aliases.entrySet()) {
-                    linkedIndices.addAll(alias.getValue());
-                }
-
-                // Indices
-                List<String> indices = esState.getIndices();
-
-                Collection<String> orphanIndices = CollectionUtils.disjunction(indices, linkedIndices);
+                Collection<String> orphanIndices = getOrphanIndices();
 
                 // Clean
                 if (orphanIndices.size() > 0) {
@@ -92,7 +76,7 @@ public class CleanESIndices {
                 }
 
             } else {
-                cleaningStatus = "One Zero Down Time Re-Indexing process is in progress: you can not clean indicies for the moment.";
+                cleaningStatus = "One Zero Down Time Re-Indexing process is in progress: you can not clean indices for the moment.";
             }
 
 
@@ -103,6 +87,27 @@ public class CleanESIndices {
         }
 
         return new StringBlob(cleaningStatus);
+    }
+
+    public static Collection<String> getOrphanIndices() throws InterruptedException, ExecutionException {
+        EsState esState = EsStateChecker.get().getEsState();
+
+        if (log.isInfoEnabled()) {
+            log.info(esState.toString());
+        }
+
+        // Indices mapped to aliases
+        Map<String, List<String>> aliases = esState.getAliases();
+
+        Set<String> linkedIndices = new HashSet<String>();
+        for (Entry<String, List<String>> alias : aliases.entrySet()) {
+            linkedIndices.addAll(alias.getValue());
+        }
+
+        // Indices
+        List<String> indices = esState.getIndices();
+
+        return CollectionUtils.disjunction(indices, linkedIndices);
     }
 
 }

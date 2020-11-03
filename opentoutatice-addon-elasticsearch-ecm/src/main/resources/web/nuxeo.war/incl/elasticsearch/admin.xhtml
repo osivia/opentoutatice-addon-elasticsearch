@@ -6,6 +6,10 @@
   
 <c:if test="#{webActions.checkFilter('only_for_manager')}">
 
+   <c:if test="#{esAdmin.isIndexingInProgress()}">
+      <div class="processMessage completeWarning">Indexation en cours: vous ne pouvez effectuer aucune opération d'administration avant la fin de cette indexation</div>
+   </c:if>
+
   <h3>Indexing operations</h3>
 
   <div class="detail">Indexing operations are done asynchronously.
@@ -20,7 +24,7 @@
     <div class="detail">Choose a repository where the indexing operation will apply.</div>
     <div class="bubbleBox">
       Repository:
-      <h:selectOneMenu name="j_repo" value="#{esAdmin.repositoryName}">
+      <h:selectOneMenu name="j_repo" value="#{esAdmin.repositoryName}" disabled="#{esAdmin.isIndexingInProgress()}">
         <f:selectItems value="#{esAdmin.repositoryNamesWithAliasMode}" var="repoMode" itemLabel="#{repoMode.key}" itemLabelEscaped="true" itemValue="#{repoMode.value}"/>
       </h:selectOneMenu>
     </div>
@@ -44,7 +48,7 @@
 	</div> 
      
     <div class="bubbleBox">
-      <h:commandButton action="#{esAdmin.startReindexAll}" value="Re-index repository"/>
+      <h:commandButton action="#{esAdmin.startReindexAll}" value="Re-index repository" onclick="#{esAdmin.confirm()}" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
     
     <h4>Re-indexing documents that match a NXQL query</h4>
@@ -69,7 +73,18 @@
     <div class="bubbleBox">
       NXQL query:
       <h:inputText name="j_nxql" value="#{esAdmin.nxql}"/>
-      <h:commandButton action="#{esAdmin.startReindexNxql}" value="Re-index"/>
+      <h:commandButton action="#{esAdmin.startReindexNxql}" value="Re-index" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+    
+    <h4>Clean unused indices (Zero Down Time)</h4>
+
+    <div class="detail-zoom">
+    Si le dépôt est configuré en mode alias (Zero Down Time), supprime les indexes qui ne sont plus utilisés (référencés) par Elasticsearch.<br/>
+    Si le dépôt n'est pas configuré en mode alias, aucune action n'est effectuée (le nettoyage doit être effectué manuellement afin de ne pas supprimer l'index courant).
+    </div>
+    
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
     
     <h4>Clean unused indexes</h4>
@@ -96,7 +111,7 @@
     <div class="bubbleBox">
       Document id:
       <h:inputText name="j_docid" value="#{esAdmin.rootId}"/>
-      <h:commandButton action="#{esAdmin.startReindexFrom}" value="Re-index"/>
+      <h:commandButton action="#{esAdmin.startReindexFrom}" value="Re-index" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
 
     <h3>Other operations</h3>
@@ -105,7 +120,7 @@
 
     <div class="detail">Use this to make sure Elasticsearch flush its indexes to disk.</div>
     <div class="bubbleBox">
-      <h:commandButton action="#{esAdmin.flush}" value="Flush"/>
+      <h:commandButton action="#{esAdmin.flush}" value="Flush" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
 
     <h4>Optimize all Elasticsearch indexes</h4>
@@ -116,7 +131,7 @@
       very heavy operation.
     </div>
     <div class="bubbleBox">
-      <h:commandButton action="#{esAdmin.optimize}" value="Optimize"/>
+      <h:commandButton action="#{esAdmin.optimize}" value="Optimize" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
 
   </h:form>
