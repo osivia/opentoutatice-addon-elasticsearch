@@ -35,11 +35,6 @@
 	<div class="collapsible-content">
 	
 		<p>On ré-indexe entièrement le dépôt lorsqu'un changement de configuration Elasticsearch a été effectué (modification du fichier xxx-elasticsearch-config.nxftl)</p>
-		<ul>
-			<li>si le changement est effectué au niveau de la partie 'settings', la ré-indexation est obligatoire</li>
-			<li>si le changement est effectué au niveau de la partie 'mapping', la ré-indexation n'est obligatoire que si le changement de mapping affecte les valeurs des données déjà indexées 
-		        (exemple: changement d'analyseur à l'indexation d'un champ, changement du type d'un champ, ...)</li>
-		</ul>
 		<br/>
 		<p><i>Note: </i></p>
 		<p>Ré-indexer entièrement le dépôt revient à créer un nouvel index et à le peupler</p>
@@ -59,12 +54,7 @@
     
     <button type="button" class="collapsible"><img src="/nuxeo/icons/warning.png"/>Quand ré-indexer avec la requête: 'select * from Document' ?</button>
 	<div class="collapsible-content">
-		<p>On ré-indexe avec la requête 'select * from Document' lorsque:</p>
-		<ul>
-			<li>les données Elasticsearch sont désynchronisées avec les données PostgreSQL</li>
-			<li>on a effectué un changement de configuration Elasticsearch (modification du fichier xxx-elasticsearch-config.nxftl) au niveau de la partie 'mapping' 
-			uniquement par ajout de nouveaux champs</li>
-		</ul>
+		<p>On ré-indexe avec la requête 'select * from Document' lorsque les données Elasticsearch sont désynchronisées par rapport aux données PostgreSQL</p>
 		<br/>
 		<p><i>Note:</i></p>
 		<p>Ré-indexer avec la requête 'select * from Document' revient à re-peupler l'index courant. Les recherches Elastisearch sont utilisables pendant la ré-indexation mais ne seront pas à jour.</p>
