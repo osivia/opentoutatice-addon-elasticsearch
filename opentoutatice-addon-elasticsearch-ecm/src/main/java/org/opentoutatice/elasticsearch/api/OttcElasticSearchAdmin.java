@@ -20,5 +20,7 @@ public interface OttcElasticSearchAdmin extends ElasticSearchAdmin {
     String getConfiguredIndexOrAliasNameForRepository(String repositoryName);
 
     boolean isZeroDownTimeReIndexingInProgress(String repository) throws InterruptedException;
+    
+    boolean aliasConfigured(String repositoryName);
 
 }

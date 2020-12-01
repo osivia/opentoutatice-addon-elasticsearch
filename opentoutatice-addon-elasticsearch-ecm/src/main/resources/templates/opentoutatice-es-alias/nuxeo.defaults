@@ -1,6 +1,0 @@
-opentoutatice-es-alias.target=.
-
-##----------------------------------------------------------------------------
-## Loop timeout for re-indexing waiting in seconds
-##----------------------------------------------------------------------------
-#ottc.reindexing.check.loop.period=30

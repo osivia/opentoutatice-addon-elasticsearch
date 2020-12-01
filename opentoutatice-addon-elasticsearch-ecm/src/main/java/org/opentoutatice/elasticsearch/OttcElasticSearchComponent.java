@@ -539,6 +539,11 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
     public String getConfiguredIndexOrAliasNameForRepository(String repositoryName) {
         return this.esa.getConfiguredIndexOrAliasNameForRepository(repositoryName);
     }
+    
+    @Override
+    public boolean aliasConfigured(String repositoryName) {
+        return this.esa.aliasConfigured(repositoryName);
+    }
 
     // ES Search ===============================================================
     @Override

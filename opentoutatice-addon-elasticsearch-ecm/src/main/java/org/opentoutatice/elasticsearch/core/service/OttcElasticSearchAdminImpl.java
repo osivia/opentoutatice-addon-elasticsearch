@@ -548,8 +548,9 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
         }
         return ret;
     }
-
-    private boolean aliasConfigured(String repositoryName) {
+    
+    @Override
+    public boolean aliasConfigured(String repositoryName) {
         ElasticSearchIndexConfig esCfg = this.getIndexConfig().get(this.getIndexNames().get(repositoryName));
         return (esCfg instanceof OttcElasticSearchIndexOrAliasConfig) && (((OttcElasticSearchIndexOrAliasConfig) esCfg).aliasConfigured());
     }

@@ -1,0 +1,133 @@
+<div xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:c="http://java.sun.com/jstl/core"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  class="hostInfos">
+  
+<c:if test="#{webActions.checkFilter('only_for_manager')}">
+
+   <c:if test="#{esAdmin.isIndexingInProgress()}">
+      <div class="processMessage completeWarning">Indexation en cours: vous ne pouvez effectuer aucune opération d'administration avant la fin de cette indexation</div>
+   </c:if>
+
+  <h3>Indexing operations</h3>
+
+  <div class="detail">Indexing operations are done asynchronously.
+    When they are terminated the status "No indexing in progress"
+    is displayed in the Info tab.
+  </div>
+  
+  <ui:param name="reposWithMode" value="#{esAdmin.repositoryNamesWithAliasMode}" />
+
+  <h:form id="esAdmin">
+
+    <div class="detail">Choose a repository where the indexing operation will apply.</div>
+    <div class="bubbleBox">
+      Repository:
+      <h:selectOneMenu name="j_repo" value="#{esAdmin.repositoryName}" disabled="#{esAdmin.isIndexingInProgress()}">
+        <f:selectItems value="#{esAdmin.repositoryNamesWithAliasMode}" var="repoMode" itemLabel="#{repoMode.key}" itemLabelEscaped="true" itemValue="#{repoMode.value}"/>
+      </h:selectOneMenu>
+    </div>
+
+    <h4>Re-indexing the entire repository</h4>
+
+    <button type="button" class="collapsible"><img src="/nuxeo/icons/warning.png"/>Quand ré-indexer entièrement le dépôt?</button>
+	<div class="collapsible-content">
+	
+		<p>On ré-indexe entièrement le dépôt lorsqu'un changement de configuration Elasticsearch a été effectué (modification du fichier xxx-elasticsearch-config.nxftl)</p>
+		<br/>
+		<p><i>Note: </i></p>
+		<p>Ré-indexer entièrement le dépôt revient à créer un nouvel index et à le peupler</p>
+		<p>Si le dépôt est configuré en mode alias, l'ancien index est conservé permettant un maintien des recherches Elasticsearch pendant la ré-indexation (Zero Down Time). 
+		Sinon, l'ancien index est supprimé et les recherches seront partielles durant la ré-indexation</p>
+	</div> 
+     
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.startReindexAll}" value="Re-index repository" onclick="#{esAdmin.confirm()}" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+    
+    <h4>Re-indexing documents that match a NXQL query</h4>
+
+    <div class="detail">Only documents that match the query are indexed, there is no recursive
+      indexation of children nor deletion of spurious documents from the index.
+    </div>
+    
+    <button type="button" class="collapsible"><img src="/nuxeo/icons/warning.png"/>Quand ré-indexer avec la requête: 'select * from Document' ?</button>
+	<div class="collapsible-content">
+		<p>On ré-indexe avec la requête 'select * from Document' lorsque les données Elasticsearch sont désynchronisées par rapport aux données PostgreSQL</p>
+		<br/>
+		<p><i>Note:</i></p>
+		<p>Ré-indexer avec la requête 'select * from Document' revient à re-peupler l'index courant. Les recherches Elastisearch sont utilisables pendant la ré-indexation mais ne seront pas à jour.</p>
+	</div> 
+    
+    <div class="bubbleBox">
+      NXQL query:
+      <h:inputText name="j_nxql" value="#{esAdmin.nxql}"/>
+      <h:commandButton action="#{esAdmin.startReindexNxql}" value="Re-index" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+    
+    <h4>Clean unused indices (Zero Down Time)</h4>
+
+    <div class="detail-zoom">
+    Si le dépôt est configuré en mode alias (Zero Down Time), supprime les indexes qui ne sont plus utilisés (référencés) par Elasticsearch.<br/>
+    Si le dépôt n'est pas configuré en mode alias, aucune action n'est effectuée (le nettoyage doit être effectué manuellement afin de ne pas supprimer l'index courant).
+    </div>
+    
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+    
+    <h4>Clean unused indexes</h4>
+
+    <div class="detail-zoom">
+    Supprime les indexes non utilisés.<br/>
+	<ul>
+		<li>si le mode alias est activé, supprime les indexes qui ne sont pas l'index courant ou l'ancien index</li>
+		<li>si le mode alias n'est pas activé, aucune action n'est effectué car Elasticsearch ne possède que l'index courant</li>
+	</ul> 
+    </div>
+    
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices"/>
+    </div>
+
+    <h4>Re-indexing a document and its children</h4>
+
+    <div class="detail">This will re-index a document and its children recursively.
+      Before indexing, the document and its children are removed from Elasticsearch,
+      this operation can be used to remove spurious documents from the index.
+      You may experience incomplete search results during the re-indexing.
+    </div>
+    <div class="bubbleBox">
+      Document id:
+      <h:inputText name="j_docid" value="#{esAdmin.rootId}"/>
+      <h:commandButton action="#{esAdmin.startReindexFrom}" value="Re-index" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+
+    <h3>Other operations</h3>
+
+    <h4>Flush all Elasticsearch indexes</h4>
+
+    <div class="detail">Use this to make sure Elasticsearch flush its indexes to disk.</div>
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.flush}" value="Flush" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+
+    <h4>Optimize all Elasticsearch indexes</h4>
+
+    <div class="detail">The optimize process basically optimizes the index for faster search operations (and relates to
+      the number of segments a Lucene index holds within each shard). The optimize operation allows to reduce the number
+      of segments by merging them. Ask for a full optimization to a single segment. Note that this can potentially be a
+      very heavy operation.
+    </div>
+    <div class="bubbleBox">
+      <h:commandButton action="#{esAdmin.optimize}" value="Optimize" disabled="#{esAdmin.isIndexingInProgress()}"/>
+    </div>
+
+  </h:form>
+  
+  <script type="text/javascript" src="#{baseURL}scripts/ottc_collapsible.js"></script>
+
+</c:if>
+
+</div>
