@@ -76,20 +76,6 @@
     <div class="bubbleBox">
       <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices" disabled="#{esAdmin.isIndexingInProgress()}"/>
     </div>
-    
-    <h4>Clean unused indexes</h4>
-
-    <div class="detail-zoom">
-    Supprime les indexes non utilisés.<br/>
-	<ul>
-		<li>si le mode alias est activé, supprime les indexes qui ne sont pas l'index courant ou l'ancien index</li>
-		<li>si le mode alias n'est pas activé, aucune action n'est effectué car Elasticsearch ne possède que l'index courant</li>
-	</ul> 
-    </div>
-    
-    <div class="bubbleBox">
-      <h:commandButton action="#{esAdmin.cleanIndices()}" value="Clean unused indices"/>
-    </div>
 
     <h4>Re-indexing a document and its children</h4>
 
