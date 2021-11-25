@@ -4,6 +4,7 @@
 package fr.toutatice.ecm.elasticsearch.servlet;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -14,6 +15,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.automation.core.operations.services.DocumentPageProviderOperation;
 import org.nuxeo.ecm.automation.core.operations.services.query.DocumentPaginatedQuery;
 import org.nuxeo.runtime.api.Framework;
@@ -24,6 +27,8 @@ import org.nuxeo.runtime.api.Framework;
  *
  */
 public class VcsToEsQueryFilter implements Filter {
+    
+    private static final Log log = LogFactory.getLog(VcsToEsQueryFilter.class);
 
     private static final String APP_HEADER = "X-Application-Name";
 
@@ -39,6 +44,9 @@ public class VcsToEsQueryFilter implements Filter {
 
     /** Document.QueryES compatibility mode (set schema in parameter is deprecated). */
     public static final String QUERY_ES_COMPAT_MODE = "qEsCompat";
+    
+    /* To trace */
+    private static final AtomicInteger NB_QUERY_VCS = new AtomicInteger(0);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -69,19 +77,23 @@ public class VcsToEsQueryFilter implements Filter {
             authorizedApp = true;
         }
 
-
         if (authorizedApp && queryingEsFromConfig && !queryingVcs) {
             // Check operation
             String opId = StringUtils.substringAfterLast(httpReq.getPathInfo(), "/");
 
             if (DocumentPaginatedQuery.ID.equals(opId) || DocumentPageProviderOperation.ID.equals(opId)) {
-                // Redirect all Document.Query by Document.QueryES
+                // Redirect all Document.Query to Document.QueryES
                 httpReq.getRequestDispatcher(QUERY_ES_OP_RESOURCE).forward(request, response);
             } else {
                 chain.doFilter(request, response);
             }
 
         } else {
+            if (authorizedApp && queryingEsFromConfig && queryingVcs) {
+                if(log.isTraceEnabled()) {
+                    log.trace(String.format("[Query VCS]: [%s]", NB_QUERY_VCS.incrementAndGet()));
+                } 
+            }
             chain.doFilter(request, response);
         }
 

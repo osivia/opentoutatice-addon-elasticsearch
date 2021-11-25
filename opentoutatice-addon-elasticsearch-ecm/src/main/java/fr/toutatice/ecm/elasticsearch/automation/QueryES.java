@@ -21,6 +21,7 @@ package fr.toutatice.ecm.elasticsearch.automation;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -72,6 +73,9 @@ public class QueryES {
     public static enum QueryLanguage {
         NXQL, ES;
     }
+    
+    /* For Trace */
+    private static final AtomicInteger NB_QUERY_ES = new AtomicInteger(0);
 
     @Context
     protected CoreSession session;
@@ -174,6 +178,10 @@ public class QueryES {
             long duration = System.currentTimeMillis() - startTime;
             log.debug(String.format("#runNxqlSearch: [TA_%s_TA] ms ", String.valueOf(duration)));
         }
+        
+        if(log.isTraceEnabled()) {
+            log.trace(String.format("[QueryES]: [%s]", NB_QUERY_ES.incrementAndGet()));
+        }
 
         return responseAsJson;
     }
@@ -262,6 +270,10 @@ public class QueryES {
 
             if (log.isDebugEnabled()) {
                 log.debug("Result: " + esResponse.toString());
+            }
+            
+            if(log.isTraceEnabled()) {
+                log.trace(String.format("[QueryES]: [%s]", NB_QUERY_ES.incrementAndGet()));
             }
 
             return new DefaultJsonAdapter(esResponse);
