@@ -86,7 +86,7 @@ public class ReIndexingRunner {
                 this.checkInterrupt();
 
                 newNxAliasCfg = this.createNewEsIndex(newIndex, nxAliasCfg);
-                this.getEsAdmin().initIndex(newNxAliasCfg, false);
+                this.getEsAdmin().initIndexIf(newNxAliasCfg.getName(), newNxAliasCfg.getType(), newNxAliasCfg.getSettings(), false);
 
                 this.createNSwitchOnTransientAliases(initialIndex, newIndex);
 

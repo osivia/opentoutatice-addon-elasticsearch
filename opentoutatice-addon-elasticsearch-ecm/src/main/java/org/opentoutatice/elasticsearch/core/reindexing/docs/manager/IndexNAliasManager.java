@@ -4,10 +4,12 @@
 package org.opentoutatice.elasticsearch.core.reindexing.docs.manager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,7 +68,19 @@ public class IndexNAliasManager {
     public Boolean indexExists(String indexName) {
         return this.getAdminClient().indices().prepareExists(indexName).execute().actionGet().isExists();
     }
-
+    
+    public String getLastIndex(String indexName) {
+        List<String> indicesWithName = new ArrayList<String>();
+        for(String index : getIndices()) {
+            if(StringUtils.startsWith(index, indexName)) {
+                indicesWithName.add(index);
+            }
+        }
+        Collections.sort(indicesWithName);
+        return indicesWithName.size() > 0 ? indicesWithName.get(indicesWithName.size() - 1) : null;
+    }
+    
+    // TODO: order by name or creation (timestamp)??
     public List<String> getIndices() {
         List<String> indices = null;
 
@@ -79,7 +93,8 @@ public class IndexNAliasManager {
                 indices.add(index);
             }
         }
-
+        Collections.sort(indices);
+        
         return indices;
     }
 
