@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.common.xmap.annotation.XObject;
 import org.nuxeo.elasticsearch.config.ElasticSearchIndexConfig;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 
 /**
  * From now on, Nx works (only) with aliases and configured elasticsearch.indexName points to elsaticsearch alias.
@@ -159,13 +158,24 @@ public class OttcElasticSearchIndexOrAliasConfig extends ElasticSearchIndexConfi
     public String getAliasName() {
         return super.getName();
     }
+    
+    public String getIndexName() {
+        String idxName = null;
+        if(this.aliasConfigured()) {
+            idxName = StringUtils.split(super.getName(), NX_ALIAS_SUFFIX)[0];
+        } else {
+            idxName = super.getName();
+        }
+        return idxName;
+    }
 
     /**
      * Do not create if alias is configured.
      */
     @Override
     public boolean mustCreate() {
-        return this.aliasConfigured() ? false : this.create;
+        //return this.aliasConfigured() ? false : this.create;
+        return this.create;
     }
 
     public boolean aliasConfigured() {

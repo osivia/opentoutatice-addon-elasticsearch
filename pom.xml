@@ -117,7 +117,6 @@
 
 		</dependencies>
 	</dependencyManagement>
-
 	<!-- Repository for jcabi FIXME: SNAPSHOT version of 2016 ... -->
 	<pluginRepositories>
 		<pluginRepository>
@@ -194,4 +193,3 @@
 	</distributionManagement>
 
 </project>
-

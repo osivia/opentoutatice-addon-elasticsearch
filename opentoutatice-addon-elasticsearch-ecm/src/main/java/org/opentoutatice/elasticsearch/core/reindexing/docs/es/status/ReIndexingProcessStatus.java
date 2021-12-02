@@ -4,12 +4,11 @@
 package org.opentoutatice.elasticsearch.core.reindexing.docs.es.status;
 
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexingRunnerStepStateStatus;
 
 /**
@@ -30,7 +29,7 @@ public class ReIndexingProcessStatus {
 
     private EsState esState;
     private IndexName newIndex;
-    
+
     private long initialNbDocsInBdd;
     private long nbDocsInBdd;
 
@@ -42,7 +41,7 @@ public class ReIndexingProcessStatus {
     private long nbCreatedDocsDuringReIndexing;
     private long nbModifiedDocsDuringReIndexing;
     private long nbDeletedDocsDuringReIndexing;
-    
+
     private long nbContributedDocsNotIndexed;
 
     public ReIndexingProcessStatus build(String workId, String repository) {
@@ -51,35 +50,39 @@ public class ReIndexingProcessStatus {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer(); 
+        StringBuffer sb = new StringBuffer();
 
         sb.append(System.lineSeparator());
         sb.append("=============== ES Reindexing Process [DONE] ===============").append(System.lineSeparator());
         sb.append(String.format("Status: [%s]", this.getStatus().getMessage())).append(System.lineSeparator());
         sb.append(String.format("Duration: [%s] s", decimalFormat.format(this.getDuration()))).append(System.lineSeparator());
         sb.append(String.format("State: %s", this.getEsState() != null ? this.getEsState().toString() : "---")).append(System.lineSeparator());
-        
-        if(getNewIndex() != null) {
-            sb.append(String.format("New index: [%s]", getNewIndex().toString())).append(System.lineSeparator());
+
+        if (this.getNewIndex() != null) {
+            sb.append(String.format("New index: [%s]", this.getNewIndex().toString())).append(System.lineSeparator());
             sb.append("Contributions during re-indexing:").append(System.lineSeparator());
-            sb.append(String.format(" Created documents:    [%s]", getNbCreatedDocsDuringReIndexing())).append(System.lineSeparator());
-            sb.append(String.format(" Modified documents:   [%s]", getNbModifiedDocsDuringReIndexing())).append(System.lineSeparator());
-            sb.append(String.format(" Suppressed documents: [%s]", getNbDeletedDocsDuringReIndexing())).append(System.lineSeparator());
-            
+            sb.append(String.format(" Created documents:    [%s]", this.getNbCreatedDocsDuringReIndexing())).append(System.lineSeparator());
+            sb.append(String.format(" Modified documents:   [%s]", this.getNbModifiedDocsDuringReIndexing())).append(System.lineSeparator());
+            sb.append(String.format(" Suppressed documents: [%s]", this.getNbDeletedDocsDuringReIndexing())).append(System.lineSeparator());
+
             sb.append(String.format("Number of indexed documents in new index: [%s] / [%s] documents in DBB", String.valueOf(this.getNbDocsInNewIndex()),
                     String.valueOf(this.getNbDocsInBdd()))).append(System.lineSeparator());
-            
+
             if (ReIndexingRunnerStepStateStatus.inError.equals(this.getStatus())) {
                 // Some contributions has done
-                if(getNbCreatedDocsDuringReIndexing() + getNbModifiedDocsDuringReIndexing() > 0) {
+                if ((this.getNbCreatedDocsDuringReIndexing() + this.getNbModifiedDocsDuringReIndexing()) > 0) {
                     // Error during indexing or switching step:
                     // Recovery mode has restored old index (or not id error during recovery)
                     // so creation & modification contributions are not present in old index - deletion can not be recovered
-                    sb.append(String.format("(Creation & modification contributions are not present in restored current index. You can reindex them with query: %s )", String.format(CONTRIBUTED_DOCS_DURING_REINDEXING_QUERY,
-                            ReIndexingProcessStatusBuilder.dateFormat.format(this.getStartTime()), ReIndexingProcessStatusBuilder.dateFormat.format(this.getStartTime())))).append(System.lineSeparator());
+                    sb.append(String
+                            .format("(Creation & modification contributions are not present in restored current index. You can reindex them with query: %s )",
+                                    String.format(CONTRIBUTED_DOCS_DURING_REINDEXING_QUERY,
+                                            ReIndexingProcessStatusBuilder.dateFormat.format(this.getStartTime()),
+                                            ReIndexingProcessStatusBuilder.dateFormat.format(this.getStartTime()))))
+                            .append(System.lineSeparator());
                 }
             }
-            
+
             sb.append(String.format("Average ReIndexing Speed: [%s] docs/s", decimalFormat.format(this.getAverageReIndexingSpeed())))
                     .append(System.lineSeparator());
         } else {
@@ -89,6 +92,11 @@ public class ReIndexingProcessStatus {
 
         if (ReIndexingRunnerStepStateStatus.inError.equals(this.getStatus())) {
             sb.append(String.format("===== CAUSE of [%s] ===== : ", ReIndexingRunnerStepStateStatus.inError.getMessage()));
+
+            ReIndexingException re = ReIndexingRunnerStepStateStatus.inError.getError();
+            if ((re.getCause() != null) && (re.getCause().getCause() instanceof InterruptedException)) {
+                sb.append(" process [INTERRUPTED]").append(System.lineSeparator());
+            }
         } else {
             sb.append("======================================================================");
         }
@@ -136,11 +144,11 @@ public class ReIndexingProcessStatus {
     public void setEsState(EsState esState) {
         this.esState = esState;
     }
-    
+
     public IndexName getNewIndex() {
-        return newIndex;
+        return this.newIndex;
     }
-    
+
     public void setNewIndex(IndexName newIndex) {
         this.newIndex = newIndex;
     }
@@ -148,11 +156,11 @@ public class ReIndexingProcessStatus {
     public long getNbDocsInBdd() {
         return this.nbDocsInBdd;
     }
-    
+
     public long getInitialNbDocsInBdd() {
-        return initialNbDocsInBdd;
+        return this.initialNbDocsInBdd;
     }
-    
+
     public void setInitialNbDocsInBdd(long initialNbDocsInBdd) {
         this.initialNbDocsInBdd = initialNbDocsInBdd;
     }
@@ -184,28 +192,28 @@ public class ReIndexingProcessStatus {
     public void setAverageReIndexingSpeed(float averageReIndexingSpeed) {
         this.averageReIndexingSpeed = averageReIndexingSpeed;
     }
-    
+
     public long getNbCreatedDocsDuringReIndexing() {
-        return nbCreatedDocsDuringReIndexing;
+        return this.nbCreatedDocsDuringReIndexing;
     }
 
-    
+
     public void setNbCreatedDocsDuringReIndexing(long nbCreatedDocsDuringReIndexing) {
         this.nbCreatedDocsDuringReIndexing = nbCreatedDocsDuringReIndexing;
     }
-    
+
     public long getNbModifiedDocsDuringReIndexing() {
-        return nbModifiedDocsDuringReIndexing;
+        return this.nbModifiedDocsDuringReIndexing;
     }
-    
+
     public void setNbModifiedDocsDuringReIndexing(long nbModifiedDocsDuringReIndexing) {
         this.nbModifiedDocsDuringReIndexing = nbModifiedDocsDuringReIndexing;
     }
-    
+
     public long getNbDeletedDocsDuringReIndexing() {
-        return nbDeletedDocsDuringReIndexing;
+        return this.nbDeletedDocsDuringReIndexing;
     }
-    
+
     public void setNbDeletedDocsDuringReIndexing(long nbDeletedDocsDuringReIndexing) {
         this.nbDeletedDocsDuringReIndexing = nbDeletedDocsDuringReIndexing;
     }
@@ -217,5 +225,5 @@ public class ReIndexingProcessStatus {
     public void setNbContributedDocsNotIndexed(long nbContributedDocsNotIndexed) {
         this.nbContributedDocsNotIndexed = nbContributedDocsNotIndexed;
     }
-    
+
 }

@@ -94,10 +94,11 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
      * @throws RealIndexNameException
      * @throws ExecutionException
      * @throws InterruptedException
+     * @throws AliasConfigurationException 
      * @throws IndexExistenceException
      */
     public OttcElasticSearchAdminImpl(ElasticSearchLocalConfig localConfig, ElasticSearchRemoteConfig remoteConfig,
-            Map<String, ElasticSearchIndexConfig> indexConfig) throws InterruptedException, ExecutionException {
+            Map<String, ElasticSearchIndexConfig> indexConfig) throws InterruptedException, ExecutionException, AliasConfigurationException {
         this.remoteConfig = remoteConfig;
         this.localConfig = localConfig;
         this.indexConfig = indexConfig;
@@ -235,7 +236,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
         }
     }
 
-    private void initializeIndexes() {
+    private void initializeIndexes() throws AliasConfigurationException {
         for (ElasticSearchIndexConfig conf : this.indexConfig.values()) {
             if (DOC_TYPE.equals(conf.getType())) {
                 log.info("Associate index " + conf.getName() + " with repository: " + conf.getRepositoryName());
@@ -260,7 +261,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
             }
 
         }
-        this.initIndexes(false);
+        this.initIndexesOrAlias(false);
     }
 
     // Admin Impl =============================================================
@@ -325,34 +326,34 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     }
 
     @Override
-    public void initIndexes(boolean dropIfExists) {
+    public void initIndexesOrAlias(boolean dropIfExists) throws AliasConfigurationException {
         this.indexInitDone = false;
         for (ElasticSearchIndexConfig conf : this.indexConfig.values()) {
-            this.initIndex(conf, dropIfExists);
+            this.initIndexOrAlias(conf, dropIfExists);
         }
         log.info("ES Service ready");
         this.indexInitDone = true;
     }
 
     @Override
-    public void dropAndInitIndex(String indexName) {
+    public void dropAndInitIndexOrAlias(String indexName) throws AliasConfigurationException {
         log.info("Drop and init index: " + indexName);
         this.indexInitDone = false;
         for (ElasticSearchIndexConfig conf : this.indexConfig.values()) {
             if (conf.getName().equals(indexName)) {
-                this.initIndex(conf, true);
+                this.initIndexOrAlias(conf, true);
             }
         }
         this.indexInitDone = true;
     }
 
     @Override
-    public void dropAndInitRepositoryIndex(String repositoryName) {
+    public void dropAndInitRepositoryIndexOrAlias(String repositoryName) throws AliasConfigurationException {
         log.info("Drop and init index of repository: " + repositoryName);
         this.indexInitDone = false;
         for (ElasticSearchIndexConfig conf : this.indexConfig.values()) {
             if (DOC_TYPE.equals(conf.getType()) && repositoryName.equals(conf.getRepositoryName())) {
-                this.initIndex(conf, true);
+                this.initIndexOrAlias(conf, true);
             }
         }
         this.indexInitDone = true;
@@ -364,59 +365,78 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     }
 
     // Zero downtime Re-indexing FORK ======================
-    public void initIndex(ElasticSearchIndexConfig conf, boolean dropIfExists) {
-        if (!conf.mustCreate()) {
+    public void initIndexOrAlias(ElasticSearchIndexConfig conf, boolean dropIfExists) throws AliasConfigurationException {
+        if (this.aliasConfigured(conf.getRepositoryName())) {
 
             // Nx configured with alias: must exist
-            if (this.aliasConfigured(conf.getRepositoryName())) {
-                if (!IndexNAliasManager.get().aliasExists(conf.getName())) {
+            if (!conf.mustCreate()) {
+                if (!IndexNAliasManager.get().aliasExists(((OttcElasticSearchIndexOrAliasConfig) conf).getName())) {
                     // Update confs
                     this.getIndexNames().put(conf.getRepositoryName(), null);
                     this.getRepoNames().remove(conf.getName());
 
-                    log.fatal(new AliasConfigurationException(
-                            String.format("Alias [%s] does not exist: you must create it before use alias mode.", conf.getName())));
+                    throw new AliasConfigurationException(
+                            String.format("Alias [%s] does not exist: you must create it before use alias mode.", conf.getName()));
+                }
+            } else {
+                if (!IndexNAliasManager.get().aliasExists(((OttcElasticSearchIndexOrAliasConfig) conf).getAliasName())) {
+                    initIndexIf(((OttcElasticSearchIndexOrAliasConfig) conf).getIndexName(), conf.getType(), conf.getSettings(), dropIfExists);
+                    String lastIndex = IndexNAliasManager.get().getLastIndex(((OttcElasticSearchIndexOrAliasConfig) conf).getIndexName());
+                    IndexNAliasManager.get().createAliasFor(lastIndex, conf.getName());
                 }
             }
 
-            return;
+        } else {
+            if(conf.mustCreate()) {
+                initIndexIf(conf.getName(), conf.getType(), conf.getSettings(), dropIfExists);
+             }
         }
-        log.info(String.format("Initialize index: %s, type: %s", conf.getName(), conf.getType()));
-        boolean mappingExists = false;
-        boolean indexExists = this.getClient().admin().indices().prepareExists(conf.getName()).execute().actionGet().isExists();
+        // Always update mapping
+        this.updateMapping(conf, dropIfExists);
+        // make sure the index is ready before returning
+        this.checkClusterHealth(conf.getName());
+        
+    }
+
+    public void initIndexIf(String indexName, String type, String settings, boolean dropIfExists) {
+        log.info(String.format("Initialize index: %s, type: %s", indexName, type));
+        //boolean mappingExists = false;
+        boolean indexExists = this.getClient().admin().indices().prepareExists(indexName).execute().actionGet().isExists();
         if (indexExists) {
             if (!dropIfExists) {
-                log.debug("Index " + conf.getName() + " already exists");
-                mappingExists = this.getClient().admin().indices().prepareGetMappings(conf.getName()).execute().actionGet().getMappings().get(conf.getName())
-                        .containsKey(DOC_TYPE);
+                log.debug("Index " + indexName + " already exists");
+//                mappingExists = this.getClient().admin().indices().prepareGetMappings(indexName).execute().actionGet().getMappings().get(indexName)
+//                        .containsKey(DOC_TYPE);
             } else {
                 if (!Framework.isTestModeSet()) {
-                    log.warn(String.format("Initializing index: %s, type: %s with " + "dropIfExists flag, deleting an existing index", conf.getName(),
-                            conf.getType()));
+                    log.warn(String.format("Initializing index: %s, type: %s with " + "dropIfExists flag, deleting an existing index", indexName,
+                            type));
                 }
-                this.getClient().admin().indices().delete(new DeleteIndexRequest(conf.getName())).actionGet();
+                this.getClient().admin().indices().delete(new DeleteIndexRequest(indexName)).actionGet();
                 indexExists = false;
             }
         }
         if (!indexExists) {
-            log.info(String.format("Creating index: %s", conf.getName()));
+            log.info(String.format("Creating index: %s", indexName));
             if (log.isDebugEnabled()) {
-                log.debug("Using settings: " + conf.getSettings());
+                log.debug("Using settings: " + settings); 
             }
-            this.getClient().admin().indices().prepareCreate(conf.getName()).setSettings(conf.getSettings()).execute().actionGet();
+            this.getClient().admin().indices().prepareCreate(indexName).setSettings(settings).execute().actionGet();
         }
-        if (!mappingExists) {
-            log.info(String.format("Creating mapping type: %s on index: %s", conf.getType(), conf.getName()));
-            if (log.isDebugEnabled()) {
-                log.debug("Using mapping: " + conf.getMapping());
-            }
-            this.getClient().admin().indices().preparePutMapping(conf.getName()).setType(conf.getType()).setSource(conf.getMapping()).execute().actionGet();
-            if (!dropIfExists && (conf.getRepositoryName() != null)) {
-                this.repositoryInitialized.add(conf.getRepositoryName());
-            }
+//        if (!mappingExists) {
+//            updateMapping(conf, dropIfExists);
+//        }
+    }
+
+    public void updateMapping(ElasticSearchIndexConfig conf, boolean dropIfExists) {
+        log.info(String.format("Creating mapping type: %s on index: %s", conf.getType(), conf.getName()));
+        if (log.isDebugEnabled()) {
+            log.debug("Using mapping: " + conf.getMapping());
         }
-        // make sure the index is ready before returning
-        this.checkClusterHealth(conf.getName());
+        this.getClient().admin().indices().preparePutMapping(conf.getName()).setType(conf.getType()).setSource(conf.getMapping()).execute().actionGet();
+        if (!dropIfExists && (conf.getRepositoryName() != null)) {
+            this.repositoryInitialized.add(conf.getRepositoryName());
+        }
     }
 
     @Override
@@ -548,8 +568,9 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
         }
         return ret;
     }
-
-    private boolean aliasConfigured(String repositoryName) {
+    
+    @Override
+    public boolean aliasConfigured(String repositoryName) {
         ElasticSearchIndexConfig esCfg = this.getIndexConfig().get(this.getIndexNames().get(repositoryName));
         return (esCfg instanceof OttcElasticSearchIndexOrAliasConfig) && (((OttcElasticSearchIndexOrAliasConfig) esCfg).aliasConfigured());
     }
@@ -596,6 +617,24 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
      */
     public List<String> getInitializedRepositories() {
         return this.repositoryInitialized;
+    }
+    
+    @Override
+    @Deprecated
+    public void initIndexes(boolean dropIfExists) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    @Deprecated
+    public void dropAndInitIndex(String indexName) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    @Deprecated
+    public void dropAndInitRepositoryIndex(String repositoryName) {
+        // TODO Auto-generated method stub
     }
 
 }

@@ -9,5 +9,6 @@ Nuxeo-Component: OSGI-INF/extensions/toutatice-elasticsearch-operations-contrib.
  OSGI-INF/extensions/toutatice-elasticsearch-audit-contrib.xml,
  OSGI-INF/extensions/zero-down-time/ottc-elastisearch-overriden-service.xml,
  OSGI-INF/extensions/zero-down-time/ottc-zero-down-time-reindexing-work-queue-contrib.xml,
- OSGI-INF/extensions/zero-down-time/ottc-zero-down-time-operations-contrib.xml
+ OSGI-INF/extensions/zero-down-time/ottc-zero-down-time-operations-contrib.xml,
+ OSGI-INF/extensions/ui/toutatice-theme-contrib.xml
  

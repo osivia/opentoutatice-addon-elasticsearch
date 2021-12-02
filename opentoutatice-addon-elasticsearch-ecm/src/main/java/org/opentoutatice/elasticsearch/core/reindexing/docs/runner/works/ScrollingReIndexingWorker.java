@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.runner.works;
 
@@ -30,7 +30,7 @@ public class ScrollingReIndexingWorker extends ScrollingIndexingWorker {
         if (bucket.isEmpty()) {
             return;
         }
-        BucketIndexingWorker subWorker = new BucketReIndexingWorker(repositoryName, bucket, isLast);
-        getWorkManager().schedule(subWorker);
+        BucketIndexingWorker subWorker = new BucketReIndexingWorker(this.repositoryName, bucket, isLast);
+        this.getWorkManager().schedule(subWorker);
     }
 }

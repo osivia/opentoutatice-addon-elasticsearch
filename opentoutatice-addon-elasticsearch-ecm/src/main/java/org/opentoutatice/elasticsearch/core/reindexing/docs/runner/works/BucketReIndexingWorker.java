@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.opentoutatice.elasticsearch.core.reindexing.docs.runner.works;
 

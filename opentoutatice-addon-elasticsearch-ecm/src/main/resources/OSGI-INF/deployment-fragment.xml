@@ -1,36 +1,36 @@
 <?xml version="1.0"?>
 
 <fragment version="1">
- 	
+
 	<require>org.nuxeo.ecm.automation.core</require>
 	<require>org.nuxeo.ecm.automation.io</require>
 	<require>org.nuxeo.ecm.platform.lang</require>
-	
+
 	<require>org.nuxeo.ecm.core.storage.sql</require>
-	
+
 	<extension target="application#MODULE">
 		<module>
 			<java>${bundle.fileName}</java>
 		</module>
 	</extension>
-	
+
 	<!-- Servlet and Filter to control mode of ES use -->
 	<extension target="web#SERVLET">
 
 		<filter>
-            <display-name>VcsToEsQueryFilter</display-name>
-            <filter-name>VcsToEsQueryFilter</filter-name>
-            <filter-class>
-                fr.toutatice.ecm.elasticsearch.servlet.VcsToEsQueryFilter
-            </filter-class>
-        </filter>
+			<display-name>VcsToEsQueryFilter</display-name>
+			<filter-name>VcsToEsQueryFilter</filter-name>
+			<filter-class>
+				fr.toutatice.ecm.elasticsearch.servlet.VcsToEsQueryFilter
+			</filter-class>
+		</filter>
 
-        <filter-mapping>
-            <filter-name>VcsToEsQueryFilter</filter-name>
-            <url-pattern>/site/automation/*</url-pattern>
-            <dispatcher>REQUEST</dispatcher>
-            <dispatcher>FORWARD</dispatcher>
-        </filter-mapping>
+		<filter-mapping>
+			<filter-name>VcsToEsQueryFilter</filter-name>
+			<url-pattern>/site/automation/*</url-pattern>
+			<dispatcher>REQUEST</dispatcher>
+			<dispatcher>FORWARD</dispatcher>
+		</filter-mapping>
 
 
 		<filter>
@@ -52,16 +52,24 @@
 	</extension>
 
 	<install>
+		<unzip from="${bundle.fileName}" to="/" prefix="web">
+			<include>web/nuxeo.war/**</include>
+		</unzip>
+
 		<!-- append l10n files -->
 		<delete path="${bundle.fileName}.tmp" />
 		<mkdir path="${bundle.fileName}.tmp" />
 		<unzip from="${bundle.fileName}" to="${bundle.fileName}.tmp">
 			<include>OSGI-INF/l10n/**</include>
 		</unzip>
-		<append from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_fr.properties"
-            to="nuxeo.war/WEB-INF/classes/messages_fr.properties" addNewLine="true" />
-		<append from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_en.properties"
-			to="nuxeo.war/WEB-INF/classes/messages_en.properties" addNewLine="true" />
+		<append
+			from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_fr.properties"
+			to="nuxeo.war/WEB-INF/classes/messages_fr.properties"
+			addNewLine="true" />
+		<append
+			from="${bundle.fileName}.tmp/OSGI-INF/l10n/messages_en.properties"
+			to="nuxeo.war/WEB-INF/classes/messages_en.properties"
+			addNewLine="true" />
 		<delete path="${bundle.fileName}.tmp" />
 	</install>
 

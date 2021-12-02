@@ -70,7 +70,7 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
 
     @Inject
     protected Session automationSession;
-    
+
     protected static int nbAliases = 1;
     protected static int nbIndices = 1;
 
@@ -97,7 +97,7 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
     public void testC_ReIndexingWithErrorOnSwitchingStep() throws Exception {
         // Es state = {nbIndices, nbAliases}
         int[] expectedInitialEsState = {2, 1};
-        // New index creating 
+        // New index creating
         int[] expectedFinalEsState = {3, 1};
         this.testErrorRecovery(ReIndexingRunnerStep.switching, expectedInitialEsState, expectedFinalEsState);
     }

@@ -52,6 +52,7 @@ import org.nuxeo.runtime.transaction.TransactionHelper;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchAdmin;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchService;
+import org.opentoutatice.elasticsearch.config.exception.AliasConfigurationException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
@@ -172,7 +173,7 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
     // }
 
     @Override
-    public void applicationStarted(ComponentContext context) throws InterruptedException, ExecutionException {
+    public void applicationStarted(ComponentContext context) throws InterruptedException, ExecutionException, AliasConfigurationException {
         if (!this.isElasticsearchEnabled()) {
             log.info("Elasticsearch service is disabled");
             return;
@@ -258,18 +259,36 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
     // ===
 
     @Override
+    @Deprecated
     public void initIndexes(boolean dropIfExists) {
         this.esa.initIndexes(dropIfExists);
     }
-
+    
     @Override
-    public void dropAndInitIndex(String indexName) {
-        this.esa.dropAndInitIndex(indexName);
+    public void initIndexesOrAlias(boolean dropIfExists) throws AliasConfigurationException {
+        this.esa.initIndexesOrAlias(dropIfExists);
     }
 
     @Override
+    @Deprecated
+    public void dropAndInitIndex(String indexName) {
+        this.esa.dropAndInitIndex(indexName);
+    }
+    
+    @Override
+    public void dropAndInitIndexOrAlias(String indexName) throws AliasConfigurationException {
+        this.esa.dropAndInitIndexOrAlias(indexName);
+    }
+
+    @Override
+    @Deprecated
     public void dropAndInitRepositoryIndex(String repositoryName) {
         this.esa.dropAndInitRepositoryIndex(repositoryName);
+    }
+    
+    @Override
+    public void dropAndInitRepositoryIndexOrAlias(String repositoryName) throws AliasConfigurationException {
+        this.esa.dropAndInitRepositoryIndexOrAlias(repositoryName);
     }
 
     @Override
@@ -498,7 +517,7 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
 
     @Override
     public void runReindexingWorker(String repositoryName, String nxql) {
-        runReindexingWorker(repositoryName, nxql, false);
+        this.runReindexingWorker(repositoryName, nxql, false);
     }
 
     public void runReindexingWorker(String repositoryName, String nxql, boolean zeroDownTime) {
@@ -538,6 +557,11 @@ public class OttcElasticSearchComponent extends DefaultComponent implements Ottc
     @Override
     public String getConfiguredIndexOrAliasNameForRepository(String repositoryName) {
         return this.esa.getConfiguredIndexOrAliasNameForRepository(repositoryName);
+    }
+    
+    @Override
+    public boolean aliasConfigured(String repositoryName) {
+        return this.esa.aliasConfigured(repositoryName);
     }
 
     // ES Search ===============================================================

@@ -19,10 +19,10 @@
 package fr.toutatice.ecm.elasticsearch.codec;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -39,6 +39,7 @@ import org.nuxeo.ecm.automation.io.services.codec.ObjectCodec;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.query.filter.ReIndexingTransientAggregate;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.transitory.TransitoryIndexUse;
+import org.opentoutatice.elasticsearch.utils.MessageUtils;
 
 import fr.toutatice.ecm.elasticsearch.search.TTCSearchResponse;
 
@@ -46,6 +47,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
     private static final Log log = LogFactory.getLog(TTCEsCodec.class);
 
+    private static final Pattern SYSTEM_PROPS_PATTERN = Pattern.compile("ecm:.+");
     public TTCEsCodec() {
         super(TTCSearchResponse.class);
     }
@@ -59,10 +61,10 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
     @SuppressWarnings("unchecked")
     public void write(JsonGenerator jg, TTCSearchResponse value) throws IOException {
         // For logs
-//        long startTime = System.currentTimeMillis();
+        // long startTime = System.currentTimeMillis();
 
         SearchHits upperhits = value.getSearchResponse().getHits();
-        String schemasRegex = value.getSchemasRegex();
+        Pattern schemasRegex = Pattern.compile(value.getSchemasRegex());
 
         SearchHit[] searchhits = upperhits.getHits();
 
@@ -83,7 +85,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         }
 
         jg.writeArrayFieldStart("entries");
-        
+
         if (this.hasToFilterDuplicate(value.getSearchResponse())) {
             this.writeDuplicateFilteredEntries(jg, schemasRegex, value.getSearchResponse());
         } else {
@@ -93,11 +95,11 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
         jg.writeEndObject();
         jg.flush();
-        
-//        if(log.isDebugEnabled()) {
-//            long duration = System.currentTimeMillis() - startTime;
-//            log.debug(String.format("Json written: [TJ_%s_TJ] ms", String.valueOf(duration)));
-//        }
+
+        // if(log.isDebugEnabled()) {
+        // long duration = System.currentTimeMillis() - startTime;
+        // log.debug(String.format("Json written: [TJ_%s_TJ] ms", String.valueOf(duration)));
+        // }
     }
 
     protected boolean hasToFilterDuplicate(SearchResponse searchResponse) {
@@ -115,26 +117,26 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    protected void writeEntries(JsonGenerator jg, String schemasRegex, SearchHit[] searchhits)
+    protected void writeEntries(JsonGenerator jg, Pattern schemasRegex, SearchHit[] searchhits)
             throws IOException, JsonGenerationException, JsonProcessingException {
         // For logs
-//        long startTime = System.currentTimeMillis();
-        
+        // long startTime = System.currentTimeMillis();
+
         for (SearchHit hit : searchhits) {
             this.writeEntry(jg, schemasRegex, hit.getSource());
         }
-        
-//        if(log.isDebugEnabled()) {
-//            long duration = System.currentTimeMillis() - startTime;
-//            log.debug(String.format("#writeEntries: [%s] ms", String.valueOf(duration)));
-//        }
+
+        // if(log.isDebugEnabled()) {
+        // long duration = System.currentTimeMillis() - startTime;
+        // log.debug(String.format("#writeEntries: [%s] ms", String.valueOf(duration)));
+        // }
     }
 
-    protected void writeDuplicateFilteredEntries(JsonGenerator jg, String schemasRegex, SearchResponse searchResponse)
+    protected void writeDuplicateFilteredEntries(JsonGenerator jg, Pattern schemasRegex, SearchResponse searchResponse)
             throws JsonGenerationException, JsonProcessingException, IOException {
         // For logs
         long startTime = System.currentTimeMillis();
-        
+
         SearchHit[] searchHits = searchResponse.getHits().getHits();
         StringTerms duplicateAggs = searchResponse.getAggregations().get(ReIndexingTransientAggregate.DUPLICATE_AGGREGATE_NAME);
 
@@ -148,16 +150,16 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         }
 
         if (log.isTraceEnabled()) {
-            log.trace(String.format("List of duplicates: [%s]", listToString(duplicateIds)));
+            log.trace(String.format("List of duplicates: [%s]", MessageUtils.listToString(duplicateIds)));
         }
 
         if (duplicateIds.size() == 0) {
             this.writeEntries(jg, schemasRegex, searchHits);
         } else {
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug(String.format("[%s] duplicates ids found: filtering...", duplicateIds.size()));
             }
-            
+
             // Write filtering duplicate:
             // index from which duplicates must be kept (index pointed by transient write alias)
             // TODO: response can be managed few later time after re-indexing and write alias can not exist anymore
@@ -181,8 +183,8 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
                 }
             }
         }
-        
-        if(log.isDebugEnabled()) {
+
+        if (log.isDebugEnabled()) {
             long duration = System.currentTimeMillis() - startTime;
             log.debug(String.format("#writeDuplicateFilteredEntries done: [%s] ms", String.valueOf(duration)));
         }
@@ -198,7 +200,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
      * @throws JsonGenerationException
      * @throws JsonProcessingException
      */
-    private void writeEntry(JsonGenerator jg, String schemasRegex, Map<String, Object> source)
+    private void writeEntry(JsonGenerator jg, Pattern schemasRegex, Map<String, Object> source)
             throws IOException, JsonGenerationException, JsonProcessingException {
         jg.writeStartObject();
 
@@ -220,7 +222,7 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
 
         jg.writeObjectFieldStart("properties");
         for (String key : source.keySet()) {
-            if (!key.matches("ecm:.+") && key.matches(schemasRegex)) {
+            if (!SYSTEM_PROPS_PATTERN.matcher(key).matches() && schemasRegex.matcher(key).matches()) {
                 jg.writeObjectField(key, source.get(key));
             }
         }
@@ -229,21 +231,4 @@ public class TTCEsCodec extends ObjectCodec<TTCSearchResponse> {
         jg.flush();
     }
 
-    /**
-     * @param duplicateIds
-     * @return
-     */
-    protected String listToString(List<String> duplicateIds) {
-        StringBuffer sb = new StringBuffer();
-        Iterator<String> duplicatesIt = duplicateIds.iterator();
-        while (duplicatesIt.hasNext()) {
-            String dupId = duplicatesIt.next();
-            sb.append(dupId);
-            if (duplicatesIt.hasNext()) {
-                sb.append(", ");
-            }
-        }
-        return sb.toString();
-    }
-    
 }

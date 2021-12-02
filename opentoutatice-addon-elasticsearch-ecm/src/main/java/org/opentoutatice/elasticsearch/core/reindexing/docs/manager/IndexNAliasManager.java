@@ -4,10 +4,12 @@
 package org.opentoutatice.elasticsearch.core.reindexing.docs.manager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -67,10 +69,22 @@ public class IndexNAliasManager {
         return this.getAdminClient().indices().prepareExists(indexName).execute().actionGet().isExists();
     }
     
-    public List<String> getIndices(){
+    public String getLastIndex(String indexName) {
+        List<String> indicesWithName = new ArrayList<String>();
+        for(String index : getIndices()) {
+            if(StringUtils.startsWith(index, indexName)) {
+                indicesWithName.add(index);
+            }
+        }
+        Collections.sort(indicesWithName);
+        return indicesWithName.size() > 0 ? indicesWithName.get(indicesWithName.size() - 1) : null;
+    }
+    
+    // TODO: order by name or creation (timestamp)??
+    public List<String> getIndices() {
         List<String> indices = null;
-        
-        ImmutableOpenMap<String, IndexMetaData> indicesMap = getAdminClient().cluster().prepareState().get().getState().getMetaData().getIndices();
+
+        ImmutableOpenMap<String, IndexMetaData> indicesMap = this.getAdminClient().cluster().prepareState().get().getState().getMetaData().getIndices();
         if (indicesMap != null) {
             indices = new ArrayList<String>();
             UnmodifiableIterator<String> indicesIt = indicesMap.keysIt();
@@ -79,6 +93,7 @@ public class IndexNAliasManager {
                 indices.add(index);
             }
         }
+        Collections.sort(indices);
         
         return indices;
     }
@@ -233,9 +248,9 @@ public class IndexNAliasManager {
         }
 
         try {
-            if (this.aliasExists(aliasName)) {
-                String formerIndex = this.getIndexOfAlias(aliasName);
-                this.getAdminClient().indices().prepareAliases().removeAlias(formerIndex, formerAlias);
+            if (this.aliasExists(formerAlias)) {
+                String formerIndex = this.getIndexOfAlias(formerAlias);
+                this.getAdminClient().indices().prepareAliases().removeAlias(formerIndex, formerAlias).get();
             }
             // FIXME: check atomicity!!!!!!
             this.getAdminClient().indices().prepareAliases().addAlias(initialIndex.toString(), formerAlias).get();

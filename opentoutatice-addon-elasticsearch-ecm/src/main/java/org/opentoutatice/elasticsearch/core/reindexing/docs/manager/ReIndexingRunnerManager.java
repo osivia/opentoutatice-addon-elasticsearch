@@ -6,7 +6,6 @@ package org.opentoutatice.elasticsearch.core.reindexing.docs.manager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,12 +18,10 @@ import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.OttcElasticSearchComponent;
 import org.opentoutatice.elasticsearch.api.OttcElasticSearchIndexing;
 import org.opentoutatice.elasticsearch.config.OttcElasticSearchIndexOrAliasConfig;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.constant.ReIndexingConstants;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStateException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.exception.ReIndexingStatusException;
-import org.opentoutatice.elasticsearch.core.reindexing.docs.es.status.ReIndexingProcessStatusBuilder;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.index.IndexName;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.exception.ReIndexingException;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.ReIndexingWork;
@@ -49,7 +46,7 @@ public class ReIndexingRunnerManager {
 
     private OttcElasticSearchAdminImpl esAdmin;
     private OttcElasticSearchIndexing esIndexing;
-    
+
     private String currentWorkId;
 
     // For logs infos
@@ -185,16 +182,19 @@ public class ReIndexingRunnerManager {
         this.setCurrentWorkId(reIndexingWork.getId());
         this.getWorkManager().schedule(reIndexingWork);
     }
-    
+
     // FIXME: to keep signature with repo
     public boolean isReIndexingInProgress(String repositoryName) throws InterruptedException {
-        return isReIndexingInProgress();
+        return this.isReIndexingInProgress();
     }
-    
+
     public boolean isReIndexingInProgress() throws InterruptedException {
-        State workState = this.getWorkManager().getWorkState(getCurrentWorkId());
-        boolean inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
-        
+        boolean inProgress = false;
+
+        State workState = this.getWorkManager().getWorkState(this.getCurrentWorkId());
+        if (workState != null) {
+            inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
+        }
         if (log.isTraceEnabled()) {
             log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
         }
@@ -243,11 +243,11 @@ public class ReIndexingRunnerManager {
     private void setEsIndexing(OttcElasticSearchIndexing esIndexing) {
         this.esIndexing = esIndexing;
     }
-    
+
     public String getCurrentWorkId() {
-        return currentWorkId;
+        return this.currentWorkId;
     }
-    
+
     private void setCurrentWorkId(String currentWorkId) {
         this.currentWorkId = currentWorkId;
     }
@@ -291,4 +291,5 @@ public class ReIndexingRunnerManager {
     public void setInitialNbDocsInBddFor(String work, Long nbDocs) {
         this.initialNbDocsInBdd.put(work, nbDocs);
     }
+
 }
