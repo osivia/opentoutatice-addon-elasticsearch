@@ -30,9 +30,10 @@ import org.nuxeo.runtime.test.runner.Jetty;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.automation.ReIndexZeroDownTimeES;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.ReIndexingRunnerManager;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.test.EsNodeTestInitializer;
 import org.opentoutatice.elasticsearch.reindexing.docs.config.ZeroDownTimeErrorStartUpConfigFeature;
 import org.opentoutatice.elasticsearch.reindexing.docs.feature.EmbeddedAutomationServerFeatureWithOsvClient;
-import org.tst.opentoutatice.elasticsearch.reindexing.docs.ZeroDownTimeReIndexingTest;
+import org.tst.opentoutatice.elasticsearch.reindexing.docs.ZeroDownTimeReIndexingTst;
 
 import com.google.inject.Inject;
 
@@ -48,9 +49,9 @@ import com.google.inject.Inject;
         "fr.toutatice.ecm.platform.elasticsearch:usermanger-test.xml", "fr.toutatice.ecm.platform.elasticsearch:log4j.xml"})
 @Jetty(port = 18080)
 @RepositoryConfig(cleanup = Granularity.METHOD)
-public class ZeroDownTimeReIndexingNoAliasAtStartUpTest {
+public class ZeroDownTimeReIndexingNoAliasAtStartUpTst {
 
-    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingTest.class);
+    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingTst.class);
 
     static final String[][] users = {{"VirtualAdministrator", "secret"}, {"Administrator", "Administrator"}};
     static final int NB_DOCS = 5;
@@ -134,6 +135,5 @@ public class ZeroDownTimeReIndexingNoAliasAtStartUpTest {
             running = ReIndexingRunnerManager.get().isReIndexingInProgress(repoName);
         }
     }
-
-
+    
 }

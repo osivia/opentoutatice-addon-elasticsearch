@@ -57,6 +57,11 @@ public class IndexNAliasManager {
         Validate.isTrue(instance == null);
         instance = new IndexNAliasManager(adminClient);
     }
+    
+    // For tests only
+    public static void reset() {
+        instance = null;
+    }
 
     // Must be called after OttcElasticSearchComponent#applicationStarted
     public static synchronized IndexNAliasManager get() {

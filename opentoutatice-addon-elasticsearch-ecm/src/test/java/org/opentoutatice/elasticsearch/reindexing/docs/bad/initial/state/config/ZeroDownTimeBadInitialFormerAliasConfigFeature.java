@@ -18,5 +18,10 @@ public class ZeroDownTimeBadInitialFormerAliasConfigFeature extends ZeroDownTime
         super.initialize(runner);
         System.setProperty(ReIndexingTestConstants.CREATE_BAD_FORMER_ALIAS_ON_STARTUP_TEST, "true");
     }
+    
+    @Override
+    public void stop(FeaturesRunner runner) throws Exception {
+        System.setProperty(ReIndexingTestConstants.CREATE_BAD_FORMER_ALIAS_ON_STARTUP_TEST, "false");
+    }
 
 }

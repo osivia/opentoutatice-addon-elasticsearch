@@ -130,6 +130,11 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
     }
 
     public void disconnect() {
+        
+        // Test mode
+        if (Framework.isTestModeSet()) {
+            EsNodeTestInitializer.cleanIndices(this.client, log);
+        }
 
         if (this.client != null) {
             this.client.close();
@@ -143,6 +148,7 @@ public class OttcElasticSearchAdminImpl /* extends ElasticSearchAdminImpl */ imp
 
             log.info("ES embedded Node Stopped");
         }
+        
     }
 
     private Node createEmbeddedNode(ElasticSearchLocalConfig conf) {

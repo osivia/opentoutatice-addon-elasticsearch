@@ -7,11 +7,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import javax.ws.rs.core.Response.Status.Family;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.helper.Validate;
 import org.nuxeo.ecm.core.work.api.Work.State;
+import org.nuxeo.ecm.core.work.WorkManagerImpl;
+import org.nuxeo.ecm.core.work.api.Work;
 import org.nuxeo.ecm.core.work.api.WorkManager;
+import org.nuxeo.ecm.core.work.api.WorkManager.Scheduling;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.runtime.api.Framework;
@@ -82,6 +87,11 @@ public class ReIndexingRunnerManager {
         }
         return instance;
     }
+    
+    // For tests only
+    public static void reset() {
+        instance = null;
+    }
 
     /**
      * Launches Es re-indexing with zero down time on given repository.
@@ -99,6 +109,7 @@ public class ReIndexingRunnerManager {
             if (this.isEsInInitialAllowedState(aliasConfig)) {
                 // Launch re-indexing
                 this.launchReIndexingRunner(aliasConfig);
+                
                 launchedStatus = true;
             }
         }
@@ -195,6 +206,7 @@ public class ReIndexingRunnerManager {
         if (workState != null) {
             inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
         }
+        
         if (log.isTraceEnabled()) {
             log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
         }

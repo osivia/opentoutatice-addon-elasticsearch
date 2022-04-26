@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import org.nuxeo.ecm.automation.client.Session;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
+import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
@@ -28,6 +30,7 @@ import org.nuxeo.runtime.test.runner.Jetty;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsState;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.es.state.EsStateChecker;
+import org.opentoutatice.elasticsearch.core.reindexing.docs.manager.IndexNAliasManager;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.runner.step.ReIndexingRunnerStep;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.test.constant.ReIndexingTestConstants;
 import org.opentoutatice.elasticsearch.reindexing.docs.config.ZeroDownTimeErrorsConfigFeature;
@@ -43,15 +46,15 @@ import com.google.inject.Inject;
 @RunWith(FeaturesRunner.class)
 @Features({ZeroDownTimeErrorsConfigFeature.class, RepositoryElasticSearchFeature.class, EmbeddedAutomationServerFeatureWithOsvClient.class})
 @BlacklistComponent("org.nuxeo.elasticsearch.ElasticSearchComponent")
-@Deploy({"org.nuxeo.ecm.automation.test", "org.nuxeo.elasticsearch.core.test",})
+@Deploy({"org.nuxeo.ecm.automation.test", "org.nuxeo.elasticsearch.core.test"})
 @LocalDeploy({"fr.toutatice.ecm.platform.elasticsearch", "fr.toutatice.ecm.platform.elasticsearch:elasticsearch-config-test.xml",
         "fr.toutatice.ecm.platform.elasticsearch:usermanger-test.xml", "fr.toutatice.ecm.platform.elasticsearch:log4j.xml"})
 @Jetty(port = 18080)
 @RepositoryConfig(cleanup = Granularity.CLASS)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ZeroDownTimeReIndexingErrorsCasesTest {
+public class ZeroDownTimeReIndexingErrorsCasesTst {
 
-    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingErrorsCasesTest.class);
+    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingErrorsCasesTst.class);
 
     static final String[][] users = {{"VirtualAdministrator", "secret"}, {"Administrator", "Administrator"}};
     static final int NB_DOCS = 5;
@@ -64,6 +67,9 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
 
     @Inject
     protected ElasticSearchService esService;
+    
+    @Inject
+    protected WorkManager wm;
 
     @Inject
     protected CoreSession session;
@@ -131,6 +137,7 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
             exc = e;
         }
         Assert.assertNotNull(exc);
+        
     }
 
     /**
@@ -147,13 +154,14 @@ public class ZeroDownTimeReIndexingErrorsCasesTest {
         // To Fire Exception at end of step
         System.setProperty(ReIndexingTestConstants.FIRE_TEST_ERRORS_ON_STEP_PROP, step.name());
         // Launch zero down time re-indexing
-        ZeroDownTimeReIndexingTest.launchReIndexingFromAutomation(this.automationSession, users);
+        ZeroDownTimeReIndexingTst.launchReIndexingFromAutomation(this.automationSession, users);
 
         // Waiting for ordering logs
-        ZeroDownTimeReIndexingTest.waitReIndexing(repoName);
+        ZeroDownTimeReIndexingTst.waitReIndexing(repoName);
 
         // Asserts:
         this.checkEsState(repoName, expectedFinalEsState[0], expectedFinalEsState[1]);
+        
     }
 
     private EsState checkEsState(String repoName, int expectedNbIndices, int expectedNbAliases) throws InterruptedException, ExecutionException {

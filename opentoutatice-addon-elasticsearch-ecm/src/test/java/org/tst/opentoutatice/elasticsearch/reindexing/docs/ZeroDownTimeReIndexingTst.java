@@ -96,9 +96,9 @@ import fr.toutatice.ecm.elasticsearch.automation.QueryES;
 @Jetty(port = 18080)
 @RepositoryConfig(cleanup = Granularity.CLASS)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ZeroDownTimeReIndexingTest {
+public class ZeroDownTimeReIndexingTst {
 
-    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingTest.class);
+    protected static final Log log = LogFactory.getLog(ZeroDownTimeReIndexingTst.class);
 
     static final String[][] users = {{"VirtualAdministrator", "secret"}, {"Administrator", "Administrator"}};
     static final int NB_DOCS = 50;
@@ -219,16 +219,16 @@ public class ZeroDownTimeReIndexingTest {
 
         // Docs list
         DocumentModelList initialDocs = this.getAllDocs(repoName);
-
+        
         // Launch zero down time re-indexing
         ((OttcElasticSearchIndexing) this.esIndexing).reIndexAllDocumentsWithZeroDownTime(repoName);
-
+        
         // Waiting for re-indexing
         waitReIndexing(repoName);
-
+       
         // Refresh index
         this.esAdmin.refreshRepositoryIndex(this.session.getRepositoryName());
-
+        
         // Asserts:
         this.checkFinalEsState(repoName, initialEsState, initialDocs);
     }
@@ -253,12 +253,16 @@ public class ZeroDownTimeReIndexingTest {
         ((OttcElasticSearchIndexing) this.esIndexing).reIndexAllDocumentsWithZeroDownTime(repoName);
 
         // Read - write test when re-indexing is suspending: =========
+        Thread.sleep(100);
         Assert.assertEquals(Boolean.TRUE, ReIndexingRunnerManager.get().isReIndexingInProgress(repoName));
 
         // Write test -----------
         String indexOrAlias = ((OttcElasticSearchComponent) this.esAdmin).getIndexNameForRepository(repoName);
         Assert.assertEquals(TransitoryIndexUse.Write.getAlias(), indexOrAlias);
-
+        
+        // Wait initialization
+        Thread.sleep(500);
+        
         boolean tx = false;
         DocumentModel createdWs = null;
         try {
@@ -336,6 +340,7 @@ public class ZeroDownTimeReIndexingTest {
 
     @Test
     public void testD_ZeroDownTimeReadDuplicateDuringReIndexingFromAutomation() throws Exception {
+        
         String repoName = this.session.getRepositoryName();
         final String ALL_DOCS_QUERY = "select * from Document";
 
@@ -395,6 +400,7 @@ public class ZeroDownTimeReIndexingTest {
 
     @Test
     public void testE_ZeroDownTimeReIndexingTwiceFromAutomation() throws Exception {
+       
         String repoName = this.session.getRepositoryName();
 
         // First launch
@@ -418,11 +424,13 @@ public class ZeroDownTimeReIndexingTest {
 
     @Test
     public void testF_ZeroDownTimeReIndexingYetRunningFromAutomation() throws Exception {
+        
         // Launch zero down time re-indexing
         launchReIndexingFromAutomation(this.automationSession, users);
         // Do not wait & launch concurrent call
         RemoteException exc = null;
         try {
+            Thread.sleep(150);
             launchReIndexingFromAutomation(this.automationSession, users);
         } catch (RemoteException e) {
             exc = e;
@@ -433,12 +441,21 @@ public class ZeroDownTimeReIndexingTest {
                 .get("className");
 
         Assert.assertEquals(ReIndexingStatusException.class.getCanonicalName(), excAsJsonNode.getTextValue());
+        
+        waitReIndexing(this.session.getRepositoryName());
+        
+        nbIndices++;
     }
 
     @Test
     public void testG_copyDuringReIndexing() throws Exception {
+        
+        checkInitialEsState(this.session.getRepositoryName());
+        
         launchReIndexingFromAutomation(this.automationSession, users);
 
+        Thread.sleep(150);
+        
         DocumentModel rootDocument = null;
         DocumentModel createdWsContainer = null;
 
@@ -488,19 +505,18 @@ public class ZeroDownTimeReIndexingTest {
         TransactionHelper.commitOrRollbackTransaction();
 
         Assert.assertNotNull(copiedFolderish);
-
+        
+        waitReIndexing(this.session.getRepositoryName());
+        
+        nbIndices++;
     }
 
     @Test
     public void testH_cleanIndices() throws Exception {
-        // Re-index third before clean
-        this.zeroDownTimeReIndexingFromAutomation();
-        this.zeroDownTimeReIndexingFromAutomation();
-        this.zeroDownTimeReIndexingFromAutomation();
 
         String returnedStatus = callOp(this.automationSession, users, CleanESIndices.ID, null);
         log.info(returnedStatus);
-        Assert.assertTrue(StringUtils.contains(returnedStatus, "[2] orphan indices deleted"));
+        Assert.assertTrue(StringUtils.contains(returnedStatus, "[7] orphan indices deleted"));
 
         // Nothing to clean now
         returnedStatus = callOp(this.automationSession, users, CleanESIndices.ID, null);

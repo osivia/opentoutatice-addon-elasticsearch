@@ -18,6 +18,7 @@
  */
 package fr.toutatice.ecm.elasticsearch.automation;
 
+import org.junit.Assert;
 import org.nuxeo.ecm.automation.client.Constants;
 import org.nuxeo.ecm.automation.client.OperationRequest;
 import org.nuxeo.ecm.automation.client.Session;
@@ -27,7 +28,6 @@ import org.nuxeo.ecm.automation.client.model.Document;
 import org.nuxeo.ecm.automation.client.model.Documents;
 
 import fr.toutatice.ecm.elasticsearch.marshaller.EsMarshaller;
-import junit.framework.Assert;
 
 public class QueryESMain {
 

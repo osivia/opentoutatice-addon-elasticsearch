@@ -6,6 +6,10 @@ package org.opentoutatice.elasticsearch.core.reindexing.docs.test;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.logging.Log;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.hppc.cursors.ObjectCursor;
 import org.nuxeo.elasticsearch.config.ElasticSearchIndexConfig;
 import org.nuxeo.runtime.api.Framework;
 import org.opentoutatice.elasticsearch.core.reindexing.docs.test.constant.ReIndexingTestConstants;
@@ -56,6 +60,25 @@ public class EsNodeTestInitializer {
                     log.debug("BAD former alias former-nxutest-alias created: points on index [idx-tst]");
                 }
             }
+        }
+    }
+    
+    public static void cleanIndices(Client client, Log log) {
+        ImmutableOpenMap<String, IndexMetaData> indices = client.admin().cluster().prepareState().get().getState().getMetaData().getIndices();
+        for (ObjectCursor<String> index : indices.keys()) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("== Cleaning index [%s]", index.value));
+            }
+            client.admin().indices().prepareDelete(index.value).execute().actionGet();
+        }
+
+        ImmutableOpenMap<String, ImmutableOpenMap<String, AliasMetaData>> aliases = client.admin().cluster().prepareState().get().getState().getMetaData()
+                .getAliases();
+        for (ObjectCursor<String> alias : aliases.keys()) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("== Cleaning alias [%s]", alias.value));
+            }
+            client.admin().indices().prepareDelete(alias.value).execute().actionGet();
         }
     }
 
