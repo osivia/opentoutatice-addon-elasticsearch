@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.helper.Validate;
@@ -191,12 +192,15 @@ public class ReIndexingRunnerManager {
     public boolean isReIndexingInProgress() throws InterruptedException {
         boolean inProgress = false;
 
-        State workState = this.getWorkManager().getWorkState(this.getCurrentWorkId());
-        if (workState != null) {
-            inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
-        }
-        if (log.isTraceEnabled()) {
-            log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
+        if(StringUtils.isNotBlank(this.getCurrentWorkId())) {
+            State workState = this.getWorkManager().getWorkState(this.getCurrentWorkId());
+            if (workState != null) {
+                inProgress = State.SCHEDULED.equals(workState) || State.RUNNING.equals(workState);
+            }
+            if (log.isTraceEnabled()) {
+                log.trace(String.format("Zero down time re-indexing in progress: [%s]", String.valueOf(inProgress)));
+            }
+
         }
 
         return inProgress;
